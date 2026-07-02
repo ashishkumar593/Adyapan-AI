@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { saveAuthSession } from "@/hooks/useAuth";
 import { Navbar } from "@/components/layout/Navbar";
 
 type Tab = "login" | "register" | "forgot";
@@ -87,8 +88,7 @@ export default function LoginPage() {
     e.preventDefault(); setLoginError(""); setLoginLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email: loginEmail, password: loginPassword });
-      localStorage.setItem("adyapan-token", data.token);
-      localStorage.setItem("adyapan-user", JSON.stringify(data.user));
+      saveAuthSession(data.token, data.user);
       router.push(data.user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
     } catch (err: unknown) {
       setLoginError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Invalid email or password.");

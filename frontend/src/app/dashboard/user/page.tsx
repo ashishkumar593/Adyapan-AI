@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { clearAuthSession } from "@/hooks/useAuth";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -160,80 +161,81 @@ function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashb
 
   return (
     <aside className="dash-sidebar">
-      {sidebarItems.map((item) => {
-        const isActive = item.id === "dashboard";
-        const isOpen = openItem === item.id;
-        const hasSubmenu = !!item.submenu;
+      {/* Dashboard */}
+      <button
+        onClick={onViewDashboard}
+        style={{
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
+          color: activeView === "dashboard" ? "var(--primary)" : "var(--text-secondary)",
+          background: activeView === "dashboard" ? "rgba(245,158,11,0.1)" : "transparent",
+          border: activeView === "dashboard" ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+          fontWeight: 500, fontSize: "0.82rem", cursor: "pointer", width: "100%",
+          textAlign: "left", whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ flexShrink: 0 }}><LayoutDashboard size={18} /></span>
+        <span className="sb-label">Dashboard</span>
+      </button>
 
+      {/* Divider */}
+      <div style={{ height: 1, background: "var(--border-color)", margin: "0.5rem 0.3rem 0.7rem" }} />
+
+      {/* Hub items (skip dashboard since it's a top button) */}
+      {sidebarItems.filter(item => item.id !== "dashboard").map((item) => {
+        const isOpen = openItem === item.id;
         return (
-          <div key={item.id}>
-            {!hasSubmenu ? (
-              <Link
-                href={item.href ?? "#"}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.75rem",
-                  padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
-                  color: isActive ? "var(--primary)" : "var(--text-secondary)",
-                  background: isActive ? "rgba(245,158,11,0.1)" : "transparent",
-                  border: isActive ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
-                  fontWeight: 500, fontSize: "0.82rem", textDecoration: "none",
-                  transition: "all 0.2s ease", whiteSpace: "nowrap",
-                }}
-              >
-                <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                <span className="sb-label">{item.label}</span>
-              </Link>
-            ) : (
-              <div>
-                <button
-                  onClick={() => toggleItem(item.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "0.75rem",
-                    padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
-                    color: "var(--text-secondary)", background: "transparent",
-                    border: "1px solid transparent", fontWeight: 500,
-                    fontSize: "0.82rem", cursor: "pointer", width: "100%",
-                    transition: "all 0.2s ease", whiteSpace: "nowrap",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                    (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "transparent";
-                    (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
-                  }}
-                >
-                  <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                  <span className="sb-label" style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-                  <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                    <ChevronDown size={13} />
-                  </span>
-                </button>
-                <div className="sb-submenu" style={{ paddingLeft: "1.2rem" }}>
-                  {isOpen && item.submenu?.map((sub) => (
-                    <a
-                      key={sub.label}
-                      href={sub.href}
-                      onClick={(e) => { e.preventDefault(); onComingSoon(); }}
-                      style={{
-                        display: "block", padding: "0.28rem 0.5rem", fontSize: "0.76rem",
-                        color: "var(--text-secondary)", borderRadius: 8, marginBottom: 1,
-                        textDecoration: "none", transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.color = "var(--primary)";
-                        (e.currentTarget as HTMLElement).style.background = "rgba(245,158,11,0.05)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                      }}
-                    >
-                      {sub.label}
-                    </a>
-                  ))}
-                </div>
+          <div key={item.id} className={isOpen ? "sb-item open" : "sb-item"}>
+            <button
+              onClick={() => toggleItem(item.id)}
+              style={{
+                display: "flex", alignItems: "center", gap: "0.75rem",
+                padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
+                color: "var(--text-secondary)", background: "transparent",
+                border: "1px solid transparent", fontWeight: 500,
+                fontSize: "0.82rem", cursor: "pointer", width: "100%",
+                transition: "all 0.2s ease", whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>{item.icon}</span>
+              <span className="sb-label" style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
+              <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                <ChevronDown size={13} />
+              </span>
+            </button>
+            {/* Submenu: visible when open AND sidebar is hovered */}
+            {isOpen && (
+              <div className="sb-submenu" style={{ paddingLeft: "1.2rem" }}>
+                {item.submenu?.map((sub) => (
+                  <a
+                    key={sub.label}
+                    href={sub.href}
+                    onClick={(e) => { e.preventDefault(); onComingSoon(); }}
+                    style={{
+                      display: "block", padding: "0.28rem 0.5rem", fontSize: "0.76rem",
+                      color: "var(--text-secondary)", borderRadius: 8, marginBottom: 1,
+                      textDecoration: "none", transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = "var(--primary)";
+                      (e.currentTarget as HTMLElement).style.background = "rgba(245,158,11,0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
+                  >
+                    {sub.label}
+                  </a>
+                ))}
               </div>
             )}
           </div>
@@ -435,7 +437,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
     { icon: <Settings size={15} />, label: "Settings", href: "#", cs: true },
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
     null,
-    { icon: <LogOut size={15} />, label: "Logout", href: "/login" },
+    { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
   ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean; onClickFn?: () => void } | null>;
 
   const initials = user?.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "U";
@@ -479,10 +481,10 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
               {initials}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontWeight: 700, fontSize: "0.92rem", color: isDarkTheme ? "#fff" : "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user?.name ?? "User"}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: "0.73rem", color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user?.email ?? "user@email.com"}
               </div>
             </div>
@@ -492,7 +494,9 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.9rem" }}>
             {["View Community Profile", "Manage Account"].map((label) => (
               <button key={label} onClick={onComingSoon} style={{
-                background: "#0d151c", color: "#fff", border: "1px solid rgba(255,255,255,0.1)",
+                background: isDarkTheme ? "#0d151c" : "#f1f5f9",
+                color: isDarkTheme ? "#fff" : "#0f172a",
+                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
                 padding: "0.5rem", borderRadius: 20, fontSize: "0.8rem", fontWeight: 600,
                 cursor: "pointer", transition: "all 0.2s",
               }}>
@@ -501,13 +505,13 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
             ))}
           </div>
 
-          <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: "0.7rem" }} />
+          <div style={{ height: 1, background: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", marginBottom: "0.7rem" }} />
 
           {/* Menu items */}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {menuItems.map((item, i) =>
               item === null ? (
-                <div key={i} style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "4px 0" }} />
+                <div key={i} style={{ height: 1, background: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
               ) : (
                 <Link
                   key={item.label}
@@ -515,17 +519,18 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
                   onClick={item.onClickFn ? (e) => { e.preventDefault(); setOpen(false); item.onClickFn!(); } : item.cs ? (e) => { e.preventDefault(); onComingSoon(); } : undefined}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
-                    padding: "0.5rem 0.6rem", borderRadius: 8, color: "rgba(255,255,255,0.7)",
+                    padding: "0.5rem 0.6rem", borderRadius: 8,
+                    color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.65)",
                     fontSize: "0.84rem", fontWeight: 500, textDecoration: "none",
                     transition: "all 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                    (e.currentTarget as HTMLElement).style.color = "#fff";
+                    (e.currentTarget as HTMLElement).style.background = isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+                    (e.currentTarget as HTMLElement).style.color = isDarkTheme ? "#fff" : "#0f172a";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.background = "transparent";
-                    (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                    (e.currentTarget as HTMLElement).style.color = isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.65)";
                   }}
                 >
                   <span style={{ color: "var(--primary)" }}>{item.icon}</span>

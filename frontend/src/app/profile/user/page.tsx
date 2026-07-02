@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { api } from "@/services/api";
+import { clearAuthSession } from "@/hooks/useAuth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdyapanUser {
@@ -294,7 +295,7 @@ function ProfileDropdown({ user, onComingSoon }: { user: AdyapanUser | null; onC
     { icon: <Settings size={15} />, label: "Settings", href: "#", cs: true },
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
     null,
-    { icon: <LogOut size={15} />, label: "Logout", href: "/" },
+    { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
   ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean } | null>;
 
   const initials = user?.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "U";

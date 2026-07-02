@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { forgotPassword, login, logout, me, register } from "../controllers/auth.controller";
+import { forgotPassword, login, logout, me, register, registerAdmin } from "../controllers/auth.controller";
 import { requireAuth } from "../middleware/auth";
 
 export const authRouter = Router();
 
 authRouter.post("/register", register);
+authRouter.post("/register-admin", registerAdmin);
 authRouter.post("/login", login);
 authRouter.post("/forgot-password", forgotPassword);
 authRouter.post("/logout", requireAuth, logout);

@@ -25,17 +25,21 @@ model User {
 }
 
 model Profile {
-  id        String   @id @default(cuid())
-  userId    String   @unique @map("user_id")
-  college   String?
-  branch    String?
-  skills    String[] @default([])
-  linkedin  String?
-  github    String?
-  resumeUrl String?  @map("resume_url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  college     String?
+  branch      String?
+  phone       String?
+  year        String?
+  careerGoal  String?  @map("career_goal")
+  skills      String[] @default([])
+  linkedin    String?
+  github      String?
+  resumeUrl   String?  @map("resume_url")
+  resumeName  String?  @map("resume_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }

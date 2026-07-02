@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search, Bell, ChevronDown, User, LogOut, Settings, CreditCard,
   Sun, Moon, ShieldCheck, LayoutDashboard, Users, Crown, IndianRupee,
@@ -9,6 +10,7 @@ import {
   ToggleRight, Plus, Download, ChevronRight,
 } from "lucide-react";
 import { api } from "@/services/api";
+import { clearAuthSession } from "@/hooks/useAuth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -21,6 +23,21 @@ interface OverviewData {
   totalUsers?: number;
   adminUsers?: number;
   completedProfiles?: number;
+}
+
+interface DbUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  profile: { college: string | null; branch: string | null } | null;
+}
+
+interface UsersResponse {
+  success: boolean;
+  users: DbUser[];
+  pagination: { total: number; page: number; limit: number; pages: number };
 }
 
 interface SidebarSection {
@@ -207,8 +224,8 @@ function ProfileDropdown({
     { icon: <Settings size={15} />, label: "Settings", href: "#", cs: true },
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
     null,
-    { icon: <LogOut size={15} />, label: "Logout", href: "/login" },
-  ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean } | null>;
+    { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
+  ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean; onClickFn?: () => void } | null>;
 
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -261,7 +278,7 @@ function ProfileDropdown({
                 <Link
                   key={item.label}
                   href={item.href}
-                  onClick={item.cs ? (e) => { e.preventDefault(); onComingSoon(); } : undefined}
+                  onClick={item.onClickFn ? (e) => { e.preventDefault(); setOpen(false); item.onClickFn!(); } : item.cs ? (e) => { e.preventDefault(); onComingSoon(); } : undefined}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
                     padding: "0.48rem 0.6rem", borderRadius: 8,
@@ -323,7 +340,7 @@ function AdminTopNav({
       {/* Left */}
       <div style={{ display: "flex", alignItems: "center", gap: "1.4rem" }}>
         <Link href="/dashboard/admin" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <ShieldCheck aria-hidden="true" size={30} color="var(--primary)" />
+          <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.1rem", color: navBtnColor }}>Adyapan AI</span>
         </Link>
         <div style={{ position: "relative" }}>
@@ -598,39 +615,176 @@ function OverviewSection({
 
 // ─── Users Section ─────────────────────────────────────────────────────────────
 function UsersSection({ onComingSoon }: { onComingSoon: () => void }) {
-  const [filter, setFilter] = useState("All");
-  const filters = ["All", "Active", "Suspended", "Premium"];
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<DbUser[]>([]);
+  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsers = async (p: number, q: string) => {
+    setLoading(true);
+    try {
+      const res = await api.get<UsersResponse>("/admin/users", {
+        params: { page: p, limit: 20, ...(q ? { search: q } : {}) },
+      });
+      setUsers(res.data.users);
+      setPagination({ total: res.data.pagination.total, pages: res.data.pagination.pages });
+    } catch {
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(page, search); }, [page, search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setSearch(searchInput);
+  };
+
+  const columns = ["#", "Name", "Email", "College", "Role", "Joined", "Actions"];
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem", flexWrap: "wrap", gap: "0.75rem" }}>
-        <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-primary)" }}>Users Management</h2>
+        <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-primary)" }}>
+          Users Management
+          <span style={{ marginLeft: 10, fontSize: "0.8rem", fontWeight: 500, color: "var(--text-muted)" }}>
+            ({pagination.total} total)
+          </span>
+        </h2>
         <div style={{ display: "flex", gap: "0.6rem" }}>
           <ActionButton label="Add User" icon={<Plus size={14} />} variant="primary" onClick={onComingSoon} />
           <ActionButton label="Export" icon={<Download size={14} />} onClick={onComingSoon} />
         </div>
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-        {filters.map((f) => (
-          <FilterChip key={f} label={f} active={filter === f} onClick={() => setFilter(f)} />
-        ))}
-      </div>
-      <PanelCard title="All Users">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
-                {["#", "Name", "Email", "Joined", "Plan", "Status", "Actions"].map((col) => (
-                  <th key={col} style={{
-                    padding: "0.5rem 0.7rem", textAlign: "left",
-                    color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap",
-                  }}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-          </table>
-          <EmptyState message="No users yet — connect backend to load data" />
+
+      {/* Search */}
+      <form onSubmit={handleSearch} style={{ marginBottom: "1rem", display: "flex", gap: "0.5rem" }}>
+        <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <input
+            type="text"
+            placeholder="Search by name or email…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{
+              width: "100%", padding: "0.48rem 0.75rem 0.48rem 2rem",
+              background: "var(--bg-card)", border: "1px solid var(--border-color)",
+              borderRadius: 8, color: "var(--text-primary)", fontSize: "0.82rem", outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
         </div>
+        <ActionButton label="Search" variant="primary" onClick={() => { setPage(1); setSearch(searchInput); }} />
+        {search && (
+          <ActionButton label="Clear" onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }} />
+        )}
+      </form>
+
+      <PanelCard title="All Users">
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)", fontSize: "0.84rem" }}>
+            Loading users…
+          </div>
+        ) : users.length === 0 ? (
+          <EmptyState message={search ? `No users found for "${search}"` : "No users registered yet"} />
+        ) : (
+          <>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
+                    {columns.map((col) => (
+                      <th key={col} style={{
+                        padding: "0.5rem 0.75rem", textAlign: "left",
+                        color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap",
+                      }}>{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u, idx) => (
+                    <tr
+                      key={u.id}
+                      style={{ borderBottom: "1px solid var(--border-color)", transition: "background 0.15s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <td style={{ padding: "0.6rem 0.75rem", color: "var(--text-muted)" }}>
+                        {(page - 1) * 20 + idx + 1}
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "var(--text-primary)", fontWeight: 600 }}>
+                        {u.name}
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "var(--text-secondary)" }}>
+                        {u.email}
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "var(--text-secondary)" }}>
+                        {u.profile?.college ?? <span style={{ color: "var(--text-muted)" }}>—</span>}
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem" }}>
+                        <span style={{
+                          padding: "0.2rem 0.55rem", borderRadius: 20, fontSize: "0.72rem", fontWeight: 700,
+                          background: u.role === "ADMIN" ? "rgba(245,158,11,0.15)" : "rgba(59,130,246,0.12)",
+                          color: u.role === "ADMIN" ? "#f59e0b" : "#3b82f6",
+                        }}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                        {new Date(u.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                      <td style={{ padding: "0.6rem 0.75rem" }}>
+                        <button
+                          onClick={onComingSoon}
+                          style={{
+                            padding: "0.25rem 0.6rem", borderRadius: 6, fontSize: "0.74rem",
+                            fontWeight: 600, cursor: "pointer", border: "1px solid var(--border-color)",
+                            background: "transparent", color: "var(--text-secondary)",
+                          }}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", marginTop: "1rem" }}>
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  style={{
+                    padding: "0.35rem 0.75rem", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600,
+                    cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.4 : 1,
+                    border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-secondary)",
+                  }}
+                >← Prev</button>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  Page {page} of {pagination.pages}
+                </span>
+                <button
+                  disabled={page === pagination.pages}
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{
+                    padding: "0.35rem 0.75rem", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600,
+                    cursor: page === pagination.pages ? "not-allowed" : "pointer",
+                    opacity: page === pagination.pages ? 0.4 : 1,
+                    border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-secondary)",
+                  }}
+                >Next →</button>
+              </div>
+            )}
+          </>
+        )}
       </PanelCard>
     </div>
   );
