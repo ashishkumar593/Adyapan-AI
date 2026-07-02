@@ -13,8 +13,9 @@ import {
   Star, Zap,
   LineChart, Trophy,
   Upload, Download, Trash2, CheckCircle, XCircle,
-  Phone, Mail, MapPin, Target, Github, Linkedin,
+  Phone, Mail, MapPin, Target,
 } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { api } from "@/services/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -417,7 +418,7 @@ function DashboardTopNav({
       {/* Left */}
       <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
         <Link href="/dashboard/user" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <Image src="/assets/images/logo.png" alt="Adyapan AI" width={30} height={30} style={{ objectFit: "contain" }} />
+          <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.15rem", color: "#fff" }}>Adyapan AI</span>
         </Link>
         <div style={{ position: "relative" }}>
@@ -870,8 +871,8 @@ export default function UserProfilePage() {
                       { icon: <BookOpen size={14} />, label: "Branch", value: profile?.branch },
                       { icon: <GraduationCap size={14} />, label: "Academic Year", value: profile?.year },
                       { icon: <Target size={14} />, label: "Career Goal", value: profile?.careerGoal },
-                      { icon: <Linkedin size={14} />, label: "LinkedIn", value: profile?.linkedin },
-                      { icon: <Github size={14} />, label: "GitHub", value: profile?.github },
+                      { icon: <FaLinkedin size={14} />, label: "LinkedIn", value: profile?.linkedin },
+                      { icon: <FaGithub size={14} />, label: "GitHub", value: profile?.github },
                     ].map(({ icon, label, value }) => (
                       <div key={label} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
                         <span style={{ color: "var(--primary)", marginTop: 1, flexShrink: 0 }}>{icon}</span>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer
@@ -14,9 +16,9 @@ export function Footer() {
         <div className="mb-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="flex flex-col gap-5 lg:col-span-1">
-            <a href="/" className="text-xl font-bold text-gradient" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            <Link href="/" className="text-xl font-bold text-gradient" style={{ fontFamily: "'Outfit', sans-serif" }}>
               Adyapan AI
-            </a>
+            </Link>
             <p className="text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
               Your ultimate intelligent educational suite helping you navigate college, refine
               profiles, build portfolios, and match with recruiters.
@@ -56,9 +58,9 @@ export function Footer() {
                 { label: "How It Works", href: "/#how-it-works" },
               ].map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
+                  <Link href={link.href} className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -72,9 +74,9 @@ export function Footer() {
             <ul className="flex flex-col gap-4">
               {["Study Assistant", "Resume Builder", "Interview Coach"].map((tool) => (
                 <li key={tool}>
-                  <a href="/login" className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
+                  <Link href="/login" className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
                     {tool}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -92,9 +94,9 @@ export function Footer() {
                 { label: "Privacy Policy", href: "#" },
               ].map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
+                  <Link href={link.href} className="text-sm transition-all hover:pl-1" style={{ color: "var(--text-secondary)" }}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -221,7 +221,7 @@ export default function LandingPage() {
               {landingTestimonials.map((testimonial, i) => (
                 <div key={i} className="testimonial-slide p-12 text-center">
                   <p className="mb-8 text-2xl italic leading-relaxed">
-                    "{testimonial.text}"
+                    &quot;{testimonial.text}&quot;
                   </p>
                   <div className="mx-auto mb-4 h-16 w-16 overflow-hidden rounded-full border-2 border-[var(--primary)]">
                     <img

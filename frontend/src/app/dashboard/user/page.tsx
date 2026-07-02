@@ -286,7 +286,7 @@ function DashboardTopNav({
       {/* Left */}
       <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
         <Link href="/dashboard/user" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <Image src="/assets/images/logo.png" alt="Adyapan AI" width={30} height={30} style={{ objectFit: "contain" }} />
+          <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.15rem", color: navBtnColor }}>Adyapan AI</span>
         </Link>
         <div style={{ position: "relative" }}>
@@ -843,6 +843,63 @@ function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+function ProfileView({
+  user,
+  onComingSoon,
+  onBack,
+}: {
+  user: AdyapanUser | null;
+  onComingSoon: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div style={{ display: "grid", gap: "1rem" }}>
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+          alignSelf: "start",
+          border: "1px solid var(--border-color)",
+          background: "var(--bg-card)",
+          color: "var(--text-primary)",
+          borderRadius: 12,
+          padding: "0.65rem 1rem",
+          cursor: "pointer",
+        }}
+      >
+        Back to Dashboard
+      </button>
+      <PanelCard title="Profile Overview">
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+          <div>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: 8 }}>User Profile</p>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: 8 }}>
+              {user?.name ?? "Student User"}
+            </h2>
+            <p style={{ color: "var(--text-secondary)" }}>{user?.email ?? "student@adyapan.ai"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onComingSoon}
+            style={{
+              height: 44,
+              border: "none",
+              borderRadius: 12,
+              background: "var(--gradient-main)",
+              color: "#fff",
+              padding: "0 1rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Edit Profile
+          </button>
+        </div>
+      </PanelCard>
+    </div>
+  );
+}
+
 export default function UserDashboardPage() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");

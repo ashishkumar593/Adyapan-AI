@@ -40,9 +40,7 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-semibold" style={{ color: logoColor }}>
-          <div className="relative h-7 w-7">
-            <Image src="/assets/logo.png" alt="Adyapan AI" fill className="object-contain" />
-          </div>
+          <Image src="/assets/logo.png" alt="Adyapan AI" width={32} height={32} style={{ borderRadius: "50%" }} />
           <span style={{ fontSize: "1.05rem", letterSpacing: "-0.3px" }}>Adyapan AI</span>
         </Link>
 
