@@ -405,6 +405,7 @@ function DashboardTopNav({
 function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDarkTheme = theme === "dark";
   const dropdownBg = isDarkTheme ? "#0f0f19" : "#ffffff";
   const dropdownBorder = isDarkTheme ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
@@ -416,6 +417,15 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
 
   const menuItems = [
     { icon: <User size={15} />, label: "My Profile", href: "#", onClickFn: onViewProfile },
@@ -432,8 +442,8 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
 
   return (
     <div ref={ref} style={{ position: "relative" }}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div style={{
         width: 36, height: 36, borderRadius: "50%", border: "2px solid var(--primary)",
@@ -446,13 +456,19 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
 
       {open && (
         <div style={{
-          position: "absolute", top: "calc(100% + 8px)", right: 0, width: 280,
-          borderRadius: 18, padding: "1.1rem 0.7rem", zIndex: 300,
-          background: dropdownBg,
-          backdropFilter: "blur(40px) saturate(180%)",
-          border: `1px solid ${dropdownBorder}`,
-          boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-        }}>
+          position: "absolute", top: "calc(100% + 4px)", right: 0, width: 280,
+          borderRadius: 18, paddingTop: "0.4rem", zIndex: 300,
+        }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div style={{
+            borderRadius: 18, padding: "1.1rem 0.7rem",
+            background: dropdownBg,
+            backdropFilter: "blur(40px) saturate(180%)",
+            border: `1px solid ${dropdownBorder}`,
+            boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+          }}>
           {/* User header */}
           <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "0 0.4rem", marginBottom: "0.9rem" }}>
             <div style={{
@@ -518,6 +534,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
               )
             )}
           </div>
+        </div>
         </div>
       )}
     </div>
