@@ -18,6 +18,7 @@ import {
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { api } from "@/services/api";
 import { clearAuthSession } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdyapanUser {
@@ -572,6 +573,7 @@ const inputStyle: React.CSSProperties = {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function UserProfilePage() {
+  useRequireAuth("USER");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);

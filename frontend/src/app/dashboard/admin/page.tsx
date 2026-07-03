@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api } from "@/services/api";
 import { clearAuthSession } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -1084,6 +1085,7 @@ function Breadcrumb({ activeSection }: { activeSection: string }) {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
+  useRequireAuth("ADMIN");
   const [user, setUser] = useState<AdminUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);

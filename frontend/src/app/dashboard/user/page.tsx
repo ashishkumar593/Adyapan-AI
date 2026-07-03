@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { clearAuthSession } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -12,7 +13,7 @@ import {
   LayoutDashboard, Sun, Moon, TrendingDown, ArrowUpRight,
   BookMarked, ClipboardList,
   Star, Zap,
-  LineChart, Trophy,
+  LineChart, Trophy, MessageCircle,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -247,13 +248,14 @@ function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashb
 
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
-  user, theme, onThemeToggle, onComingSoon, onViewProfile,
+  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat,
 }: {
   user: AdyapanUser | null;
   theme: string;
   onThemeToggle: () => void;
   onComingSoon: () => void;
   onViewProfile: () => void;
+  onAdyChat: () => void;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
@@ -369,6 +371,20 @@ function DashboardTopNav({
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
         <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</button>
         <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</button>
+        <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
+        <button
+          onClick={onAdyChat}
+          style={{
+            ...navBtnBase,
+            padding: "0.5rem 1rem",
+            background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(245,158,11,0.2))",
+            border: "1px solid rgba(139,92,246,0.4)",
+            color: "#c4b5fd",
+            fontWeight: 700,
+          }}
+        >
+          <MessageCircle size={13} /> Ady Chat
+        </button>
       </div>
 
       {/* Right */}
@@ -923,6 +939,7 @@ function ProfileView({
 }
 
 export default function UserDashboardPage() {
+  useRequireAuth("USER");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
@@ -956,10 +973,11 @@ export default function UserDashboardPage() {
   const showComingSoon = () => setToast(true);
   const handleViewProfile = () => setView("profile");
   const handleViewDashboard = () => setView("dashboard");
+  const handleAdyChat = () => { window.open("/chat", "_blank"); };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={view} onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
 
       <main className="dash-main">
