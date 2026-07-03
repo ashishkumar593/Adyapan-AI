@@ -14,6 +14,7 @@ const allowedOrigins = [
   env.frontendUrl,
   "http://localhost:3000",
   "http://localhost:3001",
+  "https://adyapan-ai-gamma.vercel.app",
 ];
 
 app.use(helmet());
@@ -24,10 +25,11 @@ app.use(
       // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Return 403 instead of throwing — prevents 500 errors
       return callback(null, false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
