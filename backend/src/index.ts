@@ -50,12 +50,6 @@ app.get("/", (_req, res) => {
 app.use("/api", apiRouter);
 app.use(errorHandler);
 
-// Export for Vercel serverless — Vercel handles the listener
-export default app;
-
-// Local dev only
-if (process.env.NODE_ENV !== "production" || process.env.RAILWAY_ENVIRONMENT) {
-  app.listen(env.port, () => {
-    console.log(`Adyapan AI API running on http://localhost:${env.port}`);
-  });
-}
+app.listen(env.port, () => {
+  console.log(`Adyapan AI API running on http://localhost:${env.port}`);
+});
