@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Link from "next/link";
@@ -881,69 +882,13 @@ function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-function ProfileView({
-  user,
-  onComingSoon,
-  onBack,
-}: {
-  user: AdyapanUser | null;
-  onComingSoon: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          alignSelf: "start",
-          border: "1px solid var(--border-color)",
-          background: "var(--bg-card)",
-          color: "var(--text-primary)",
-          borderRadius: 12,
-          padding: "0.65rem 1rem",
-          cursor: "pointer",
-        }}
-      >
-        Back to Dashboard
-      </button>
-      <PanelCard title="Profile Overview">
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-          <div>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: 8 }}>User Profile</p>
-            <h2 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: 8 }}>
-              {user?.name ?? "Student User"}
-            </h2>
-            <p style={{ color: "var(--text-secondary)" }}>{user?.email ?? "student@adyapan.ai"}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onComingSoon}
-            style={{
-              height: 44,
-              border: "none",
-              borderRadius: 12,
-              background: "var(--gradient-main)",
-              color: "#fff",
-              padding: "0 1rem",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Edit Profile
-          </button>
-        </div>
-      </PanelCard>
-    </div>
-  );
-}
 
 export default function UserDashboardPage() {
   useRequireAuth("USER");
+  const router = useRouter();
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [view, setView] = useState<"dashboard" | "profile">("dashboard");
 
   useEffect(() => {
     try {
@@ -971,25 +916,19 @@ export default function UserDashboardPage() {
   };
 
   const showComingSoon = () => setToast(true);
-  const handleViewProfile = () => setView("profile");
-  const handleViewDashboard = () => setView("dashboard");
+  const handleViewProfile = () => router.push("/profile/user");
+  const handleViewDashboard = () => {};
   const handleAdyChat = () => { window.open("/chat", "_blank"); };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView={view} onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView="dashboard" onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
 
       <main className="dash-main">
-        {view === "dashboard" ? (
-          <>
-            <WelcomeBanner user={user} onComingSoon={showComingSoon} />
-            <StatCardsGrid />
-            <PanelGrid onComingSoon={showComingSoon} />
-          </>
-        ) : (
-          <ProfileView user={user} onComingSoon={showComingSoon} onBack={handleViewDashboard} />
-        )}
+        <WelcomeBanner user={user} onComingSoon={showComingSoon} />
+        <StatCardsGrid />
+        <PanelGrid onComingSoon={showComingSoon} />
       </main>
 
       {toast && (

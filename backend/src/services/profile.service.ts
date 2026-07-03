@@ -1,21 +1,30 @@
 import { prisma } from "../config/prisma";
 
 type ProfileInput = {
+  username?: string;
+  phone?: string;
+  location?: string;
+  aboutMe?: string;
   college?: string;
   branch?: string;
-  phone?: string;
+  degree?: string;
   year?: string;
-  careerGoal?: string;
+  graduationYear?: string;
   skills?: unknown;
+  interestedDomains?: unknown;
+  targetRole?: string;
+  careerGoal?: string;
+  careerObjective?: string;
   linkedin?: string;
   github?: string;
+  portfolio?: string;
   resumeUrl?: string;
   resumeName?: string;
 };
 
-function normalizeSkills(skills: unknown) {
-  if (!Array.isArray(skills)) return [];
-  return skills.map((skill) => String(skill).trim()).filter(Boolean);
+function normalizeStringArray(val: unknown): string[] {
+  if (!Array.isArray(val)) return [];
+  return val.map((s) => String(s).trim()).filter(Boolean);
 }
 
 export function getProfile(userId: string) {
@@ -23,13 +32,7 @@ export function getProfile(userId: string) {
     where: { userId },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
       },
     },
   });
@@ -37,14 +40,23 @@ export function getProfile(userId: string) {
 
 export function upsertProfile(userId: string, input: ProfileInput) {
   const data = {
+    username: input.username,
+    phone: input.phone,
+    location: input.location,
+    aboutMe: input.aboutMe,
     college: input.college,
     branch: input.branch,
-    phone: input.phone,
+    degree: input.degree,
     year: input.year,
+    graduationYear: input.graduationYear,
+    skills: normalizeStringArray(input.skills),
+    interestedDomains: normalizeStringArray(input.interestedDomains),
+    targetRole: input.targetRole,
     careerGoal: input.careerGoal,
-    skills: normalizeSkills(input.skills),
+    careerObjective: input.careerObjective,
     linkedin: input.linkedin,
     github: input.github,
+    portfolio: input.portfolio,
     ...(input.resumeUrl !== undefined && { resumeUrl: input.resumeUrl }),
     ...(input.resumeName !== undefined && { resumeName: input.resumeName }),
   };
