@@ -184,23 +184,6 @@ function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashb
         <span className="sb-label">Dashboard</span>
       </button>
 
-      {/* Profile */}
-      <button
-        onClick={onViewProfile}
-        style={{
-          display: "flex", alignItems: "center", gap: "0.75rem",
-          padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
-          color: activeView === "profile" ? "var(--primary)" : "var(--text-secondary)",
-          background: activeView === "profile" ? "rgba(245,158,11,0.1)" : "transparent",
-          border: activeView === "profile" ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
-          fontWeight: 500, fontSize: "0.82rem", cursor: "pointer", width: "100%",
-          textAlign: "left", whiteSpace: "nowrap",
-        }}
-      >
-        <span style={{ flexShrink: 0 }}><User size={18} /></span>
-        <span className="sb-label">My Profile</span>
-      </button>
-
       {/* Divider */}
       <div style={{ height: 1, background: "var(--border-color)", margin: "0.5rem 0.3rem 0.7rem" }} />
 
