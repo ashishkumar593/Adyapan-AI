@@ -228,7 +228,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeEdu = (i: number) => setEducation(education.filter((_, idx) => idx !== i));
   const updateEdu = (i: number, key: string, val: string) => {
     const updated = [...education];
-    updated[i][key] = val;
+    updated[i][key as keyof EducationItem] = val;
     setEducation(updated);
   };
 
@@ -236,7 +236,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeExp = (i: number) => setExperience(experience.filter((_, idx) => idx !== i));
   const updateExp = (i: number, key: string, val: string) => {
     const updated = [...experience];
-    updated[i][key] = val;
+    updated[i][key as keyof ExperienceItem] = val;
     setExperience(updated);
   };
 
@@ -244,7 +244,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeProj = (i: number) => setProjects(projects.filter((_, idx) => idx !== i));
   const updateProj = (i: number, key: string, val: string) => {
     const updated = [...projects];
-    updated[i][key] = val;
+    updated[i][key as keyof ProjectItem] = val;
     setProjects(updated);
   };
 
@@ -252,7 +252,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeCert = (i: number) => setCertifications(certifications.filter((_, idx) => idx !== i));
   const updateCert = (i: number, key: string, val: string) => {
     const updated = [...certifications];
-    updated[i][key] = val;
+    updated[i][key as keyof CertificationItem] = val;
     setCertifications(updated);
   };
 

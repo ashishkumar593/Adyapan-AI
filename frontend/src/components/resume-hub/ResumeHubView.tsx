@@ -202,7 +202,7 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
             {tools.map((tool) => (
               <div
                 key={tool.id}
-                onClick={() => setView(tool.target)}
+                onClick={() => setView(tool.target as ResumeHubViewType)}
                 className="backdrop-blur-md bg-white/3 border border-white/5 hover:border-[#f59e0b]/30 rounded-2xl p-5 hover:translate-y-[-2px] transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
