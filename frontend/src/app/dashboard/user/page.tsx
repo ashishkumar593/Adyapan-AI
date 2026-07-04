@@ -902,6 +902,117 @@ function PanelGrid({ onComingSoon }: { onComingSoon: () => void }) {
   );
 }
 
+// ─── Profile Types & Helpers ──────────────────────────────────────────────────
+interface ProfileData {
+  user: { id: string; name: string; email: string; role: string; };
+  username?: string; phone?: string; location?: string; aboutMe?: string;
+  college?: string; branch?: string; degree?: string; year?: string;
+  graduationYear?: string; skills: string[]; interestedDomains: string[];
+  targetRole?: string; careerGoal?: string; careerObjective?: string;
+  linkedin?: string; github?: string; portfolio?: string;
+  resumeUrl?: string; resumeName?: string;
+}
+const DOMAINS = ["Artificial Intelligence","Machine Learning","Data Science","Cybersecurity","Web Development","Cloud Computing","Digital Marketing","UI/UX Design"];
+function calcCompletion(p: ProfileData | null): number {
+  if (!p) return 0;
+  const fields = [p.user?.name,p.user?.email,p.username,p.phone,p.location,p.aboutMe,p.college,p.branch,p.degree,p.graduationYear,p.skills?.length>0?"y":"",p.interestedDomains?.length>0?"y":"",p.targetRole,p.careerObjective,p.linkedin,p.github,p.resumeUrl];
+  return Math.round((fields.filter(Boolean).length/fields.length)*100);
+}
+function ProfileProgressBar({ value }: { value: number }) {
+  return <div style={{height:6,width:"100%",background:"rgba(255,255,255,0.08)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${value}%`,background:"var(--primary)",borderRadius:3,transition:"width 1s ease"}} /></div>;
+}
+function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.4rem",marginBottom:"1.2rem"}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:"1.1rem"}}><span style={{color:"var(--primary)"}}>{icon}</span><h3 style={{fontSize:"0.95rem",fontWeight:700,color:"var(--text-primary)",margin:0}}>{title}</h3></div>{children}</div>;
+}
+function FieldRow({ label, value, placeholder }: { label: string; value?: string; placeholder?: string }) {
+  return <div style={{marginBottom:"0.8rem"}}><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:3,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>{label}</div><div style={{fontSize:"0.88rem",color:value?"var(--text-primary)":"var(--text-muted)",fontWeight:value?500:400}}>{value||placeholder||"—"}</div></div>;
+}
+function ProfileFormInput({ label, value, onChange, placeholder, type="text", hint }: { label:string; value:string; onChange:(v:string)=>void; placeholder?:string; type?:string; hint?:string }) {
+  return <div style={{marginBottom:"0.9rem"}}><label style={{display:"block",fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:4,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>{label}</label>{hint&&<div style={{fontSize:"0.71rem",color:"var(--text-muted)",marginBottom:4}}>{hint}</div>}<input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:"100%",padding:"0.58rem 0.85rem",background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:8,color:"var(--text-primary)",fontSize:"0.84rem",outline:"none",boxSizing:"border-box" as const}} onFocus={e=>(e.currentTarget.style.borderColor="var(--primary)")} onBlur={e=>(e.currentTarget.style.borderColor="var(--border-color)")} /></div>;
+}
+function ProfileFormTextarea({ label, value, onChange, placeholder, hint }: { label:string; value:string; onChange:(v:string)=>void; placeholder?:string; hint?:string }) {
+  return <div style={{marginBottom:"0.9rem"}}><label style={{display:"block",fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:4,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>{label}</label>{hint&&<div style={{fontSize:"0.71rem",color:"var(--text-muted)",marginBottom:4}}>{hint}</div>}<textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={3} style={{width:"100%",padding:"0.58rem 0.85rem",background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:8,color:"var(--text-primary)",fontSize:"0.84rem",outline:"none",boxSizing:"border-box" as const,resize:"vertical"}} onFocus={e=>(e.currentTarget.style.borderColor="var(--primary)")} onBlur={e=>(e.currentTarget.style.borderColor="var(--border-color)")} /></div>;
+}
+
+// ─── Profile View (inline, no nav/sidebar) ───────────────────────────────────
+function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [profileToast, setProfileToast] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [f, setF] = useState({ username:"",phone:"",location:"",aboutMe:"",college:"",branch:"",degree:"",graduationYear:"",skills:"",interestedDomains:[] as string[],targetRole:"",careerObjective:"",linkedin:"",github:"",portfolio:"" });
+  const setField = (key: keyof typeof f) => (val: string) => setF(p => ({...p,[key]:val}));
+  const populate = (data: ProfileData) => setF({ username:data.username??"",phone:data.phone??"",location:data.location??"",aboutMe:data.aboutMe??"",college:data.college??"",branch:data.branch??"",degree:data.degree??"",graduationYear:data.graduationYear??"",skills:(data.skills??[]).join(", "),interestedDomains:data.interestedDomains??[],targetRole:data.targetRole??"",careerObjective:data.careerObjective??"",linkedin:data.linkedin??"",github:data.github??"",portfolio:data.portfolio??"" });
+  const fetchProfile = async () => { try { const res = await api.get("/profile/me"); const data = res.data.profile as ProfileData; setProfile(data); populate(data); } catch {/**/} finally { setLoading(false); } };
+  useEffect(() => { fetchProfile(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleSave = async () => { setSaving(true); try { await api.put("/profile/me",{...f,skills:f.skills.split(",").map(s=>s.trim()).filter(Boolean)}); setProfileToast("✅ Profile updated!"); setEditMode(false); await fetchProfile(); } catch { setProfileToast("❌ Failed to save."); } finally { setSaving(false); } };
+  const handleResume = async (file: File) => { if(file.size>5*1024*1024){setProfileToast("❌ Max 5MB.");return;} setUploading(true); try { const fd=new FormData();fd.append("resume",file); await api.post("/profile/upload-resume",fd,{headers:{"Content-Type":"multipart/form-data"}}); setProfileToast("✅ Resume uploaded!"); await fetchProfile(); } catch { setProfileToast("❌ Upload failed."); } finally { setUploading(false); } };
+  const handleRemoveResume = async () => { try { await api.post("/profile/remove-resume"); setProfileToast("🗑️ Resume removed."); await fetchProfile(); } catch { setProfileToast("❌ Could not remove."); } };
+  const toggleDomain = (d: string) => setF(p => ({...p,interestedDomains:p.interestedDomains.includes(d)?p.interestedDomains.filter(x=>x!==d):[...p.interestedDomains,d]}));
+  const completion = calcCompletion(profile);
+  const displayName = profile?.user?.name ?? "User";
+  const initials = displayName.split(" ").map((n:string)=>n[0]).join("").toUpperCase().slice(0,2);
+  const skills = profile?.skills??[];
+  const domains = profile?.interestedDomains??[];
+  if (loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:300,color:"var(--text-muted)"}}>Loading profile…</div>;
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.5rem",flexWrap:"wrap",gap:"0.75rem"}}>
+        <div><p style={{fontSize:"0.78rem",color:"var(--primary)",fontWeight:600,marginBottom:2}}>USER PROFILE</p><h1 style={{fontSize:"1.4rem",fontWeight:800,color:"var(--text-primary)",margin:0}}>{displayName}</h1></div>
+        <div style={{display:"flex",gap:"0.6rem"}}>
+          {editMode ? (<><button onClick={()=>setEditMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:600,cursor:"pointer",background:"transparent",border:"1px solid var(--border-color)",color:"var(--text-secondary)"}}><X size={14}/> Cancel</button><button onClick={handleSave} disabled={saving} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000",opacity:saving?0.65:1}}><Save size={14}/> {saving?"Saving…":"Save Changes"}</button></>) : (<button onClick={()=>setEditMode(true)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000"}}><Edit3 size={14}/> Edit Profile</button>)}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:"1.2rem",alignItems:"start"}} className="profile-grid">
+        <div>
+          <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.5rem",marginBottom:"1rem",textAlign:"center"}}>
+            <div style={{width:80,height:80,borderRadius:"50%",border:"3px solid var(--primary)",background:"rgba(245,158,11,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"1.8rem",color:"var(--primary)",margin:"0 auto 0.85rem"}}>{initials}</div>
+            <div style={{fontWeight:800,fontSize:"1.05rem",color:"var(--text-primary)",marginBottom:2}}>{displayName}</div>
+            <div style={{fontSize:"0.78rem",color:"var(--text-muted)",marginBottom:"0.4rem"}}>{profile?.user?.email}</div>
+            {profile?.targetRole&&<div style={{fontSize:"0.78rem",color:"var(--primary)",fontWeight:600,marginBottom:"1rem"}}>{profile.targetRole}</div>}
+            <div style={{marginTop:"0.85rem"}}><div style={{display:"flex",justifyContent:"space-between",fontSize:"0.76rem",marginBottom:4}}><span style={{color:"var(--text-secondary)"}}>Profile Completion</span><span style={{color:"var(--primary)",fontWeight:700}}>{completion}%</span></div><ProfileProgressBar value={completion} /></div>
+          </div>
+          <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.1rem",marginBottom:"1rem"}}>
+            <div style={{fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",marginBottom:"0.75rem"}}>Quick Actions</div>
+            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("🚀 Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<button key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</button>))}
+          </div>
+        </div>
+        <div>
+          {!editMode ? (
+            <>
+              <SectionCard title="Personal Information" icon={<User size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="Full Name" value={profile?.user?.name} placeholder="Not set"/><FieldRow label="Username" value={profile?.username} placeholder="Not set"/><FieldRow label="Email" value={profile?.user?.email}/><FieldRow label="Phone" value={profile?.phone} placeholder="Not set"/><FieldRow label="Location" value={profile?.location} placeholder="Not set"/></div><FieldRow label="About Me" value={profile?.aboutMe} placeholder="Tell us about yourself..."/></SectionCard>
+              <SectionCard title="Academic Information" icon={<GraduationCap size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="College / University" value={profile?.college} placeholder="Not set"/><FieldRow label="Degree & Branch" value={profile?.degree&&profile?.branch?`${profile.degree} – ${profile.branch}`:(profile?.branch||profile?.degree)} placeholder="Not set"/><FieldRow label="Graduation Year" value={profile?.graduationYear} placeholder="Not set"/></div></SectionCard>
+              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}>
+                <div style={{marginBottom:"1rem"}}><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>Skills</div>{skills.length?<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{skills.map(s=><span key={s} style={{padding:"0.25rem 0.75rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,background:"rgba(245,158,11,0.1)",color:"var(--primary)",border:"1px solid rgba(245,158,11,0.25)"}}>{s}</span>)}</div>:<span style={{fontSize:"0.82rem",color:"var(--text-muted)"}}>No skills added yet</span>}</div>
+                <div><div style={{fontSize:"0.72rem",fontWeight:600,color:"var(--text-muted)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.05em"}}>Interested Domains</div>{domains.length?<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{domains.map(d=><span key={d} style={{padding:"0.25rem 0.75rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.25)"}}>{d}</span>)}</div>:<span style={{fontSize:"0.82rem",color:"var(--text-muted)"}}>No domains selected yet</span>}</div>
+              </SectionCard>
+              <SectionCard title="Career Goals" icon={<Target size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="Target Role" value={profile?.targetRole} placeholder="Not set"/></div><FieldRow label="Career Objective" value={profile?.careerObjective} placeholder="Describe your professional goals..."/></SectionCard>
+              <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="LinkedIn" value={profile?.linkedin} placeholder="Not set"/><FieldRow label="GitHub" value={profile?.github} placeholder="Not set"/><FieldRow label="Portfolio" value={profile?.portfolio} placeholder="Not set"/></div></SectionCard>
+              <SectionCard title="Resume" icon={<FileText size={16}/>}>
+                {profile?.resumeUrl?(<div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.75rem",background:"rgba(245,158,11,0.05)",borderRadius:10,border:"1px solid rgba(245,158,11,0.15)"}}><FileText size={20} style={{color:"var(--primary)",flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:"0.85rem",fontWeight:600,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.resumeName||"Resume"}</div></div><a href={profile.resumeUrl} target="_blank" rel="noreferrer" style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.2)",fontSize:"0.78rem",fontWeight:600,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Download size={12}/> View</a><button onClick={handleRemoveResume} style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(239,68,68,0.1)",color:"#ef4444",border:"1px solid rgba(239,68,68,0.2)",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Trash2 size={12}/> Remove</button></div>):(<div style={{textAlign:"center",padding:"1.5rem"}}><Upload size={28} style={{color:"var(--text-muted)",marginBottom:8}}/><p style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:"0.75rem"}}>No resume uploaded yet</p><button onClick={()=>fileRef.current?.click()} disabled={uploading} style={{padding:"0.5rem 1.2rem",borderRadius:8,background:"var(--primary)",border:"none",color:"#000",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"}}>{uploading?"Uploading…":"Upload Resume"}</button></div>)}
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];if(file)handleResume(file);e.target.value="";}}/>
+              </SectionCard>
+            </>
+          ) : (
+            <>
+              <SectionCard title="Personal Information" icon={<User size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="Username" value={f.username} onChange={setField("username")} placeholder="@username"/><ProfileFormInput label="Phone" value={f.phone} onChange={setField("phone")} placeholder="+91 XXXXX XXXXX"/><ProfileFormInput label="Location" value={f.location} onChange={setField("location")} placeholder="City, Country"/></div><ProfileFormTextarea label="About Me" value={f.aboutMe} onChange={setField("aboutMe")} placeholder="Tell us about yourself..."/></SectionCard>
+              <SectionCard title="Academic Information" icon={<GraduationCap size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="College / University" value={f.college} onChange={setField("college")} placeholder="e.g. IIT Delhi"/><ProfileFormInput label="Branch / Specialization" value={f.branch} onChange={setField("branch")} placeholder="e.g. CSE"/><ProfileFormInput label="Degree" value={f.degree} onChange={setField("degree")} placeholder="e.g. B.Tech"/><ProfileFormInput label="Graduation Year" value={f.graduationYear} onChange={setField("graduationYear")} placeholder="e.g. 2025"/></div></SectionCard>
+              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}><ProfileFormInput label="Skills" value={f.skills} onChange={setField("skills")} placeholder="Python, React, Machine Learning" hint="Separate with commas"/><div><div style={{fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>Interested Domains</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{DOMAINS.map(d=>{const sel=f.interestedDomains.includes(d);return(<button key={d} onClick={()=>toggleDomain(d)} style={{padding:"0.3rem 0.8rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,cursor:"pointer",background:sel?"rgba(245,158,11,0.15)":"transparent",color:sel?"var(--primary)":"var(--text-secondary)",border:sel?"1px solid rgba(245,158,11,0.35)":"1px solid var(--border-color)",transition:"all 0.15s"}}>{d}</button>);})}</div></div></SectionCard>
+              <SectionCard title="Career Goals" icon={<Target size={16}/>}><ProfileFormInput label="Target Role" value={f.targetRole} onChange={setField("targetRole")} placeholder="e.g. Full Stack Developer"/><ProfileFormTextarea label="Career Objective" value={f.careerObjective} onChange={setField("careerObjective")} placeholder="Describe your professional goals..."/></SectionCard>
+              <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="LinkedIn" value={f.linkedin} onChange={setField("linkedin")} placeholder="https://linkedin.com/in/..."/><ProfileFormInput label="GitHub" value={f.github} onChange={setField("github")} placeholder="https://github.com/..."/><ProfileFormInput label="Portfolio" value={f.portfolio} onChange={setField("portfolio")} placeholder="https://yoursite.com"/></div></SectionCard>
+            </>
+          )}
+        </div>
+      </div>
+      {profileToast && <Toast message={profileToast} onClose={()=>setProfileToast("")} />}
+      <style>{`.profile-grid { grid-template-columns: 280px 1fr; } @media(max-width:768px){.profile-grid{grid-template-columns:1fr!important;}}`}</style>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
