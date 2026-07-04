@@ -21,6 +21,12 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
   profile   Profile?
 
+  resumes         Resume[]
+  atsReports      ATSReport[]
+  resumeAnalyses  ResumeAnalysis[]
+  coverLetters    CoverLetter[]
+  linkedinReports LinkedInReport[]
+
   @@map("users")
 }
 
@@ -51,4 +57,83 @@ model Profile {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
+}
+
+model Resume {
+  id             String           @id @default(cuid())
+  userId         String           @map("user_id")
+  title          String
+  template       String
+  personalInfo   Json             @map("personal_info")
+  education      Json
+  experience     Json
+  projects       Json
+  skills         Json
+  certifications Json
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  atsReports     ATSReport[]
+  resumeAnalyses ResumeAnalysis[]
+
+  @@map("resumes")
+}
+
+model ATSReport {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  resumeId        String   @map("resume_id")
+  score           Int
+  missingKeywords Json     @map("missing_keywords")
+  recommendations Json
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("ats_reports")
+}
+
+model ResumeAnalysis {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  resumeId        String   @map("resume_id")
+  strengths       Json
+  weaknesses      Json
+  recommendations Json
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("resume_analyses")
+}
+
+model CoverLetter {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  companyName String   @map("company_name")
+  role        String
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("cover_letters")
+}
+
+model LinkedInReport {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  headline        String
+  aboutSection    String   @map("about_section")
+  skills          Json
+  recommendations Json
+  score           Int
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("linkedin_reports")
 }

@@ -6,6 +6,13 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
 import Link from "next/link";
 import Image from "next/image";
+import { ResumeHubView } from "@/components/resume-hub/ResumeHubView";
+import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
+import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
+import { ResumeAnalyzerView } from "@/components/resume-hub/ResumeAnalyzerView";
+import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
+import { LinkedInView } from "@/components/resume-hub/LinkedInView";
+import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown,
   User, LogOut, Settings, CreditCard, TrendingUp, Award,
@@ -148,10 +155,11 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 // ─── Sidebar Component ────────────────────────────────────────────────────────
-function DashboardSidebar({ onComingSoon, activeView, onViewDashboard }: {
+function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool }: {
   onComingSoon: () => void;
-  activeView: "dashboard" | "profile";
+  activeView: string;
   onViewDashboard: () => void;
+  onViewTool: (tool: ResumeHubViewType) => void;
 }) {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
@@ -187,7 +195,10 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard }: {
         return (
           <div key={item.id} className={isOpen ? "sb-item open" : "sb-item"}>
             <button
-              onClick={() => toggleItem(item.id)}
+              onClick={() => {
+                toggleItem(item.id);
+                if (item.id === "resume") onViewTool("resume-hub");
+              }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
                 padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
@@ -218,7 +229,15 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard }: {
                   <a
                     key={sub.label}
                     href={sub.href}
-                    onClick={(e) => { e.preventDefault(); onComingSoon(); }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (sub.label === "Resume Builder") onViewTool("resume-builder");
+                      else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
+                      else if (sub.label === "Resume Analyzer") onViewTool("resume-analyzer");
+                      else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
+                      else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
+                      else onComingSoon();
+                    }}
                     style={{
                       display: "block", padding: "0.28rem 0.5rem", fontSize: "0.76rem",
                       color: "var(--text-secondary)", borderRadius: 8, marginBottom: 1,
@@ -247,7 +266,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard }: {
 
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
-  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat,
+  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -255,6 +274,7 @@ function DashboardTopNav({
   onComingSoon: () => void;
   onViewProfile: () => void;
   onAdyChat: () => void;
+  onViewTool: (tool: ResumeHubViewType) => void;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
@@ -323,7 +343,10 @@ function DashboardTopNav({
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}>
               {genItems.map((item) => (
-                <button key={item} onClick={onComingSoon} style={{
+                <button key={item} onClick={() => {
+                  if (item === "Resume") onViewTool("resume-builder");
+                  else onComingSoon();
+                }} style={{
                   display: "block", width: "100%", textAlign: "left",
                   padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",
                   background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
@@ -355,7 +378,11 @@ function DashboardTopNav({
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}>
               {evalItems.map((item) => (
-                <button key={item} onClick={onComingSoon} style={{
+                <button key={item} onClick={() => {
+                  if (item === "ATS Score") onViewTool("ats-checker");
+                  else if (item === "Resume Analysis") onViewTool("resume-analyzer");
+                  else onComingSoon();
+                }} style={{
                   display: "block", width: "100%", textAlign: "left",
                   padding: "0.45rem 0.7rem", fontSize: "0.8rem", color: "var(--text-secondary)",
                   background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
@@ -997,7 +1024,7 @@ export default function UserDashboardPage() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<"dashboard" | "profile">("dashboard");
+  const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
 
   useEffect(() => {
     // Load theme immediately
@@ -1040,12 +1067,24 @@ export default function UserDashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} />
 
       <main className="dash-main">
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
+        ) : activeView === "resume-hub" ? (
+          <ResumeHubView setView={setActiveView} />
+        ) : activeView === "resume-builder" ? (
+          <ResumeBuilderView setView={setActiveView} />
+        ) : activeView === "ats-checker" ? (
+          <AtsCheckerView setView={setActiveView} />
+        ) : activeView === "resume-analyzer" ? (
+          <ResumeAnalyzerView setView={setActiveView} />
+        ) : activeView === "cover-letter" ? (
+          <CoverLetterView setView={setActiveView} />
+        ) : activeView === "linkedin-optimizer" ? (
+          <LinkedInView setView={setActiveView} />
         ) : (
           <>
             <WelcomeBanner user={user} onComingSoon={showComingSoon} />
