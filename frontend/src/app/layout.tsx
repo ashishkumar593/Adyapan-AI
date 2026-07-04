@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import LenisProvider from "@/components/providers/LenisProvider";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="en"
       className={`${outfit.variable} ${plusJakarta.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <LenisProvider />
+        {children}
+      </body>
     </html>
   );
 }

@@ -12,17 +12,13 @@ import {
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { landingFAQs } from "@/data/platform";
+import CountUp from "react-countup";
+import Scene from "@/components/3d/Scene";
 
 export default function LandingPage() {
   const [faqSearch, setFaqSearch] = useState("");
   const [pricingPeriod, setPricingPeriod] = useState<"monthly" | "annually">("annually");
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
-
-  // Stats Counter state
-  const [statLearned, setStatLearned] = useState(0);
-  const [statNotes, setStatNotes] = useState(0);
-  const [statResumes, setStatResumes] = useState(0);
-  const [statInterviews, setStatInterviews] = useState(0);
 
   // ATS Scanner state
   const [atsScanning, setAtsScanning] = useState(false);
@@ -72,46 +68,6 @@ export default function LandingPage() {
     }, 7000);
 
     return () => clearInterval(timer);
-  }, []);
-
-  // Trigger counter increments when visible
-  useEffect(() => {
-    const startCounters = () => {
-      let l = 0, n = 0, r = 0, i = 0;
-      const learnedInt = setInterval(() => {
-        l += 8;
-        if (l >= 1248) { setStatLearned(1248); clearInterval(learnedInt); }
-        else setStatLearned(l);
-      }, 15);
-      const notesInt = setInterval(() => {
-        n += 5;
-        if (n >= 412) { setStatNotes(412); clearInterval(notesInt); }
-        else setStatNotes(n);
-      }, 20);
-      const resumesInt = setInterval(() => {
-        r += 1;
-        if (r >= 85) { setStatResumes(85); clearInterval(resumesInt); }
-        else setStatResumes(r);
-      }, 25);
-      const interviewInt = setInterval(() => {
-        i += 1;
-        if (i >= 94) { setStatInterviews(94); clearInterval(interviewInt); }
-        else setStatInterviews(i);
-      }, 30);
-    };
-
-    const handleScroll = () => {
-      const section = document.getElementById("live-dashboard");
-      if (section) {
-        const rect = section.getBoundingClientRect();
-        if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-          startCounters();
-          window.removeEventListener("scroll", handleScroll);
-        }
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Add landing class to body
