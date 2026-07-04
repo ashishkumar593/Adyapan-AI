@@ -16,7 +16,10 @@ import {
   BookMarked, ClipboardList,
   Star, Zap,
   LineChart, Trophy, MessageCircle,
+  Phone, Mail, MapPin, Target, Globe, Edit3, Save, X,
+  Upload, Download, Trash2,
 } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdyapanUser {
@@ -179,6 +182,23 @@ function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashb
       >
         <span style={{ flexShrink: 0 }}><LayoutDashboard size={18} /></span>
         <span className="sb-label">Dashboard</span>
+      </button>
+
+      {/* Profile */}
+      <button
+        onClick={onViewProfile}
+        style={{
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
+          color: activeView === "profile" ? "var(--primary)" : "var(--text-secondary)",
+          background: activeView === "profile" ? "rgba(245,158,11,0.1)" : "transparent",
+          border: activeView === "profile" ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+          fontWeight: 500, fontSize: "0.82rem", cursor: "pointer", width: "100%",
+          textAlign: "left", whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ flexShrink: 0 }}><User size={18} /></span>
+        <span className="sb-label">My Profile</span>
       </button>
 
       {/* Divider */}
@@ -890,6 +910,7 @@ export default function UserDashboardPage() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
+  const [activeView, setActiveView] = useState<"dashboard" | "profile">("dashboard");
 
   useEffect(() => {
     // Load theme immediately
@@ -926,19 +947,25 @@ export default function UserDashboardPage() {
   };
 
   const showComingSoon = () => setToast(true);
-  const handleViewProfile = () => router.push("/profile/user");
-  const handleViewDashboard = () => {};
+  const handleViewProfile = () => setActiveView("profile");
+  const handleViewDashboard = () => setActiveView("dashboard");
   const handleAdyChat = () => { window.open("/chat", "_blank"); };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView="dashboard" onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
 
       <main className="dash-main">
-        <WelcomeBanner user={user} onComingSoon={showComingSoon} />
-        <StatCardsGrid />
-        <PanelGrid onComingSoon={showComingSoon} />
+        {activeView === "profile" ? (
+          <ProfileView onViewDashboard={handleViewDashboard} />
+        ) : (
+          <>
+            <WelcomeBanner user={user} onComingSoon={showComingSoon} />
+            <StatCardsGrid />
+            <PanelGrid onComingSoon={showComingSoon} />
+          </>
+        )}
       </main>
 
       {toast && (
