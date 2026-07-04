@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
@@ -10,16 +9,15 @@ import Image from "next/image";
 import {
   Search, Crown, Bell, ChevronDown,
   User, LogOut, Settings, CreditCard, TrendingUp, Award,
-  BookOpen, Code2, Compass, FileText, Mic,
+  BookOpen, Code2, FileText, Mic,
   Briefcase, UserCircle, BarChart3, Wand2, GraduationCap,
   LayoutDashboard, Sun, Moon, TrendingDown, ArrowUpRight,
   BookMarked, ClipboardList,
   Star, Zap,
   LineChart, Trophy, MessageCircle,
-  Phone, Mail, MapPin, Target, Globe, Edit3, Save, X,
+  Target, Globe, Edit3, Save, X,
   Upload, Download, Trash2,
 } from "lucide-react";
-import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdyapanUser {
@@ -150,10 +148,9 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 // ─── Sidebar Component ────────────────────────────────────────────────────────
-function DashboardSidebar({ onComingSoon, activeView, onViewProfile, onViewDashboard }: {
+function DashboardSidebar({ onComingSoon, activeView, onViewDashboard }: {
   onComingSoon: () => void;
   activeView: "dashboard" | "profile";
-  onViewProfile: () => void;
   onViewDashboard: () => void;
 }) {
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -997,7 +994,6 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
 
 export default function UserDashboardPage() {
   useRequireAuth("USER");
-  const router = useRouter();
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
@@ -1045,7 +1041,7 @@ export default function UserDashboardPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewProfile={handleViewProfile} onViewDashboard={handleViewDashboard} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} />
 
       <main className="dash-main">
         {activeView === "profile" ? (

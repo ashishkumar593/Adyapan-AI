@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -224,9 +225,11 @@ export default function LandingPage() {
                     &quot;{testimonial.text}&quot;
                   </p>
                   <div className="mx-auto mb-4 h-16 w-16 overflow-hidden rounded-full border-2 border-[var(--primary)]">
-                    <img
+                    <Image
                       src={testimonial.avatar}
                       alt={testimonial.author}
+                      width={64}
+                      height={64}
                       className="h-full w-full object-cover"
                     />
                   </div>
