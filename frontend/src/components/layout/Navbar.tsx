@@ -98,7 +98,7 @@ export function Navbar() {
 
           <Link
             href="/login"
-            className="rounded-full px-4 py-2 text-sm font-medium transition-colors"
+            className="hidden md:inline-block rounded-full px-4 py-2 text-sm font-medium transition-colors"
             style={{ color: logoColor }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.background = loginBg;
@@ -112,7 +112,7 @@ export function Navbar() {
 
           <Link
             href="/login?tab=register"
-            className="rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
+            className="hidden md:inline-block rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
             style={{ background: getStartedBg, color: getStartedText }}
           >
             Get Started
@@ -165,6 +165,24 @@ export function Navbar() {
               </li>
             ))}
           </ul>
+          <div className="mt-6 flex flex-col gap-3 pt-6 border-t border-dashed" style={{ borderColor: navBorder }}>
+            <Link
+              href="/login"
+              className="w-full text-center rounded-full py-2 text-sm font-medium transition-colors border"
+              style={{ color: logoColor, borderColor: navBorder }}
+              onClick={() => setMenuOpen(false)}
+            >
+              Login
+            </Link>
+            <Link
+              href="/login?tab=register"
+              className="w-full text-center rounded-full py-2 text-sm font-medium transition-opacity hover:opacity-90"
+              style={{ background: getStartedBg, color: getStartedText }}
+              onClick={() => setMenuOpen(false)}
+            >
+              Get Started
+            </Link>
+          </div>
         </nav>
       )}
     </header>

@@ -226,3 +226,54 @@ button, input, select, textarea {
   }
 }
 
+/* ── Dashboard Responsive Media Queries ── */
+@media (max-width: 1024px) {
+  .desktop-search,
+  .desktop-nav-center,
+  .desktop-premium {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-sidebar {
+    transform: translateX(-100%);
+    width: 260px !important;
+    transition: transform 0.3s ease-in-out;
+    z-index: 120 !important;
+    height: 100vh !important;
+    top: 0 !important;
+    padding-top: 1rem !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+  }
+  .dash-sidebar:hover {
+    width: 260px !important;
+  }
+  .dash-sidebar.open {
+    transform: translateX(0) !important;
+  }
+  .dash-main {
+    margin-left: 0 !important;
+    padding: 1rem 0.75rem !important;
+  }
+  .dash-sidebar:hover ~ .dash-main {
+    margin-left: 0 !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  .mobile-close-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  .mobile-close-btn {
+    display: none !important;
+  }
+}
+
+

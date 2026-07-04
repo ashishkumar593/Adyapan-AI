@@ -14,7 +14,7 @@ import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
 import { LinkedInView } from "@/components/resume-hub/LinkedInView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
-  Search, Crown, Bell, ChevronDown,
+  Search, Crown, Bell, ChevronDown, Menu,
   User, LogOut, Settings, CreditCard, TrendingUp, Award,
   BookOpen, Code2, FileText, Mic,
   Briefcase, UserCircle, BarChart3, Wand2, GraduationCap,
@@ -155,11 +155,13 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 // ─── Sidebar Component ────────────────────────────────────────────────────────
-function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool }: {
+function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool, sidebarOpen, setSidebarOpen }: {
   onComingSoon: () => void;
   activeView: string;
   onViewDashboard: () => void;
   onViewTool: (tool: ResumeHubViewType) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }) {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
@@ -168,10 +170,27 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
   };
 
   return (
-    <aside className="dash-sidebar">
+    <aside className={`dash-sidebar ${sidebarOpen ? "open" : ""}`}>
+      {/* Mobile close button */}
+      <div className="mobile-close-btn" style={{ display: "none", justifyContent: "flex-end", padding: "0.5rem 0.5rem 0" }}>
+        <button
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            background: "transparent", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 4, color: "var(--text-secondary)",
+          }}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
       {/* Dashboard */}
       <button
-        onClick={onViewDashboard}
+        onClick={() => {
+          onViewDashboard();
+          setSidebarOpen(false);
+        }}
         style={{
           display: "flex", alignItems: "center", gap: "0.75rem",
           padding: "0.55rem 0.5rem", borderRadius: 12, marginBottom: 2,
@@ -197,7 +216,10 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
             <button
               onClick={() => {
                 toggleItem(item.id);
-                if (item.id === "resume") onViewTool("resume-hub");
+                if (item.id === "resume") {
+                  onViewTool("resume-hub");
+                  setSidebarOpen(false);
+                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
@@ -237,6 +259,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
                       else onComingSoon();
+                      setSidebarOpen(false);
                     }}
                     style={{
                       display: "block", padding: "0.28rem 0.5rem", fontSize: "0.76rem",
@@ -266,7 +289,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
-  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool,
+  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -275,6 +298,7 @@ function DashboardTopNav({
   onViewProfile: () => void;
   onAdyChat: () => void;
   onViewTool: (tool: ResumeHubViewType) => void;
+  onMenuToggle: () => void;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
@@ -303,16 +327,29 @@ function DashboardTopNav({
       position: "fixed", top: 0, left: 0, width: "100%", height: 70,
       background: navBg, borderBottom: `1px solid ${navBorder}`,
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 1.5rem", zIndex: 105, boxSizing: "border-box",
+      padding: "0 1rem", zIndex: 105, boxSizing: "border-box",
       transition: "background 0.3s ease",
     }}>
       {/* Left */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        {/* Mobile menu trigger */}
+        <button
+          onClick={onMenuToggle}
+          className="mobile-menu-btn"
+          style={{
+            background: "transparent", border: "none", cursor: "pointer",
+            display: "none", alignItems: "center", justifyContent: "center",
+            padding: 4, color: navBtnColor, marginRight: 2,
+          }}
+        >
+          <Menu size={20} />
+        </button>
+
         <Link href="/dashboard/user" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.15rem", color: navBtnColor }}>Adyapan AI</span>
         </Link>
-        <div style={{ position: "relative" }}>
+        <div className="desktop-search" style={{ position: "relative" }}>
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
           <input
             type="text" placeholder="Search tools, notes, jobs..."
@@ -326,7 +363,7 @@ function DashboardTopNav({
       </div>
 
       {/* Center */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="desktop-nav-center" style={{ display: "flex", alignItems: "center", gap: 6 }}>
         {/* Generate dropdown */}
         <div style={{ position: "relative" }}
           onMouseEnter={() => setGenerateOpen(true)}
@@ -415,7 +452,7 @@ function DashboardTopNav({
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <button onClick={onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+        <button className="desktop-premium" onClick={onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
           <Crown size={13} /> Premium
         </button>
 
@@ -1025,6 +1062,7 @@ export default function UserDashboardPage() {
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Load theme immediately
@@ -1067,8 +1105,8 @@ export default function UserDashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} />
+      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
         {activeView === "profile" ? (
