@@ -12,6 +12,12 @@ import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
 import { ResumeAnalyzerView } from "@/components/resume-hub/ResumeAnalyzerView";
 import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
 import { LinkedInView } from "@/components/resume-hub/LinkedInView";
+import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
+import { NotesGeneratorView } from "@/components/learning-hub/NotesGeneratorView";
+import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
+import { AssignmentGeneratorView } from "@/components/learning-hub/AssignmentGeneratorView";
+import { PptGeneratorView } from "@/components/learning-hub/PptGeneratorView";
+import { MindMapsView } from "@/components/learning-hub/MindMapsView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -258,6 +264,12 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "Resume Analyzer") onViewTool("resume-analyzer");
                       else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
                       else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
+                      else if (sub.label === "Study Assistant") onViewTool("study-assistant");
+                      else if (sub.label === "Notes Generator") onViewTool("notes-generator");
+                      else if (sub.label === "Quiz Generator") onViewTool("quiz-generator");
+                      else if (sub.label === "Assignment Generator") onViewTool("assignment-generator");
+                      else if (sub.label === "PPT Generator") onViewTool("ppt-generator");
+                      else if (sub.label === "Mind Maps") onViewTool("mind-maps");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -1123,6 +1135,18 @@ export default function UserDashboardPage() {
           <CoverLetterView setView={setActiveView} />
         ) : activeView === "linkedin-optimizer" ? (
           <LinkedInView setView={setActiveView} />
+        ) : activeView === "study-assistant" ? (
+          <StudyAssistantView />
+        ) : activeView === "notes-generator" ? (
+          <NotesGeneratorView />
+        ) : activeView === "quiz-generator" ? (
+          <QuizGeneratorView />
+        ) : activeView === "assignment-generator" ? (
+          <AssignmentGeneratorView />
+        ) : activeView === "ppt-generator" ? (
+          <PptGeneratorView />
+        ) : activeView === "mind-maps" ? (
+          <MindMapsView />
         ) : (
           <>
             <WelcomeBanner user={user} onComingSoon={showComingSoon} />

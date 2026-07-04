@@ -373,3 +373,213 @@ export async function optimizeLinkedInProfile(profileData: {
     return fallback;
   }
 }
+
+// ============================================================================
+// LEARNING HUB AI SERVICES
+// ============================================================================
+
+/**
+ * 10. Study Assistant Chat Response
+ */
+export async function generateStudyResponse(
+  context: string,
+  query: string
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const prompt = `
+    You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
+    Context from uploaded documents:
+    """
+    ${context}
+    """
+    
+    Student's Query: ${query}
+    
+    Answer clearly using markdown. If the query asks to explain a concept or formula, break it down simply.
+  `;
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Error in generateStudyResponse:", error);
+    return "I am currently unable to process your query due to a system error. Please try again later.";
+  }
+}
+
+/**
+ * 11. Notes Generator
+ */
+export async function generateNotes(
+  topic: string,
+  difficulty: string,
+  type: string
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const prompt = `
+    Generate comprehensive study notes on the topic: "${topic}".
+    Target difficulty level: ${difficulty}
+    Format style: ${type} (e.g., detailed, short, revision, formula, exam)
+    
+    Guidelines:
+    - Use clear headings, bullet points, and markdown styling.
+    - Highlight key definitions or formulas.
+    - Structure logically from basics to advanced.
+    - Return ONLY valid markdown text.
+  `;
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Error in generateNotes:", error);
+    return "# Notes Generation Failed\nPlease try again.";
+  }
+}
+
+/**
+ * 12. Quiz Generator
+ */
+export interface QuizGenerationResult {
+  questions: Array<{
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    explanation: string;
+  }>;
+  flashcards: Array<{
+    front: string;
+    back: string;
+  }>;
+}
+
+export async function generateQuiz(
+  topic: string,
+  count: number,
+  difficulty: string
+): Promise<QuizGenerationResult> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+  const prompt = `
+    Generate an educational quiz and study flashcards for the topic: "${topic}".
+    Difficulty: ${difficulty}
+    Number of questions: ${count}
+    
+    Output a JSON object containing:
+    1. "questions": An array of ${count} objects, each with "question", "options" (array of 4 strings), "correctAnswer" (must match one of the options), and "explanation".
+    2. "flashcards": An array of ${Math.ceil(count / 2)} objects, each with "front" (a key term or concept) and "back" (the definition).
+  `;
+  const fallback: QuizGenerationResult = { questions: [], flashcards: [] };
+  try {
+    const result = await model.generateContent(prompt);
+    return parseGeminiJson<QuizGenerationResult>(result.response.text(), fallback);
+  } catch (error) {
+    console.error("Error in generateQuiz:", error);
+    return fallback;
+  }
+}
+
+/**
+ * 13. Assignment Generator
+ */
+export interface AssignmentResult {
+  introduction: string;
+  body: string;
+  conclusion: string;
+  references: string[];
+}
+
+export async function generateAssignment(
+  topic: string,
+  level: string,
+  wordCount: number
+): Promise<AssignmentResult> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-pro",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+  const prompt = `
+    Write an academic assignment on the topic: "${topic}".
+    Academic Level: ${level}
+    Target Word Count: ${wordCount}
+    
+    Output a JSON object containing:
+    1. "introduction": The introductory text using markdown.
+    2. "body": The main body content using markdown headings and paragraphs.
+    3. "conclusion": The concluding text using markdown.
+    4. "references": An array of 3-5 APA format reference strings.
+  `;
+  const fallback: AssignmentResult = { introduction: "", body: "", conclusion: "", references: [] };
+  try {
+    const result = await model.generateContent(prompt);
+    return parseGeminiJson<AssignmentResult>(result.response.text(), fallback);
+  } catch (error) {
+    console.error("Error in generateAssignment:", error);
+    return fallback;
+  }
+}
+
+/**
+ * 14. PPT Generator
+ */
+export interface PptSlide {
+  title: string;
+  bullets: string[];
+  notes: string;
+}
+
+export async function generatePPTContent(
+  topic: string,
+  slideCount: number
+): Promise<PptSlide[]> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+  const prompt = `
+    Create a presentation structure on the topic: "${topic}".
+    Number of slides: ${slideCount}
+    
+    Output a JSON array of objects. Each object must contain:
+    1. "title": The slide title.
+    2. "bullets": An array of 3-5 string bullet points.
+    3. "notes": Speaker notes for the slide.
+  `;
+  try {
+    const result = await model.generateContent(prompt);
+    return parseGeminiJson<PptSlide[]>(result.response.text(), []);
+  } catch (error) {
+    console.error("Error in generatePPTContent:", error);
+    return [];
+  }
+}
+
+/**
+ * 15. Mind Map Generator (React Flow Schema)
+ */
+export interface MindMapResult {
+  nodes: Array<{ id: string; type: string; data: { label: string }; position: { x: number; y: number } }>;
+  edges: Array<{ id: string; source: string; target: string }>;
+}
+
+export async function generateMindMapSchema(topic: string): Promise<MindMapResult> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+  const prompt = `
+    Create a mind map structure for the topic: "${topic}".
+    
+    Output a JSON object containing:
+    1. "nodes": An array of objects for React Flow. Each must have "id" (string), "type" ("default"), "data" ({ "label": string }), and "position" ({ "x": number, "y": number }). The root node should be at x: 250, y: 50. Distribute child nodes cleanly.
+    2. "edges": An array of objects to connect nodes. Each must have "id" (string), "source" (node id), and "target" (node id).
+  `;
+  const fallback: MindMapResult = { nodes: [], edges: [] };
+  try {
+    const result = await model.generateContent(prompt);
+    return parseGeminiJson<MindMapResult>(result.response.text(), fallback);
+  } catch (error) {
+    console.error("Error in generateMindMapSchema:", error);
+    return fallback;
+  }
+}

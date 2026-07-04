@@ -27,6 +27,17 @@ model User {
   coverLetters    CoverLetter[]
   linkedinReports LinkedInReport[]
 
+  // Learning Hub Relations
+  studySessions   StudySession[]
+  uploadedDocs    UploadedDocument[]
+  generatedNotes  GeneratedNote[]
+  quizzes         Quiz[]
+  quizAttempts    QuizAttempt[]
+  flashcards      Flashcard[]
+  assignments     Assignment[]
+  presentations   Presentation[]
+  mindMaps        MindMap[]
+
   @@map("users")
 }
 
@@ -136,4 +147,150 @@ model LinkedInReport {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("linkedin_reports")
+}
+
+model StudySession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  topic     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  StudyMessage[]
+  documents UploadedDocument[]
+
+  @@map("study_sessions")
+}
+
+model StudyMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  role      String   // "user" or "model"
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("study_messages")
+}
+
+model UploadedDocument {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  sessionId String?  @map("session_id")
+  fileName  String   @map("file_name")
+  fileUrl   String   @map("file_url")
+  fileType  String   @map("file_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   StudySession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("uploaded_documents")
+}
+
+model GeneratedNote {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  topic      String
+  subject    String?
+  difficulty String?
+  type       String   // "detailed", "short", "revision", "formula", "exam"
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("generated_notes")
+}
+
+model Quiz {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  topic      String
+  difficulty String?
+  questions  Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts   QuizAttempt[]
+  flashcards Flashcard[]
+
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  quizId       String   @map("quiz_id")
+  score        Int
+  total        Int
+  accuracy     Float
+  weakTopics   String[] @map("weak_topics")
+  strongTopics String[] @map("strong_topics")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model Flashcard {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  quizId    String?  @map("quiz_id")
+  topic     String
+  front     String
+  back      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz      Quiz?   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("flashcards")
+}
+
+model Assignment {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  topic         String
+  academicLevel String   @map("academic_level")
+  wordCount     Int      @map("word_count")
+  content       Json     // Introduction, Body, Conclusion, References
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("assignments")
+}
+
+model Presentation {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  topic      String
+  slideCount Int      @map("slide_count")
+  audience   String?
+  style      String?
+  slides     Json     // Array of Slide Content
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("presentations")
+}
+
+model MindMap {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  topic     String
+  nodes     Json
+  edges     Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mind_maps")
 }

@@ -6,7 +6,13 @@ export type ResumeHubViewType =
   | "ats-checker"
   | "resume-analyzer"
   | "cover-letter"
-  | "linkedin-optimizer";
+  | "linkedin-optimizer"
+  | "study-assistant"
+  | "notes-generator"
+  | "quiz-generator"
+  | "assignment-generator"
+  | "ppt-generator"
+  | "mind-maps";
 
 export interface PersonalInfo {
   fullName: string;
