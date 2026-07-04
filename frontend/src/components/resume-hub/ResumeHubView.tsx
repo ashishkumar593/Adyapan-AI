@@ -160,10 +160,10 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
+        <h1 className="text-2xl font-extrabold text-[var(--text-primary)]" style={{ fontFamily: "'Outfit', sans-serif" }}>
           Resume Hub
         </h1>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-[var(--text-secondary)]">
           Create resumes, analyze keywords, check ATS scores, and prepare cover letters with AI assistance.
         </p>
       </div>
@@ -178,11 +178,11 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
         ].map((item, i) => (
           <div
             key={i}
-            className="backdrop-blur-md bg-white/3 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex items-center justify-between transition-all"
+            className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-hover)] rounded-2xl p-4 flex items-center justify-between transition-all"
           >
             <div>
-              <span className="text-xs text-white/50 font-semibold uppercase tracking-wider">{item.label}</span>
-              <div className="text-2xl font-extrabold text-white mt-1">{item.value}</div>
+              <span className="text-xs text-[var(--text-secondary)] font-semibold uppercase tracking-wider">{item.label}</span>
+              <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-1">{item.value}</div>
             </div>
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: item.bg }}>
               {item.icon}
@@ -195,7 +195,7 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Columns: Tools */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]" style={{ color: "var(--text-primary)" }}>
             <Layers className="w-5 h-5 text-[#f59e0b]" /> Custom Tools
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -203,14 +203,14 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
               <div
                 key={tool.id}
                 onClick={() => setView(tool.target as ResumeHubViewType)}
-                className="backdrop-blur-md bg-white/3 border border-white/5 hover:border-[#f59e0b]/30 rounded-2xl p-5 hover:translate-y-[-2px] transition-all cursor-pointer group flex flex-col justify-between"
+                className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#f59e0b]/30 rounded-2xl p-5 hover:translate-y-[-2px] transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--bg-card-hover)] border border-[var(--border-color)] flex items-center justify-center mb-4 group-hover:scale-105 transition-all">
                     {tool.icon}
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">{tool.title}</h3>
-                  <p className="text-xs text-white/60 leading-relaxed mb-4">{tool.description}</p>
+                  <h3 className="text-base font-bold text-[var(--text-primary)] mb-2">{tool.title}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4">{tool.description}</p>
                 </div>
                 <button className="inline-flex items-center gap-1 text-xs font-bold text-[#f59e0b] group-hover:underline">
                   {tool.actionLabel} <ArrowRight className="w-3.5 h-3.5" />
@@ -223,7 +223,7 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
         {/* Right 1 Column: Resume Drafts & History */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-lg font-bold text-[var(--text-primary)]" style={{ color: "var(--text-primary)" }}>
               <FileText className="w-5 h-5 text-[#f59e0b]" /> Recent Drafts
             </h2>
             <button
@@ -234,9 +234,9 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
             </button>
           </div>
 
-          <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-4 space-y-4 max-h-[430px] overflow-y-auto">
+          <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 space-y-4 max-h-[430px] overflow-y-auto">
             {resumes.length === 0 ? (
-              <div className="text-center py-12 text-white/40">
+              <div className="text-center py-12 text-[var(--text-muted)]">
                 <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <span className="text-xs font-semibold">No drafts found. Click + to build one!</span>
               </div>
@@ -249,20 +249,20 @@ export function ResumeHubView({ setView }: ResumeHubViewProps) {
                     localStorage.setItem("active-resume-id", resume.id);
                     setView("resume-builder");
                   }}
-                  className="p-3 bg-white/2 hover:bg-white/5 border border-white/5 rounded-xl flex items-center justify-between cursor-pointer transition-colors group"
+                  className="p-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-xl flex items-center justify-between cursor-pointer transition-colors group"
                 >
                   <div className="min-width-0 flex-1 pr-2">
-                    <div className="text-xs font-bold text-white group-hover:text-[#f59e0b] truncate transition-colors">
+                    <div className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[#f59e0b] truncate transition-colors">
                       {resume.title}
                     </div>
-                    <div className="text-[10px] text-white/50 mt-1 flex items-center gap-1.5">
+                    <div className="text-[10px] text-[var(--text-secondary)] mt-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
                       {new Date(resume.updatedAt).toLocaleDateString()}
                     </div>
                   </div>
                   <button
                     onClick={(e) => handleDeleteResume(resume.id, e)}
-                    className="w-7 h-7 rounded-lg hover:bg-red-500/10 flex items-center justify-center text-white/40 hover:text-red-500 transition-colors"
+                    className="w-7 h-7 rounded-lg hover:bg-red-500/10 flex items-center justify-center text-[var(--text-muted)] hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

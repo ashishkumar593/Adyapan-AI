@@ -126,15 +126,15 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setView("resume-hub")}
-          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors"
+          className="w-8 h-8 rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] flex items-center justify-center text-[var(--text-primary)] transition-colors border border-[var(--border-color)]"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h1 className="text-xl font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <h1 className="text-xl font-extrabold text-[var(--text-primary)]" style={{ fontFamily: "'Outfit', sans-serif" }}>
             ATS Score Checker
           </h1>
-          <p className="text-xs text-white/50">Upload your resume to check search visibility score.</p>
+          <p className="text-xs text-[var(--text-secondary)]">Upload your resume to check search visibility score.</p>
         </div>
       </div>
 
@@ -142,26 +142,25 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
         {/* Left 7 Columns: File Upload / Result Display */}
         <div className="lg:col-span-7 space-y-6">
           {!report ? (
-            <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-6 space-y-6">
+            <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 space-y-6">
               {/* Inputs */}
               <div>
-                <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1.5">Target Job Role</label>
+                <label className="block text-[10px] text-[var(--text-secondary)] uppercase font-semibold mb-1.5">Target Job Role</label>
                 <input
                   type="text"
                   value={targetRole}
                   onChange={e => setTargetRole(e.target.value)}
                   placeholder="e.g. Full Stack Engineer"
-                  className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
-              {/* Dropzone */}
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer ${
-                  dragging ? "border-[#f59e0b] bg-[#f59e0b]/5" : "border-white/10 hover:border-white/20 bg-white/1"
+                  dragging ? "border-[#f59e0b] bg-[#f59e0b]/5" : "border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--bg-card)]"
                 }`}
                 onClick={() => document.getElementById("ats-file-input")?.click()}
               >
@@ -172,16 +171,16 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <UploadCloud className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                <UploadCloud className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-4" />
                 {file ? (
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-white">{file.name}</p>
-                    <p className="text-[10px] text-white/40">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">{file.name}</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs font-bold text-white">Drag & drop your resume here, or click to upload</p>
-                    <p className="text-[10px] text-white/40 mt-1">Supports PDF, DOCX, DOC up to 5MB</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">Drag & drop your resume here, or click to upload</p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-1">Supports PDF, DOCX, DOC up to 5MB</p>
                   </div>
                 )}
               </div>
@@ -207,11 +206,11 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             // Results Display
             <div className="space-y-6">
               {/* Score summary */}
-              <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
+              <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
                 {/* SVG Gauge */}
                 <div className="relative w-32 h-32 flex items-center justify-center">
                   <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.05)" strokeWidth="10" fill="transparent" />
+                    <circle cx="64" cy="64" r="54" stroke="var(--border-color)" strokeWidth="10" fill="transparent" />
                     <circle
                       cx="64"
                       cy="64"
@@ -225,8 +224,8 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     />
                   </svg>
                   <div className="absolute text-center">
-                    <span className="text-2xl font-extrabold text-white">{report.score}</span>
-                    <span className="block text-[8px] text-white/50 uppercase tracking-wider">Score</span>
+                    <span className="text-2xl font-extrabold text-[var(--text-primary)]">{report.score}</span>
+                    <span className="block text-[8px] text-[var(--text-muted)] uppercase tracking-wider">Score</span>
                   </div>
                 </div>
 
@@ -234,8 +233,8 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   <div className="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider" style={{ background: getScoreBg(report.score), color: getScoreColor(report.score) }}>
                     {report.score >= 80 ? "Optimized" : report.score >= 60 ? "Average" : "Needs Review"}
                   </div>
-                  <h2 className="text-base font-bold text-white">ATS Analysis Complete</h2>
-                  <p className="text-xs text-white/60">
+                  <h2 className="text-base font-bold text-[var(--text-primary)]">ATS Analysis Complete</h2>
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Audit evaluated for target role: <strong className="text-[#f59e0b]">{targetRole}</strong>. Here are the strengths and key areas to enhance.
                   </p>
                   <button
@@ -250,13 +249,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               {/* Specific Categories */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Missing Keywords */}
-                <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-white/5 pb-2">
+                <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5 border-b border-[var(--border-color)] pb-2">
                     <AlertTriangle className="w-4 h-4 text-[#f59e0b]" /> Missing Keywords
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {missingKeywords.length === 0 ? (
-                      <span className="text-xs text-white/40 italic">None detected. Great job!</span>
+                      <span className="text-xs text-[var(--text-muted)] italic">None detected. Great job!</span>
                     ) : (
                       missingKeywords.map((kw: string) => (
                         <span key={kw} className="px-2 py-0.5 bg-red-500/10 text-red-400 border border-red-500/10 text-[10px] font-semibold rounded">
@@ -268,13 +267,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 </div>
 
                 {/* Formatting Warnings */}
-                <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-white/5 pb-2">
+                <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5 border-b border-[var(--border-color)] pb-2">
                     <HelpCircle className="w-4 h-4 text-cyan-400" /> Formatting Warnings
                   </h3>
-                  <ul className="space-y-1.5 text-[10px] text-white/70 pl-2">
+                  <ul className="space-y-1.5 text-[10px] text-[var(--text-secondary)] pl-2">
                     {formattingIssues.length === 0 ? (
-                      <li className="italic text-white/40">No formatting issues detected.</li>
+                      <li className="italic text-[var(--text-muted)]">No formatting issues detected.</li>
                     ) : (
                       formattingIssues.map((issue: string, idx: number) => (
                         <li key={idx} className="list-disc leading-relaxed">{issue}</li>
@@ -284,13 +283,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 </div>
 
                 {/* Strengths */}
-                <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-white/5 pb-2">
+                <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5 border-b border-[var(--border-color)] pb-2">
                     <CheckCircle className="w-4 h-4 text-[#10b981]" /> Core Strengths
                   </h3>
-                  <ul className="space-y-1.5 text-[10px] text-white/70 pl-2">
+                  <ul className="space-y-1.5 text-[10px] text-[var(--text-secondary)] pl-2">
                     {strengths.length === 0 ? (
-                      <li className="italic text-white/40">No major strengths highlighted.</li>
+                      <li className="italic text-[var(--text-muted)]">No major strengths highlighted.</li>
                     ) : (
                       strengths.map((str: string, idx: number) => (
                         <li key={idx} className="list-disc leading-relaxed text-emerald-400/90">{str}</li>
@@ -300,13 +299,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 </div>
 
                 {/* Recommendations */}
-                <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-5 space-y-3">
-                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-white/5 pb-2">
+                <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5 border-b border-[var(--border-color)] pb-2">
                     <Star className="w-4 h-4 text-amber-400" /> Recommendations
                   </h3>
-                  <ul className="space-y-1.5 text-[10px] text-white/70 pl-2">
+                  <ul className="space-y-1.5 text-[10px] text-[var(--text-secondary)] pl-2">
                     {recommendations.length === 0 ? (
-                      <li className="italic text-white/40">No specific recommendations.</li>
+                      <li className="italic text-[var(--text-muted)]">No specific recommendations.</li>
                     ) : (
                       recommendations.map((rec: string, idx: number) => (
                         <li key={idx} className="list-disc leading-relaxed">{rec}</li>
@@ -321,12 +320,12 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
 
         {/* Right 5 Columns: Historical Reports */}
         <div className="lg:col-span-5 space-y-6">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
             <FileCheck2 className="w-5 h-5 text-[#f59e0b]" /> Audit History
           </h2>
-          <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-4 space-y-3 max-h-[480px] overflow-y-auto">
+          <div className="backdrop-blur-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 space-y-3 max-h-[480px] overflow-y-auto">
             {history.length === 0 ? (
-              <div className="text-center py-12 text-white/40">
+              <div className="text-center py-12 text-[var(--text-muted)]">
                 <FileCheck2 className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <span className="text-xs font-semibold">No past evaluations found.</span>
               </div>
@@ -338,13 +337,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     // Populate from history item
                     setReport(h);
                   }}
-                  className="p-3 bg-white/2 hover:bg-white/5 border border-white/5 rounded-xl flex items-center justify-between cursor-pointer transition-colors"
+                  className="p-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-xl flex items-center justify-between cursor-pointer transition-colors"
                 >
                   <div className="min-width-0 flex-1 pr-2">
-                    <div className="text-xs font-bold text-white truncate">
+                    <div className="text-xs font-bold text-[var(--text-primary)] truncate">
                       {h.resume?.title || "Imported Resume"}
                     </div>
-                    <div className="text-[9px] text-white/40 mt-1 flex items-center gap-1">
+                    <div className="text-[9px] text-[var(--text-muted)] mt-1 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {new Date(h.createdAt).toLocaleDateString()}
                     </div>

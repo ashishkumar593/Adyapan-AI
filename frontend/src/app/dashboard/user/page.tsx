@@ -1070,7 +1070,7 @@ export default function UserDashboardPage() {
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} />
 
-      <main className="dash-main">
+      <main className="dash-main resume-hub-theme">
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
         ) : activeView === "resume-hub" ? (
