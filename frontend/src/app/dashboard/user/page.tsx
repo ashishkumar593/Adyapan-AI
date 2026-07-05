@@ -9,7 +9,6 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
 import Link from "next/link";
 import Image from "next/image";
-import { ResumeTemplateMarketplace } from "@/components/resume-hub/ResumeTemplateMarketplace";
 import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
 import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
 import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
@@ -1302,7 +1301,7 @@ function UserDashboardContent() {
   const [toast, setToast] = useState(false);
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState("Modern");
+  const selectedTemplate = "ATS Modern";
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Resume ATS Score updated to 78%", time: "3 hours ago", read: false },
     { id: 2, text: "New DSA Practice question is available", time: "5 hours ago", read: false },
@@ -1474,15 +1473,8 @@ function UserDashboardContent() {
       <main className="dash-main resume-hub-theme">
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
-        ) : activeView === "resume-hub" ? (
-          <ResumeTemplateMarketplace
-            onSelectTemplate={(templateName) => {
-              setSelectedTemplate(templateName);
-              setActiveView("resume-builder");
-            }}
-          />
-        ) : activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate} />
+        ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
+          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
         ) : activeView === "cover-letter" ? (
