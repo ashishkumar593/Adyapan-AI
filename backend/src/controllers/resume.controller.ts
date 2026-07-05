@@ -168,7 +168,7 @@ export async function generateSummary(req: Request, res: Response, next: NextFun
   try {
     const { personalInfo, education, experience, skills } = req.body;
 
-    const summary = await generateResumeSummary(
+    const summary = await aiResumeSummary(
       personalInfo ?? {},
       education ?? [],
       experience ?? [],
@@ -187,7 +187,7 @@ export async function generateSummary(req: Request, res: Response, next: NextFun
 export async function enhanceProject(req: Request, res: Response, next: NextFunction) {
   try {
     const { name, techStack, description } = req.body;
-    const result = await enhanceProjectDescription(name ?? "", techStack ?? "", description ?? "");
+    const result = await aiEnhanceProject(name ?? "", techStack ?? "", description ?? "");
     res.json({ success: true, description: result });
   } catch (error) {
     next(error);
@@ -200,7 +200,7 @@ export async function enhanceProject(req: Request, res: Response, next: NextFunc
 export async function enhanceExperience(req: Request, res: Response, next: NextFunction) {
   try {
     const { role, company, description } = req.body;
-    const result = await enhanceExperienceDescription(role ?? "", company ?? "", description ?? "");
+    const result = await aiEnhanceExperience(role ?? "", company ?? "", description ?? "");
     res.json({ success: true, description: result });
   } catch (error) {
     next(error);
@@ -213,7 +213,7 @@ export async function enhanceExperience(req: Request, res: Response, next: NextF
 export async function optimizeResume(req: Request, res: Response, next: NextFunction) {
   try {
     const { resumeJson, targetCompany } = req.body;
-    const result = await optimizeResumeContent(resumeJson, targetCompany || "Startup");
+    const result = await aiOptimizeResume(resumeJson, targetCompany || "Startup");
     res.json({ success: true, resume: result });
   } catch (error) {
     next(error);
@@ -226,7 +226,7 @@ export async function optimizeResume(req: Request, res: Response, next: NextFunc
 export async function resumeChat(req: Request, res: Response, next: NextFunction) {
   try {
     const { resumeData, message } = req.body;
-    const result = await resumeAIChat(resumeData, message);
+    const result = await aiResumeChat(resumeData, message);
     res.json({ success: true, ...result });
   } catch (error) {
     next(error);
