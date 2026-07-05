@@ -13,6 +13,7 @@ import type { ResumeHubViewType } from "@/types/resume";
 interface ResumeBuilderViewProps {
   setView: (v: ResumeHubViewType) => void;
   selectedTemplate: string;
+  theme?: string;
 }
 
 const COMPANIES = ["Google", "Microsoft", "Amazon", "Meta", "Apple", "Netflix", "Uber", "Tesla", "Spotify", "Adobe", "Stripe", "LinkedIn", "Nvidia", "Salesforce", "Oracle", "IBM", "Cisco", "Morgan Stanley", "Goldman Sachs", "Deloitte", "Accenture", "TCS", "Infosys", "Wipro", "Other"];
@@ -28,7 +29,26 @@ const containerVariants = {
   exit: { opacity: 0, y: -20 },
 };
 
-export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderViewProps) {
+export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }: ResumeBuilderViewProps) {
+  const isDark = theme === "dark";
+  const t = {
+    bg: isDark ? "#060b0e" : "#f0f4ff",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+    border: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.08)",
+    borderLight: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    text: isDark ? "#fff" : "#0f172a",
+    textSecondary: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
+    textMuted: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
+    textDim: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)",
+    inputBg: isDark ? "rgba(0,0,0,0.4)" : "rgba(246,249,252,0.8)",
+    cardBg: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.7)",
+    genBg: isDark ? "rgba(245,158,11,0.06)" : "rgba(245,158,11,0.08)",
+    genBorder: isDark ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.25)",
+    mutedBg: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+    stepCircle: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+    stepCircleBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    fullscreenBg: isDark ? "#060b0e" : "#f0f4ff",
+  };
   const [screen, setScreen] = useState(1);
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -258,23 +278,23 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
                     style={{
                       width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "0.65rem", fontWeight: 800,
-                      background: done ? "#f59e0b" : active ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.06)",
-                      border: `2px solid ${done ? "#f59e0b" : active ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.1)"}`,
-                      color: done ? "#000" : active ? "#f59e0b" : "rgba(255,255,255,0.3)",
+                      background: done ? "#f59e0b" : active ? "rgba(245,158,11,0.2)" : t.stepCircle,
+                      border: `2px solid ${done ? "#f59e0b" : active ? "rgba(245,158,11,0.5)" : t.stepCircleBorder}`,
+                      color: done ? "#000" : active ? "#f59e0b" : t.textDim,
                     }}
                   >
                     {done ? <Check size={14} /> : step}
                   </motion.div>
                   <span style={{
                     fontSize: "0.55rem", fontWeight: active || done ? 700 : 500,
-                    color: active ? "#f59e0b" : done ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+                    color: active ? "#f59e0b" : done ? t.textSecondary : t.textDim,
                     whiteSpace: "nowrap", letterSpacing: "0.02em",
                   }}>{label}</span>
                 </div>
                 {i < SCREENS.length - 1 && (
                   <div style={{
                     flex: 1, height: 2, margin: "0 6px", marginBottom: 16, borderRadius: 1,
-                    background: done ? "#f59e0b" : "rgba(255,255,255,0.06)",
+                    background: done ? "#f59e0b" : t.stepCircle,
                     transition: "background 0.3s ease",
                   }} />
                 )}
