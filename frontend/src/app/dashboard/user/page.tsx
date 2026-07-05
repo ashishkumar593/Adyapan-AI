@@ -110,15 +110,13 @@ const sidebarItems: SidebarItem[] = [
     id: "interview", label: "Interview Hub", icon: <Mic size={18} />,
     submenu: [
       { label: "AI HR Interview", href: "#" }, { label: "AI Technical Interview", href: "#" },
-      { label: "Mock Interviews", href: "#" }, { label: "Voice Interview", href: "#" },
-      { label: "Company-wise Prep", href: "#" },
+      { label: "Mock Interviews", href: "#" },
     ],
   },
   {
     id: "research", label: "Research Hub", icon: <BookOpen size={18} />,
     submenu: [
-      { label: "Research Paper AI", href: "#" }, { label: "Research Topic Generator", href: "#" },
-      { label: "Literature Review Gen", href: "#" }, { label: "Citation Generator", href: "#" },
+      { label: "Research Paper AI", href: "#" },
       { label: "Plagiarism Checker", href: "#" },
     ],
   },

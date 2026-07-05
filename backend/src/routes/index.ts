@@ -18,6 +18,7 @@ import { codingRouter } from "./coding.routes";
 import { dsaRouter } from "./dsa.routes";
 import { challengesRouter } from "./challenges.routes";
 import { githubRouter } from "./github.routes";
+import { interviewRouter } from "./interview.routes";
 
 export const apiRouter = Router();
 
@@ -42,3 +43,4 @@ apiRouter.use("/coding", codingRouter);
 apiRouter.use("/dsa", dsaRouter);
 apiRouter.use("/challenges", challengesRouter);
 apiRouter.use("/github", githubRouter);
+apiRouter.use("/interview", interviewRouter);

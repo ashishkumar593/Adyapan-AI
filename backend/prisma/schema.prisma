@@ -48,6 +48,9 @@ model User {
   githubProfiles      GithubProfile[]
   generatedReadmes    GeneratedReadme[]
 
+  // Interview Hub Relations
+  interviewSessions   InterviewSession[]
+
   @@map("users")
 }
 
@@ -488,4 +491,38 @@ model Portfolio {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("portfolios")
+}
+
+// ==========================================
+// Interview Hub Models
+// ==========================================
+
+model InterviewSession {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  role       String
+  company    String?
+  type       String   // "technical", "behavioral", "general"
+  difficulty String   @default("medium")
+  status     String   @default("in_progress") // "in_progress", "completed"
+  feedback   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   InterviewMessage[]
+
+  @@map("interview_sessions")
+}
+
+model InterviewMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  role      String   // "user", "interviewer", "feedback"
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("interview_messages")
 }

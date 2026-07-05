@@ -1,80 +1,59 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { env } from "../../config/env";
+import { generateJSON, MODELS } from "./openrouter";
 
-const genAI = new GoogleGenerativeAI(env.geminiApiKey);
-
-function getGeminiModel() {
-  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-}
-
-// Helper for structured JSON output
-async function parseGeminiJson(prompt: string, fallback: any = {}) {
-  try {
-    const model = getGeminiModel();
-    const response = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
-    });
-    const text = response.response.text();
-    return JSON.parse(text);
-  } catch (error) {
-    console.error("Gemini JSON Generation Error:", error);
-    return fallback;
-  }
-}
+const DSA_SYSTEM = "You are an expert Competitive Programmer mentoring a student in Data Structures and Algorithms.";
 
 export async function generateDsaHint(problemContext: string, currentCode: string) {
-  const aiPrompt = `
-    You are an expert Competitive Programmer mentoring a student.
-    
-    Problem:
-    ${problemContext}
-    
-    Student's Current Code:
-    ${currentCode}
+  return generateJSON(
+    DSA_SYSTEM,
+    `The student is stuck on a DSA problem and needs a hint.
 
-    The student is stuck and asked for a hint. DO NOT give them the full solution. 
-    Instead, provide 2 progressively helpful hints and a high-level conceptual approach.
+Problem:
+${problemContext}
 
-    You MUST return the output as a JSON object strictly matching this schema:
+Student's Current Code:
+${currentCode}
+
+DO NOT give the full solution. Provide 2 progressively helpful hints and a high-level approach.
+
+Return JSON matching:
+{
+  "hint1": "A subtle hint to point them in the right direction",
+  "hint2": "A more direct hint if still stuck",
+  "approach": "High-level optimal algorithm explanation (no code)"
+}`,
+    { model: MODELS.BALANCED },
     {
-      "hint1": "A subtle hint to point them in the right direction",
-      "hint2": "A more direct hint if they are still stuck",
-      "approach": "A high-level explanation of the optimal algorithm to use (no code)"
+      hint1: "Error generating hint 1",
+      hint2: "Error generating hint 2",
+      approach: "Error generating approach",
     }
-  `;
-
-  return parseGeminiJson(aiPrompt, {
-    hint1: "Error generating hint 1",
-    hint2: "Error generating hint 2",
-    approach: "Error generating approach",
-  });
+  );
 }
 
 export async function reviewDsaSolution(problemContext: string, code: string) {
-  const aiPrompt = `
-    You are an expert Competitive Programmer reviewing a student's submission.
-    
-    Problem:
-    ${problemContext}
-    
-    Submitted Code:
-    ${code}
+  return generateJSON(
+    DSA_SYSTEM,
+    `Review this DSA solution submission.
 
-    Analyze the code for correctness, time complexity, and space complexity.
-    You MUST return the output as a JSON object strictly matching this schema:
+Problem:
+${problemContext}
+
+Submitted Code:
+${code}
+
+Analyze for correctness, time complexity, and space complexity.
+
+Return JSON matching:
+{
+  "timeComplexity": "e.g., O(n log n) with explanation",
+  "spaceComplexity": "e.g., O(n) with explanation",
+  "optimizationTips": ["Tip 1", "Tip 2", "Tip 3"]
+}`,
+    { model: MODELS.BALANCED },
     {
-      "timeComplexity": "e.g., O(n log n) with explanation",
-      "spaceComplexity": "e.g., O(n) with explanation",
-      "optimizationTips": ["Tip 1", "Tip 2", "Tip 3"]
+      timeComplexity: "Unknown",
+      spaceComplexity: "Unknown",
+      optimizationTips: [],
     }
-  `;
-
-  return parseGeminiJson(aiPrompt, {
-    timeComplexity: "Unknown",
-    spaceComplexity: "Unknown",
-    optimizationTips: [],
-  });
+  );
 }

@@ -1,22 +1,22 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { env } from "../../config/env";
+import { generateText, generateJSON, MODELS } from "./openrouter";
 
-const genAI = new GoogleGenerativeAI(env.geminiApiKey);
-
-// Helper to clean and parse JSON response from Gemini
 function parseGeminiJson<T>(text: string, defaultValue: T): T {
   try {
-    // Strip markdown code block formatting if present
     const cleaned = text
       .replace(/^```json\s*/i, "")
       .replace(/```\s*$/, "")
       .trim();
     return JSON.parse(cleaned) as T;
   } catch (error) {
-    console.error("Failed to parse Gemini JSON:", text, error);
+    console.error("Failed to parse JSON:", text, error);
     return defaultValue;
   }
 }
+
+const RESUME_SYSTEM = "You are an expert resume writer and career coach. Provide concise, professional resume content.";
+const ATS_SYSTEM = "You are an ATS (Applicant Tracking System) auditor and resume optimization expert.";
+const LEARNING_SYSTEM = "You are an expert academic tutor. Provide clear, educational responses.";
+const CODING_SYSTEM = "You are an expert senior software engineer and programming instructor.";
 
 /**
  * 1. Generate Resume Summary
@@ -27,24 +27,16 @@ export async function generateResumeSummary(
   experience: any,
   skills: any
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    You are an expert resume writer. Generate a professional and compelling resume summary (3-4 sentences, about 50-80 words) based on the following candidate details:
-    
-    Personal Info: ${JSON.stringify(personalInfo)}
-    Education: ${JSON.stringify(education)}
-    Experience: ${JSON.stringify(experience)}
-    Skills: ${JSON.stringify(skills)}
-    
-    Focus on key achievements, years of experience (if applicable), and core competencies. Write in a confident, professional, third-person tone (without using pronouns like "I" or "my").
-    Return ONLY the summary text, nothing else.
-  `;
+  const prompt = `Generate a professional resume summary (3-4 sentences, 50-80 words) based on:
+Personal Info: ${JSON.stringify(personalInfo)}
+Education: ${JSON.stringify(education)}
+Experience: ${JSON.stringify(experience)}
+Skills: ${JSON.stringify(skills)}
 
+Focus on key achievements, years of experience, and core competencies. Write in a confident, professional third-person tone. Return ONLY the summary text.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateResumeSummary:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return "Results-driven professional with a proven track record of academic and practical excellence, seeking to leverage skills in technology and problem-solving to contribute to organizational success.";
   }
 }
@@ -57,25 +49,15 @@ export async function generateProjectDescription(
   techStack: string,
   role: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    Generate 3 professional, action-oriented bullet points describing a project for a resume.
-    Project Title: ${title}
-    Technologies Used: ${techStack}
-    Role: ${role}
-    
-    Guidelines:
-    - Use the XYZ formula (Accomplished [X] as measured by [Y], by doing [Z]) where possible.
-    - Start each bullet point with a strong action verb (e.g., Developed, Designed, Architected, Optimized).
-    - Focus on measurable outcomes, technical challenges solved, and performance improvements.
-    - Return the bullet points separated by newlines, with NO bullet symbols or numbers (just the plain text on each line).
-  `;
+  const prompt = `Generate 3 professional, action-oriented bullet points describing a project for a resume.
+Project Title: ${title}
+Technologies: ${techStack}
+Role: ${role}
 
+Use the XYZ formula (Accomplished X as measured by Y, by doing Z) where possible. Start each with a strong action verb. Focus on measurable outcomes. Return bullet points separated by newlines, NO bullet symbols.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateProjectDescription:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return `Designed and built ${title} utilizing ${techStack} to solve core system requirements.\nOptimized backend performance and frontend usability for enhanced scalability.\nCollaborated with developers to integrate data endpoints and ensure seamless deployment.`;
   }
 }
@@ -88,25 +70,15 @@ export async function generateExperienceBulletPoints(
   company: string,
   description: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    You are a professional CV optimizer. Enhance the experience bullet points for this work history item:
-    Role: ${role}
-    Company: ${company}
-    Draft Description/Context: ${description}
-    
-    Generate 3 highly professional, impactful, and result-oriented bullet points.
-    - Start each with a strong action verb.
-    - Quantify achievements where possible.
-    - Align the text with modern industry standards.
-    - Return the bullet points separated by newlines, with NO bullet symbols or numbers (just the plain text on each line).
-  `;
+  const prompt = `Enhance the experience bullet points for:
+Role: ${role}
+Company: ${company}
+Draft: ${description}
 
+Generate 3 highly professional, result-oriented bullet points. Start each with a strong action verb. Quantify achievements where possible. Return separated by newlines, NO bullet symbols.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateExperienceBulletPoints:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return `Spearheaded software development initiatives as a ${role} at ${company}, improving deployment velocity.\nArchitected scalable database architectures and clean REST APIs to serve client applications.\nDebugged critical production bugs, reducing latency and boosting customer satisfaction rates.`;
   }
 }
@@ -115,24 +87,12 @@ export async function generateExperienceBulletPoints(
  * 4. Generate Skills Recommendations
  */
 export async function generateSkillsRecommendations(existingSkills: string[]): Promise<string[]> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Based on the following list of skills currently possessed by a candidate, recommend 5 additional highly relevant skills, technologies, or concepts they should learn or add to their resume.
-    Existing Skills: ${existingSkills.join(", ")}
-    
-    Return a JSON array containing exactly 5 string values. Example: ["React", "TypeScript", "Docker", "AWS", "CI/CD"]
-  `;
+  const prompt = `Based on these existing skills, recommend 5 additional highly relevant skills or technologies to add:
+Existing Skills: ${existingSkills.join(", ")}
 
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<string[]>(result.response.text(), []);
-  } catch (error) {
-    console.error("Error in generateSkillsRecommendations:", error);
-    return [];
-  }
+Return a JSON array of exactly 5 strings. Example: ["React", "TypeScript", "Docker", "AWS", "CI/CD"]`;
+  const result = await generateJSON<string[]>(RESUME_SYSTEM, prompt, { model: MODELS.FAST }, []);
+  return Array.isArray(result) ? result : [];
 }
 
 /**
@@ -150,43 +110,29 @@ export async function analyzeResumeATS(
   resumeText: string,
   targetRole: string
 ): Promise<ATSAnalysisResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    You are an Applicant Tracking System (ATS) auditor. Analyze the following resume text against the target role: "${targetRole}".
-    
-    Resume Text:
-    """
-    ${resumeText}
-    """
-    
-    Perform a strict evaluation and output a JSON object containing:
-    1. "score": An integer between 0 and 100 representing the ATS readiness and relevance.
-    2. "missingKeywords": A JSON array of key technologies, skills, or industry terminology missing from the resume.
-    3. "recommendations": A JSON array of specific improvements (e.g. "Include a clear GitHub link", "Quantify accomplishments in experience").
-    4. "formattingIssues": A JSON array of formatting issues detected (e.g. "Complex tables might parse poorly", "Non-standard section headers").
-    5. "strengths": A JSON array of elements done correctly.
-    
-    Ensure the JSON matches this structure exactly.
-  `;
+  const prompt = `Analyze this resume against the target role: "${targetRole}".
+
+Resume:
+"""
+${resumeText}
+"""
+
+Output a JSON object with:
+1. "score": integer 0-100 for ATS readiness
+2. "missingKeywords": array of missing key technologies/skills
+3. "recommendations": array of specific improvements
+4. "formattingIssues": array of formatting problems detected
+5. "strengths": array of elements done correctly`;
 
   const fallback: ATSAnalysisResult = {
     score: 60,
     missingKeywords: ["TypeScript", "Docker", "Unit Testing"],
-    recommendations: ["Quantify achievements in experience section", "Structure section headers clearly"],
+    recommendations: ["Quantify achievements", "Structure section headers clearly"],
     formattingIssues: ["Verify font consistency", "Avoid headers/footers in templates"],
     strengths: ["Clean personal contact info", "Strong technical skills listed"],
   };
 
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<ATSAnalysisResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in analyzeResumeATS:", error);
-    return fallback;
-  }
+  return generateJSON<ATSAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 /**
@@ -199,37 +145,25 @@ interface SWOTAnalysisResult {
 }
 
 export async function analyzeResumeSWOT(resumeText: string): Promise<SWOTAnalysisResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Perform a deep, critical review of the candidate's resume content. Detail the Strengths, Weaknesses/Gaps, and Recommendations for growth.
-    
-    Resume Text:
-    """
-    ${resumeText}
-    """
-    
-    Output a JSON object containing:
-    1. "strengths": A JSON array of 3-4 professional strengths.
-    2. "weaknesses": A JSON array of 3-4 weaknesses or experience/skill gaps.
-    3. "recommendations": A JSON array of 3-4 actionable recommendations to advance their profile.
-  `;
+  const prompt = `Perform a deep critical review of this resume.
+
+Resume:
+"""
+${resumeText}
+"""
+
+Output a JSON object with:
+1. "strengths": array of 3-4 professional strengths
+2. "weaknesses": array of 3-4 weaknesses or gaps
+3. "recommendations": array of 3-4 actionable recommendations`;
 
   const fallback: SWOTAnalysisResult = {
-    strengths: ["Clear project descriptions", "Relevant tech stack for modern development"],
-    weaknesses: ["Lack of leadership or team collaboration metrics", "Certifications section is empty"],
-    recommendations: ["Incorporate cloud platforms (AWS/GCP/Azure) skills", "Complete professional certifications"],
+    strengths: ["Clear project descriptions", "Relevant tech stack"],
+    weaknesses: ["Lack of leadership metrics", "Certifications section is empty"],
+    recommendations: ["Incorporate cloud platforms skills", "Complete professional certifications"],
   };
 
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<SWOTAnalysisResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in analyzeResumeSWOT:", error);
-    return fallback;
-  }
+  return generateJSON<SWOTAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 /**
@@ -245,42 +179,30 @@ export async function analyzeJobMatch(
   resumeText: string,
   jobDescription: string
 ): Promise<JobMatchResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Compare the candidate's resume against the Job Description (JD). Compute a match percentage and suggest modifications to tailor the resume.
-    
-    Resume:
-    """
-    ${resumeText}
-    """
-    
-    Job Description:
-    """
-    ${jobDescription}
-    """
-    
-    Output a JSON object containing:
-    1. "matchPercentage": An integer between 0 and 100.
-    2. "feedback": A JSON array of feedback comments.
-    3. "gapAnalysis": A JSON array of specific requirements in the JD that are not met in the resume.
-  `;
+  const prompt = `Compare the resume against this Job Description.
+
+Resume:
+"""
+${resumeText}
+"""
+
+Job Description:
+"""
+${jobDescription}
+"""
+
+Output JSON:
+1. "matchPercentage": integer 0-100
+2. "feedback": array of feedback comments
+3. "gapAnalysis": array of JD requirements not met in resume`;
 
   const fallback: JobMatchResult = {
     matchPercentage: 55,
-    feedback: ["Align resume summary with target role keywords", "Highlight specific tech stack mentioned in the job description"],
-    gapAnalysis: ["Missing explicit testing experience (Jest/PyTest)", "System Design experience is not highlighted"],
+    feedback: ["Align resume summary with target role keywords", "Highlight tech stack from JD"],
+    gapAnalysis: ["Missing explicit testing experience", "System Design experience not highlighted"],
   };
 
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<JobMatchResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in analyzeJobMatch:", error);
-    return fallback;
-  }
+  return generateJSON<JobMatchResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 /**
@@ -292,28 +214,16 @@ export async function generateCoverLetterText(
   jobDescription: string,
   tone: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    Write a highly tailored Cover Letter for a job application.
-    Company Name: ${companyName}
-    Target Role: ${role}
-    Job Description: ${jobDescription}
-    Tone: ${tone} (e.g. Professional, Formal, Confident, Friendly)
-    
-    Write the letter with:
-    - An engaging introduction stating interest in the role and company.
-    - A strong body paragraph highlighting relevant project achievements and matching skills.
-    - A polite closing calling for an interview opportunity.
-    
-    Use a clean letter layout. Do not include template placeholders like [Insert Name Here] unless absolutely necessary; use natural placeholders or write a ready-to-use professional letter.
-    Return ONLY the cover letter text, with no extra conversational preambles.
-  `;
+  const prompt = `Write a highly tailored Cover Letter.
+Company: ${companyName}
+Role: ${role}
+Job Description: ${jobDescription}
+Tone: ${tone}
 
+Write with: engaging introduction, strong body highlighting achievements matching the role, polite closing. Use clean letter layout. Return ONLY the cover letter text.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateCoverLetterText:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
+  } catch {
     return `Dear Hiring Manager,\n\nI am writing to express my enthusiastic interest in the ${role} position at ${companyName}. With a strong background in software engineering and hands-on project experience, I am confident in my ability to deliver substantial value to your team.\n\nThank you for your time and consideration.\n\nSincerely,\n[Your Name]`;
   }
 }
@@ -336,42 +246,29 @@ export async function optimizeLinkedInProfile(profileData: {
   skills: string;
   targetRole: string;
 }): Promise<LinkedInOptimizationResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Analyze the current LinkedIn profile details and provide optimizations for a target role.
-    
-    Current Headline: ${profileData.headline}
-    Current About Section: ${profileData.about}
-    Current Experience Details: ${profileData.experience}
-    Current Skills: ${profileData.skills}
-    Target Role: ${profileData.targetRole}
-    
-    Output a JSON object containing:
-    1. "headline": An optimized headline following industry best practices (e.g., "Role | Key Technology | Impact Statement").
-    2. "aboutSection": A fully written, engaging "About" section summary (150-250 words) written in the first person, highlighting value proposition and core skills.
-    3. "skills": A JSON array of 5 recommended skills to add to the profile.
-    4. "recommendations": A JSON array of 3-4 suggestions (e.g. "Expand experience descriptions using bullet points", "Include links to projects").
-    5. "score": An optimization score between 0 and 100.
-  `;
+  const prompt = `Analyze and optimize this LinkedIn profile for target role: "${profileData.targetRole}".
+
+Current Headline: ${profileData.headline}
+Current About: ${profileData.about}
+Experience: ${profileData.experience}
+Skills: ${profileData.skills}
+
+Output JSON with:
+1. "headline": optimized headline
+2. "aboutSection": engaging About summary (150-250 words, first person)
+3. "skills": array of 5 recommended skills to add
+4. "recommendations": array of 3-4 suggestions
+5. "score": optimization score 0-100`;
 
   const fallback: LinkedInOptimizationResult = {
-    headline: `${profileData.targetRole || "Software Engineer"} | TypeScript | React | Node.js | Building Scalable Solutions`,
-    aboutSection: `Passionate engineer focused on crafting efficient and user-centered digital solutions. Experienced in developing applications using JavaScript, TypeScript, and modern web frameworks. Strong problem solver committed to continuous learning and technical innovation.`,
+    headline: `${profileData.targetRole || "Software Engineer"} | TypeScript | React | Node.js`,
+    aboutSection: "Passionate engineer focused on crafting efficient and user-centered digital solutions.",
     skills: ["TypeScript", "System Design", "Cloud Infrastructure"],
-    recommendations: ["Add media links to your experience cards", "Optimize your About section with target role keywords"],
+    recommendations: ["Add media links to experience cards", "Optimize About with target role keywords"],
     score: 70,
   };
 
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<LinkedInOptimizationResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in optimizeLinkedInProfile:", error);
-    return fallback;
-  }
+  return generateJSON<LinkedInOptimizationResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 // ============================================================================
@@ -385,23 +282,17 @@ export async function generateStudyResponse(
   context: string,
   query: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
-    Context from uploaded documents:
-    """
-    ${context}
-    """
-    
-    Student's Query: ${query}
-    
-    Answer clearly using markdown. If the query asks to explain a concept or formula, break it down simply.
-  `;
+  const prompt = `Context from uploaded documents:
+"""
+${context}
+"""
+
+Student's Query: ${query}
+
+Answer clearly using markdown. Break down concepts simply if needed.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateStudyResponse:", error);
+    return await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return "I am currently unable to process your query due to a system error. Please try again later.";
   }
 }
@@ -414,23 +305,14 @@ export async function generateNotes(
   difficulty: string,
   type: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-  const prompt = `
-    Generate comprehensive study notes on the topic: "${topic}".
-    Target difficulty level: ${difficulty}
-    Format style: ${type} (e.g., detailed, short, revision, formula, exam)
-    
-    Guidelines:
-    - Use clear headings, bullet points, and markdown styling.
-    - Highlight key definitions or formulas.
-    - Structure logically from basics to advanced.
-    - Return ONLY valid markdown text.
-  `;
+  const prompt = `Generate comprehensive study notes on "${topic}".
+Difficulty: ${difficulty}
+Style: ${type}
+
+Use clear headings, bullet points, markdown. Highlight key definitions. Structure from basics to advanced. Return ONLY valid markdown.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in generateNotes:", error);
+    return await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL });
+  } catch {
     return "# Notes Generation Failed\nPlease try again.";
   }
 }
@@ -456,27 +338,16 @@ export async function generateQuiz(
   count: number,
   difficulty: string
 ): Promise<QuizGenerationResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Generate an educational quiz and study flashcards for the topic: "${topic}".
-    Difficulty: ${difficulty}
-    Number of questions: ${count}
-    
-    Output a JSON object containing:
-    1. "questions": An array of ${count} objects, each with "question", "options" (array of 4 strings), "correctAnswer" (must match one of the options), and "explanation".
-    2. "flashcards": An array of ${Math.ceil(count / 2)} objects, each with "front" (a key term or concept) and "back" (the definition).
-  `;
+  const prompt = `Generate a quiz and flashcards for topic: "${topic}".
+Difficulty: ${difficulty}
+Questions: ${count}
+
+Output JSON:
+1. "questions": array of ${count} objects with "question", "options" (4 strings), "correctAnswer", "explanation"
+2. "flashcards": array of ${Math.ceil(count / 2)} objects with "front" (term) and "back" (definition)`;
+
   const fallback: QuizGenerationResult = { questions: [], flashcards: [] };
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<QuizGenerationResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in generateQuiz:", error);
-    return fallback;
-  }
+  return generateJSON<QuizGenerationResult>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 /**
@@ -494,29 +365,18 @@ export async function generateAssignment(
   level: string,
   wordCount: number
 ): Promise<AssignmentResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-pro",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Write an academic assignment on the topic: "${topic}".
-    Academic Level: ${level}
-    Target Word Count: ${wordCount}
-    
-    Output a JSON object containing:
-    1. "introduction": The introductory text using markdown.
-    2. "body": The main body content using markdown headings and paragraphs.
-    3. "conclusion": The concluding text using markdown.
-    4. "references": An array of 3-5 APA format reference strings.
-  `;
+  const prompt = `Write an academic assignment on topic: "${topic}".
+Level: ${level}
+Target Words: ${wordCount}
+
+Output JSON:
+1. "introduction": introductory text (markdown)
+2. "body": main body content (markdown)
+3. "conclusion": conclusion (markdown)
+4. "references": array of 3-5 APA references`;
+
   const fallback: AssignmentResult = { introduction: "", body: "", conclusion: "", references: [] };
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<AssignmentResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in generateAssignment:", error);
-    return fallback;
-  }
+  return generateJSON<AssignmentResult>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
 }
 
 /**
@@ -532,26 +392,15 @@ export async function generatePPTContent(
   topic: string,
   slideCount: number
 ): Promise<PptSlide[]> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Create a presentation structure on the topic: "${topic}".
-    Number of slides: ${slideCount}
-    
-    Output a JSON array of objects. Each object must contain:
-    1. "title": The slide title.
-    2. "bullets": An array of 3-5 string bullet points.
-    3. "notes": Speaker notes for the slide.
-  `;
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<PptSlide[]>(result.response.text(), []);
-  } catch (error) {
-    console.error("Error in generatePPTContent:", error);
-    return [];
-  }
+  const prompt = `Create a presentation on topic: "${topic}".
+Slides: ${slideCount}
+
+Output JSON array of objects, each with:
+1. "title": slide title
+2. "bullets": array of 3-5 bullet points
+3. "notes": speaker notes for the slide`;
+
+  return generateJSON<PptSlide[]>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED }, []);
 }
 
 /**
@@ -563,25 +412,14 @@ export interface MindMapResult {
 }
 
 export async function generateMindMapSchema(topic: string): Promise<MindMapResult> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-  const prompt = `
-    Create a mind map structure for the topic: "${topic}".
-    
-    Output a JSON object containing:
-    1. "nodes": An array of objects for React Flow. Each must have "id" (string), "type" ("default"), "data" ({ "label": string }), and "position" ({ "x": number, "y": number }). The root node should be at x: 250, y: 50. Distribute child nodes cleanly.
-    2. "edges": An array of objects to connect nodes. Each must have "id" (string), "source" (node id), and "target" (node id).
-  `;
+  const prompt = `Create a mind map for topic: "${topic}".
+
+Output JSON with:
+1. "nodes": array for React Flow, each with "id", "type" ("default"), "data" ({ "label": string }), "position" ({ x, y }). Root at x:250, y:50.
+2. "edges": array to connect nodes, each with "id", "source", "target"`;
+
   const fallback: MindMapResult = { nodes: [], edges: [] };
-  try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<MindMapResult>(result.response.text(), fallback);
-  } catch (error) {
-    console.error("Error in generateMindMapSchema:", error);
-    return fallback;
-  }
+  return generateJSON<MindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 /**
@@ -592,20 +430,13 @@ export async function enhanceProjectDescription(
   techStack: string,
   description: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    You are an expert technical resume reviewer. 
-    Optimize the description for the project: "${projectName}" built using "${techStack}".
-    Raw Description: "${description}"
+  const prompt = `Optimize the description for project "${projectName}" (${techStack}).
+Raw: "${description}"
 
-    Rewrite this description to be extremely professional, action-oriented, and highlight impact/metrics if possible.
-    Use strong bullet points (limit to 2-3 points). Do not write introduction or outro, just return the optimized description.
-  `;
+Rewrite to be extremely professional, action-oriented, highlight impact/metrics. Use 2-3 strong bullet points. No intro/outro.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in enhanceProjectDescription:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return description;
   }
 }
@@ -618,21 +449,13 @@ export async function enhanceExperienceDescription(
   company: string,
   description: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = `
-    You are an expert recruiter. 
-    Optimize the job description for the role: "${role}" at "${company}".
-    Raw Job Description: "${description}"
+  const prompt = `Optimize the job description for ${role} at ${company}.
+Raw: "${description}"
 
-    Rewrite this description using the STAR method (Situation, Task, Action, Result). Focus on achievements, technical contributions, and metrics.
-    Output 3-4 professional bullet points starting with strong action verbs (e.g. Architected, Orchestrated, Optimized).
-    Return ONLY the bullet points, nothing else.
-  `;
+Rewrite using STAR method. Focus on achievements, technical contributions, metrics. Output 3-4 bullet points starting with strong action verbs. Return ONLY bullet points.`;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    console.error("Error in enhanceExperienceDescription:", error);
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
     return description;
   }
 }
@@ -644,53 +467,127 @@ export async function optimizeResumeContent(
   resumeJson: any,
   targetCompany: string
 ): Promise<any> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-
   const companyValues: Record<string, string> = {
-    Google: "Innovation, technical complexity, algorithmic optimization, scalable design, Googley leadership.",
-    Amazon: "Ownership, customer obsession, Bias for Action, frugality, Leadership Principles.",
-    Microsoft: "Engineering excellence, collaborative alignment, security, cloud scale, accessibility.",
-    Meta: "Scale, rapid iteration, impact, Move Fast, focus on business value, system performance.",
+    Google: "Innovation, technical complexity, algorithmic optimization, scalable design.",
+    Amazon: "Ownership, customer obsession, Bias for Action, Leadership Principles.",
+    Microsoft: "Engineering excellence, collaborative alignment, security, cloud scale.",
+    Meta: "Scale, rapid iteration, impact, Move Fast, system performance.",
     Apple: "Detail orientation, premium quality, design integration, hardware-software synergy.",
-    Startup: "Versatility, high impact, end-to-end execution, rapid MVP creation, speed.",
+    Startup: "Versatility, high impact, end-to-end execution, rapid MVP creation.",
   };
 
   const values = companyValues[targetCompany] || "General professional excellence.";
 
-  const prompt = `
-    You are an elite career coach. Optimize the following resume data to stand out at "${targetCompany}".
-    The key characteristics and leadership values highly prized at ${targetCompany} are:
-    "${values}"
+  const prompt = `Optimize this resume to stand out at "${targetCompany}".
+Values prized at ${targetCompany}: "${values}"
 
-    Carefully review and refine the professional summary, experience bullet points, project details, and skills in the resume JSON.
-    Align the wording, technologies, and achievements to emphasize alignment with those values.
+Input Resume:
+${JSON.stringify(resumeJson)}
 
-    Input Resume JSON:
-    ${JSON.stringify(resumeJson)}
+Output a JSON object matching this schema:
+{
+  "personalInfo": { "fullName": "", "email": "", "phone": "", "linkedin": "", "github": "", "portfolio": "", "location": "", "summary": "" },
+  "summary": "optimized professional summary",
+  "education": [{ "institution": "", "degree": "", "fieldOfStudy": "", "startDate": "", "endDate": "", "grade": "" }],
+  "experience": [{ "company": "", "role": "", "startDate": "", "endDate": "", "description": "optimized" }],
+  "projects": [{ "name": "", "techStack": "", "description": "optimized" }],
+  "skills": ["optimized", "skills"],
+  "certifications": [{ "name": "", "issuer": "", "date": "" }],
+  "achievements": ["achievement"],
+  "languages": ["language"]
+}`;
 
-    You MUST output a valid JSON object matching the input schema:
-    {
-      "personalInfo": { "fullName": "", "email": "", "phone": "", "linkedin": "", "github": "", "portfolio": "", "location": "", "summary": "" },
-      "summary": "Optimized professional summary",
-      "education": [ { "institution": "", "degree": "", "fieldOfStudy": "", "startDate": "", "endDate": "", "grade": "" } ],
-      "experience": [ { "company": "", "role": "", "startDate": "", "endDate": "", "description": "optimized description" } ],
-      "projects": [ { "name": "", "techStack": "", "description": "optimized description" } ],
-      "skills": ["optimized", "skills", "list"],
-      "certifications": [ { "name": "", "issuer": "", "date": "" } ],
-      "achievements": ["achievement 1", "achievement 2"],
-      "languages": ["language 1", "language 2"]
-    }
-  `;
+  return generateJSON<unknown>(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED }, resumeJson);
+}
+
+// ============================================================================
+// INTERVIEW HUB AI SERVICES
+// ============================================================================
+
+/**
+ * 19. Start Interview - Generate First Question
+ */
+export async function generateInterviewQuestion(
+  role: string,
+  company: string | null,
+  type: string,
+  difficulty: string,
+  history: { role: string; content: string }[]
+): Promise<string> {
+  const isFirstQuestion = history.length === 0;
+
+  const systemPrompt = `You are a professional interviewer conducting a ${type} interview for a ${role} position${company ? ` at ${company}` : ""}.
+Difficulty: ${difficulty}
+
+Ask relevant, insightful questions that test the candidate's knowledge and skills.
+${type === "technical" ? "Focus on technical concepts, problem-solving, system design, and practical scenarios." : ""}
+${type === "behavioral" ? "Focus on past experiences, teamwork, leadership, conflict resolution using STAR format." : ""}
+${type === "general" ? "Mix of technical and behavioral questions." : ""}
+
+Keep questions concise. Do not evaluate or give feedback unless asked.`;
+
+  const userPrompt = isFirstQuestion
+    ? `The interview is starting now. Ask the first ${type} interview question for a ${role} position${company ? ` at ${company}` : ""} at ${difficulty} difficulty.`
+    : `The candidate responded: "${history[history.length - 1].content}"
+
+Based on their answer, ask the next appropriate ${type} interview question. If you have enough information to evaluate, you may provide brief feedback before the next question.`;
 
   try {
-    const result = await model.generateContent(prompt);
-    return parseGeminiJson<any>(result.response.text(), resumeJson);
-  } catch (error) {
-    console.error("Error in optimizeResumeContent:", error);
-    return resumeJson;
+    return await generateText(systemPrompt, userPrompt, {
+      model: MODELS.POWERFUL,
+      temperature: 0.8,
+    });
+  } catch {
+    return "Tell me about yourself and your experience relevant to this role.";
   }
 }
 
+/**
+ * 20. Generate Interview Feedback
+ */
+export interface InterviewFeedback {
+  overallScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  areasForImprovement: string[];
+  suggestedAnswers: string[];
+  recommendedResources: string[];
+}
+
+export async function generateInterviewFeedback(
+  role: string,
+  company: string | null,
+  type: string,
+  messages: { role: string; content: string }[]
+): Promise<InterviewFeedback> {
+  const conversation = messages
+    .filter((m) => m.role !== "feedback")
+    .map((m) => `[${m.role === "interviewer" ? "Interviewer" : "Candidate"}]: ${m.content}`)
+    .join("\n\n");
+
+  const prompt = `Review this ${type} interview for a ${role} position${company ? ` at ${company}` : ""}.
+
+Interview Transcript:
+"""
+${conversation}
+"""
+
+Provide comprehensive feedback as JSON:
+1. "overallScore": integer 0-100
+2. "strengths": array of 3-5 specific strengths demonstrated
+3. "weaknesses": array of 3-5 areas where the candidate struggled
+4. "areasForImprovement": array of 3-5 actionable improvement suggestions
+5. "suggestedAnswers": array of 2-3 example strong answers for questions they struggled with
+6. "recommendedResources": array of 2-3 resources (books, courses, topics) to study`;
+
+  const fallback: InterviewFeedback = {
+    overallScore: 70,
+    strengths: ["Good communication skills", "Relevant technical knowledge"],
+    weaknesses: ["Could provide more specific examples", "Need more depth in some areas"],
+    areasForImprovement: ["Practice structured answers using STAR", "Deepen system design knowledge"],
+    suggestedAnswers: ["Use the STAR format to structure your answers"],
+    recommendedResources: ["Cracking the Coding Interview", "System Design Interview by Alex Xu"],
+  };
+
+  return generateJSON<InterviewFeedback>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+}
