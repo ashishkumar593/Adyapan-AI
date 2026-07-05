@@ -105,7 +105,9 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
-      { label: "Resume Builder", href: "#" },
+      { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
+      { label: "Resume Analyzer", href: "#" }, { label: "Cover Letter Generator", href: "#" },
+      { label: "LinkedIn Optimizer", href: "#" },
     ],
   },
   {
@@ -263,6 +265,10 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                     onClick={(e) => {
                       e.preventDefault();
                       if (sub.label === "Resume Builder") onViewTool("resume-hub");
+                      else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
+                      else if (sub.label === "Resume Analyzer") onViewTool("resume-analyzer");
+                      else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
+                      else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
                       else if (sub.label === "Study Assistant") onViewTool("study-assistant");
                       else if (sub.label === "Notes Generator") onViewTool("notes-generator");
                       else if (sub.label === "Quiz Generator") onViewTool("quiz-generator");
