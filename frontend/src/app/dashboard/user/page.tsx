@@ -1474,7 +1474,7 @@ function UserDashboardContent() {
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} />
+          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
         ) : activeView === "cover-letter" ? (

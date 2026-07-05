@@ -48,6 +48,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
     stepCircle: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
     stepCircleBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
     fullscreenBg: isDark ? "#060b0e" : "#f0f4ff",
+    chatBg: isDark ? "#0a0e14" : "#ffffff",
   };
   const [screen, setScreen] = useState(1);
   const [resumeId, setResumeId] = useState<string | null>(null);
@@ -347,8 +348,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     disabled={!canContinue(1)}
                     className="w-full py-3.5 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all"
                     style={{
-                      background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : "rgba(255,255,255,0.06)",
-                      color: canContinue(1) ? "#000" : "rgba(255,255,255,0.3)",
+                      background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
+                      color: canContinue(1) ? "#000" : t.textDim,
                       cursor: canContinue(1) ? "pointer" : "not-allowed",
                     }}
                   >Continue <ChevronRight size={16} /></motion.button>
@@ -487,8 +488,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     onClick={() => canContinue(2) && setScreen(3)} disabled={!canContinue(2)}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all"
                     style={{
-                      background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : "rgba(255,255,255,0.06)",
-                      color: canContinue(2) ? "#000" : "rgba(255,255,255,0.3)",
+                      background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
+                      color: canContinue(2) ? "#000" : t.textDim,
                       cursor: canContinue(2) ? "pointer" : "not-allowed",
                     }}
                   >Continue <Sparkles size={14} /></motion.button>
@@ -511,12 +512,12 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   <div className="space-y-3 text-left">
                     {genSteps.map((step, i) => (
                       <div key={step.label} className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{ background: i <= genStep ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${i <= genStep ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)"}` }}>
+                        style={{ background: i <= genStep ? t.genBg : t.mutedBg, border: `1px solid ${i <= genStep ? t.genBorder : t.mutedBg}` }}>
                         <div className="w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ background: i < genStep ? "#f59e0b" : i === genStep ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.06)" }}>
+                          style={{ background: i < genStep ? "#f59e0b" : i === genStep ? "rgba(245,158,11,0.2)" : t.stepCircle }}>
                           {i < genStep ? <Check size={13} className="text-black" /> : i === genStep ? <Loader2 size={12} className="text-amber-500 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
                         </div>
-                        <span className="text-xs font-semibold" style={{ color: i <= genStep ? "#fff" : "rgba(255,255,255,0.3)" }}>{step.label}</span>
+                        <span className="text-xs font-semibold" style={{ color: i <= genStep ? t.text : t.textDim }}>{step.label}</span>
                       </div>
                     ))}
                   </div>
@@ -584,7 +585,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                 </div>
 
                 {/* Right — Live Preview */}
-                <div className="lg:col-span-7 flex flex-col gap-3 p-4 overflow-hidden relative" style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 999, background: "#060b0e", padding: "2rem" } as any : {}}>
+                <div className="lg:col-span-7 flex flex-col gap-3 p-4 overflow-hidden relative" style={isFullscreen ? { position: "fixed", inset: 0, zIndex: 999, background: t.fullscreenBg, padding: "2rem" } as any : {}}>
                   <div className="flex items-center justify-between">
                     <h2 className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-1.5"><Eye size={13} className="text-amber-500" /> Live Preview</h2>
                     <div className="flex items-center gap-2">
@@ -692,7 +693,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-md h-full bg-[#0a0e14] border-l border-white/10 flex flex-col"
+              className="relative w-full max-w-md h-full border-l border-white/10 flex flex-col" style={{ background: t.chatBg }}
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/10">
