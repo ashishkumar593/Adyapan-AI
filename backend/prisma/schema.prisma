@@ -91,6 +91,11 @@ model Resume {
   projects       Json
   skills         Json
   certifications Json
+  achievements   Json?
+  languages      Json?
+  targetCompany  String?          @map("target_company")
+  pdfUrl         String?          @map("pdf_url")
+  docxUrl        String?          @map("docx_url")
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
 

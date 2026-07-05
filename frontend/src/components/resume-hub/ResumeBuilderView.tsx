@@ -3,113 +3,66 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import {
-  FileText, ArrowLeft, Save, Sparkles,
-  Download, Plus, Trash2, Edit, ChevronLeft, ChevronRight, Eye
+  FileText, ArrowLeft, Save, Sparkles, Download, Plus, Trash2, Edit,
+  ChevronLeft, ChevronRight, Eye, ZoomIn, ZoomOut, Maximize2, Building, RefreshCw
 } from "lucide-react";
-import type {
-  ResumeHubViewType, PersonalInfo, EducationItem,
-  ExperienceItem, ProjectItem, CertificationItem
-} from "@/types/resume";
+import type { ResumeHubViewType } from "@/types/resume";
 
 interface ResumeBuilderViewProps {
   setView: (v: ResumeHubViewType) => void;
+  selectedTemplate: string;
 }
 
-export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
+export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderViewProps) {
   const [activeStep, setActiveStep] = useState(1);
   const [resumeId, setResumeId] = useState<string | null>(null);
-  const [title, setTitle] = useState("My Resume Draft");
-  const [template, setTemplate] = useState("Modern");
+  const [title, setTitle] = useState("My Professional Resume");
+  const [template, setTemplate] = useState(selectedTemplate);
+  const [targetCompany, setTargetCompany] = useState("Google");
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
-  const [tabMode, setTabMode] = useState<"edit" | "preview">("edit");
+  
+  // Custom Preview Controls
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Form Fields
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
+  const [personalInfo, setPersonalInfo] = useState({
     fullName: "",
     email: "",
     phone: "",
     location: "",
-    website: "",
-    summary: "",
+    linkedin: "",
+    github: "",
+    portfolio: "",
   });
 
-  const [education, setEducation] = useState<EducationItem[]>([
+  const [summary, setSummary] = useState("");
+  
+  const [education, setEducation] = useState<Array<{ institution: string; degree: string; fieldOfStudy: string; startDate: string; endDate: string; grade: string }>>([
     { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", grade: "" }
   ]);
 
-  const [experience, setExperience] = useState<ExperienceItem[]>([
+  const [experience, setExperience] = useState<Array<{ company: string; role: string; startDate: string; endDate: string; description: string }>>([
     { company: "", role: "", startDate: "", endDate: "", description: "" }
   ]);
 
-  const [projects, setProjects] = useState<ProjectItem[]>([
+  const [projects, setProjects] = useState<Array<{ name: string; techStack: string; description: string }>>([
     { name: "", techStack: "", description: "" }
   ]);
 
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
-  const [recommendedSkills, setRecommendedSkills] = useState<string[]>([]);
 
-  const [certifications, setCertifications] = useState<CertificationItem[]>([
+  const [certifications, setCertifications] = useState<Array<{ name: string; issuer: string; date: string }>>([
     { name: "", issuer: "", date: "" }
   ]);
 
-  // Load existing resume if editing
-  useEffect(() => {
-    const id = localStorage.getItem("active-resume-id");
-    if (id) {
-      setResumeId(id);
-      api.get(`/resume/${id}`).then(res => {
-        const r = res.data.resume;
-        if (r) {
-          setTitle(r.title);
-          setTemplate(r.template || "Modern");
-          if (r.personalInfo) setPersonalInfo(r.personalInfo);
-          if (r.education && r.education.length) setEducation(r.education);
-          if (r.experience && r.experience.length) setExperience(r.experience);
-          if (r.projects && r.projects.length) setProjects(r.projects);
-          if (r.skills) setSkills(r.skills);
-          if (r.certifications) setCertifications(r.certifications);
-        }
-      }).catch(err => console.error(err))
-        .finally(() => localStorage.removeItem("active-resume-id"));
-    }
-  }, []);
+  const [achievements, setAchievements] = useState<string[]>([""]);
+  const [languages, setLanguages] = useState<string[]>([""]);
 
-  // Fetch Recommended Skills when skills change
-  useEffect(() => {
-    if (skills.length > 0) {
-      const delay = setTimeout(() => {
-        api.post("/resume/generate-summary", {
-          // just trigger a helper for skills recommendations using the normal summary endpoint?
-          // Wait, we can fetch recommendations if we have a direct endpoint, or let's do it on demand
-        });
-      }, 2000);
-      return () => clearTimeout(delay);
-    }
-  }, [skills]);
-
-  const handleFetchRecommendations = async () => {
-    if (skills.length === 0) return;
-    setGeneratingAI(true);
-    try {
-      // Create a prompt specifically to retrieve skills recommendations
-      await api.post("/resume/generate-summary", {
-        personalInfo,
-        education,
-        experience,
-        skills, // send current skills
-      });
-      // Fallback/Parse suggestions from Gemini
-      setRecommendedSkills(["Docker", "TypeScript", "Next.js", "Jest", "GraphQL"]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setGeneratingAI(false);
-    }
-  };
-
+  // AI Summary Generator
   const handleAISummary = async () => {
     setGeneratingAI(true);
     try {
@@ -120,7 +73,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
         skills,
       });
       if (res.data.success && res.data.summary) {
-        setPersonalInfo(prev => ({ ...prev, summary: res.data.summary }));
+        setSummary(res.data.summary);
       }
     } catch (err) {
       console.error(err);
@@ -129,39 +82,21 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
     }
   };
 
-  const handleAIProjectDescription = async (index: number) => {
-    setGeneratingAI(true);
-    try {
-      const project = projects[index];
-      // We call our backend routes which handles Gemini
-      const res = await api.post("/resume/generate-summary", {
-        personalInfo: { fullName: `Enhance project descriptions for: ${project.name}` },
-        experience: [{ role: "Developer", company: project.techStack, description: project.description }],
-      });
-      // Replace with clean generated output
-      const cleanedText = res.data.summary || "";
-      const updated = [...projects];
-      updated[index].description = cleanedText;
-      setProjects(updated);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setGeneratingAI(false);
-    }
-  };
-
-  const handleAIExperiencePoints = async (index: number) => {
+  // AI Experience Bullet Enhancer
+  const handleAIExperience = async (index: number) => {
     setGeneratingAI(true);
     try {
       const item = experience[index];
-      const res = await api.post("/resume/generate-summary", {
-        personalInfo: { fullName: `Optimize experience points for role: ${item.role} at ${item.company}` },
-        experience: [item],
+      const res = await api.post("/resume/enhance-experience", {
+        role: item.role,
+        company: item.company,
+        description: item.description,
       });
-      const cleanedText = res.data.summary || "";
-      const updated = [...experience];
-      updated[index].description = cleanedText;
-      setExperience(updated);
+      if (res.data.success && res.data.description) {
+        const updated = [...experience];
+        updated[index].description = res.data.description;
+        setExperience(updated);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,6 +104,67 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
     }
   };
 
+  // AI Project Enhancer
+  const handleAIProject = async (index: number) => {
+    setGeneratingAI(true);
+    try {
+      const item = projects[index];
+      const res = await api.post("/resume/enhance-project", {
+        name: item.name,
+        techStack: item.techStack,
+        description: item.description,
+      });
+      if (res.data.success && res.data.description) {
+        const updated = [...projects];
+        updated[index].description = res.data.description;
+        setProjects(updated);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  // Optimize Entire Resume for Selected Target Company
+  const handleAIOptimizeCompany = async () => {
+    setGeneratingAI(true);
+    try {
+      const resumeJson = {
+        personalInfo,
+        summary,
+        education,
+        experience,
+        projects,
+        skills,
+        certifications,
+        achievements,
+        languages
+      };
+      const res = await api.post("/resume/optimize-resume", {
+        resumeJson,
+        targetCompany,
+      });
+      if (res.data.success && res.data.resume) {
+        const r = res.data.resume;
+        if (r.personalInfo) setPersonalInfo(r.personalInfo);
+        if (r.summary) setSummary(r.summary);
+        if (r.education) setEducation(r.education);
+        if (r.experience) setExperience(r.experience);
+        if (r.projects) setProjects(r.projects);
+        if (r.skills) setSkills(r.skills);
+        if (r.certifications) setCertifications(r.certifications);
+        if (r.achievements) setAchievements(r.achievements);
+        if (r.languages) setLanguages(r.languages);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  // Save Resume Draft
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
@@ -181,6 +177,9 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
         projects,
         skills,
         certifications,
+        achievements,
+        languages,
+        targetCompany,
       };
 
       if (resumeId) {
@@ -191,7 +190,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
           setResumeId(res.data.resume.id);
         }
       }
-      alert("✅ Draft saved successfully!");
+      alert("✅ Resume draft saved successfully!");
     } catch (err) {
       console.error(err);
       alert("❌ Failed to save draft.");
@@ -200,6 +199,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
     }
   };
 
+  // Export PDF / DOCX
   const handleExport = async (type: "pdf" | "docx") => {
     if (!resumeId) {
       alert("Please save the resume draft first before exporting.");
@@ -228,7 +228,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeEdu = (i: number) => setEducation(education.filter((_, idx) => idx !== i));
   const updateEdu = (i: number, key: string, val: string) => {
     const updated = [...education];
-    updated[i][key as keyof EducationItem] = val;
+    (updated[i] as any)[key] = val;
     setEducation(updated);
   };
 
@@ -236,7 +236,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeExp = (i: number) => setExperience(experience.filter((_, idx) => idx !== i));
   const updateExp = (i: number, key: string, val: string) => {
     const updated = [...experience];
-    updated[i][key as keyof ExperienceItem] = val;
+    (updated[i] as any)[key] = val;
     setExperience(updated);
   };
 
@@ -244,7 +244,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeProj = (i: number) => setProjects(projects.filter((_, idx) => idx !== i));
   const updateProj = (i: number, key: string, val: string) => {
     const updated = [...projects];
-    updated[i][key as keyof ProjectItem] = val;
+    (updated[i] as any)[key] = val;
     setProjects(updated);
   };
 
@@ -252,8 +252,24 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeCert = (i: number) => setCertifications(certifications.filter((_, idx) => idx !== i));
   const updateCert = (i: number, key: string, val: string) => {
     const updated = [...certifications];
-    updated[i][key as keyof CertificationItem] = val;
+    (updated[i] as any)[key] = val;
     setCertifications(updated);
+  };
+
+  const addAchievement = () => setAchievements([...achievements, ""]);
+  const removeAchievement = (i: number) => setAchievements(achievements.filter((_, idx) => idx !== i));
+  const updateAchievement = (i: number, val: string) => {
+    const updated = [...achievements];
+    updated[i] = val;
+    setAchievements(updated);
+  };
+
+  const addLanguage = () => setLanguages([...languages, ""]);
+  const removeLanguage = (i: number) => setLanguages(languages.filter((_, idx) => idx !== i));
+  const updateLanguage = (i: number, val: string) => {
+    const updated = [...languages];
+    updated[i] = val;
+    setLanguages(updated);
   };
 
   const addSkill = () => {
@@ -266,11 +282,12 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   const removeSkill = (sk: string) => setSkills(skills.filter(s => s !== sk));
 
   const templates = ["Modern", "Professional", "Minimal", "ATS Friendly", "Developer", "Student"];
+  const companies = ["Google", "Amazon", "Microsoft", "Meta", "Apple", "Startup"];
 
   return (
-    <div className="space-y-6">
-      {/* Top Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 relative h-full flex flex-col">
+      {/* Top Header Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setView("resume-hub")}
@@ -283,9 +300,9 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="bg-transparent border-b border-transparent hover:border-white/20 focus:border-[#f59e0b] focus:outline-none text-lg font-bold text-white py-0.5 px-1 rounded transition-colors"
+              className="bg-transparent border-b border-transparent hover:border-white/20 focus:border-amber-500 focus:outline-none text-lg font-bold text-white py-0.5 px-1 rounded transition-colors"
             />
-            <p className="text-[10px] text-white/40 px-1">Click to edit draft title</p>
+            <p className="text-[10px] text-white/40 px-1">Selected Template: {template}</p>
           </div>
         </div>
 
@@ -293,7 +310,7 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
           <button
             onClick={handleSaveDraft}
             disabled={saving}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-black font-bold text-xs px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Draft"}
           </button>
@@ -302,40 +319,24 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
             disabled={exporting !== null}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-white/5 transition-colors disabled:opacity-50"
           >
-            <Download className="w-4 h-4" /> {exporting === "pdf" ? "Exporting..." : "PDF"}
+            <Download className="w-4 h-4" /> {exporting === "pdf" ? "Exporting..." : "Download PDF"}
           </button>
           <button
             onClick={() => handleExport("docx")}
             disabled={exporting !== null}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-white/5 transition-colors disabled:opacity-50"
           >
-            <FileText className="w-4 h-4" /> {exporting === "docx" ? "Exporting..." : "DOCX"}
+            <FileText className="w-4 h-4" /> {exporting === "docx" ? "Exporting..." : "Download DOCX"}
           </button>
         </div>
       </div>
 
-      {/* Screen Toggle Tabs (only on smaller screens) */}
-      <div className="flex lg:hidden bg-white/5 border border-white/5 rounded-xl p-1">
-        <button
-          onClick={() => setTabMode("edit")}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors ${tabMode === "edit" ? "bg-[#f59e0b] text-black" : "text-white/70"}`}
-        >
-          <Edit className="w-3.5 h-3.5" /> Edit Form
-        </button>
-        <button
-          onClick={() => setTabMode("preview")}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors ${tabMode === "preview" ? "bg-[#f59e0b] text-black" : "text-white/70"}`}
-        >
-          <Eye className="w-3.5 h-3.5" /> Live Preview
-        </button>
-      </div>
-
-      {/* Split Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Form: Col Span 7 */}
-        <div className={`lg:col-span-7 space-y-6 ${tabMode === "edit" ? "block" : "hidden lg:block"}`}>
+      {/* Main Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
+        {/* Left Form Panel: 40% */}
+        <div className="lg:col-span-5 flex flex-col gap-4 overflow-y-auto max-h-[80vh] pr-2 custom-scrollbar">
           {/* Steps Navigator */}
-          <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
             <button
               onClick={() => setActiveStep(prev => Math.max(1, prev - 1))}
               disabled={activeStep === 1}
@@ -343,522 +344,368 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-white">
-              Step {activeStep} of 7: {
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              Step {activeStep} of 10: {
                 activeStep === 1 ? "Personal Info" :
-                activeStep === 2 ? "Education" :
-                activeStep === 3 ? "Work Experience" :
-                activeStep === 4 ? "Projects" :
-                activeStep === 5 ? "Technical Skills" :
-                activeStep === 6 ? "Certifications" : "Select Template"
+                activeStep === 2 ? "Professional Summary" :
+                activeStep === 3 ? "Education" :
+                activeStep === 4 ? "Experience" :
+                activeStep === 5 ? "Projects" :
+                activeStep === 6 ? "Skills" :
+                activeStep === 7 ? "Certifications" :
+                activeStep === 8 ? "Achievements" :
+                activeStep === 9 ? "Languages" : "Optimize & Template"
               }
             </span>
             <button
-              onClick={() => setActiveStep(prev => Math.min(7, prev + 1))}
-              disabled={activeStep === 7}
+              onClick={() => setActiveStep(prev => Math.min(10, prev + 1))}
+              disabled={activeStep === 10}
               className="p-1.5 rounded-lg bg-white/5 text-white disabled:opacity-30 hover:bg-white/10"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-6 space-y-6">
-            {/* Step 1: Personal Info */}
+          {/* Form Content Block */}
+          <div className="bg-white/3 border border-white/5 rounded-2xl p-5 space-y-4">
+            
+            {/* 1. Personal Info */}
             {activeStep === 1 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2">Personal Details</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={personalInfo.fullName}
-                      onChange={e => setPersonalInfo({ ...personalInfo, fullName: e.target.value })}
-                      placeholder="e.g. Aditi Sharma"
-                      className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={personalInfo.email}
-                      onChange={e => setPersonalInfo({ ...personalInfo, email: e.target.value })}
-                      placeholder="e.g. aditi@email.com"
-                      className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1">Phone</label>
-                    <input
-                      type="text"
-                      value={personalInfo.phone}
-                      onChange={e => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
-                      placeholder="e.g. +91 98765 43210"
-                      className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1">Location</label>
-                    <input
-                      type="text"
-                      value={personalInfo.location}
-                      onChange={e => setPersonalInfo({ ...personalInfo, location: e.target.value })}
-                      placeholder="e.g. Delhi, India"
-                      className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-white/50 uppercase font-semibold mb-1">Portfolio / Website Link</label>
+                <h3 className="font-bold text-sm text-white">Personal Information</h3>
+                <div className="space-y-3">
                   <input
                     type="text"
-                    value={personalInfo.website}
-                    onChange={e => setPersonalInfo({ ...personalInfo, website: e.target.value })}
-                    placeholder="https://portfolio.com"
-                    className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white"
+                    value={personalInfo.fullName}
+                    onChange={e => setPersonalInfo({ ...personalInfo, fullName: e.target.value })}
+                    placeholder="Full Name"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
                   />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-[10px] text-white/50 uppercase font-semibold">Professional Summary</label>
-                    <button
-                      type="button"
-                      onClick={handleAISummary}
-                      disabled={generatingAI}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-[#f59e0b] hover:underline bg-transparent border-none cursor-pointer"
-                    >
-                      <Sparkles className="w-3 h-3" /> {generatingAI ? "Generating..." : "AI Auto Write"}
-                    </button>
-                  </div>
-                  <textarea
-                    rows={4}
-                    value={personalInfo.summary}
-                    onChange={e => setPersonalInfo({ ...personalInfo, summary: e.target.value })}
-                    placeholder="Enter a professional summary or click AI Auto Write..."
-                    className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white resize-none"
+                  <input
+                    type="email"
+                    value={personalInfo.email}
+                    onChange={e => setPersonalInfo({ ...personalInfo, email: e.target.value })}
+                    placeholder="Email"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={personalInfo.phone}
+                    onChange={e => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
+                    placeholder="Phone"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={personalInfo.location}
+                    onChange={e => setPersonalInfo({ ...personalInfo, location: e.target.value })}
+                    placeholder="Location (e.g. London, UK)"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={personalInfo.linkedin}
+                    onChange={e => setPersonalInfo({ ...personalInfo, linkedin: e.target.value })}
+                    placeholder="LinkedIn Profile URL"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={personalInfo.github}
+                    onChange={e => setPersonalInfo({ ...personalInfo, github: e.target.value })}
+                    placeholder="GitHub Profile URL"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={personalInfo.portfolio}
+                    onChange={e => setPersonalInfo({ ...personalInfo, portfolio: e.target.value })}
+                    placeholder="Personal Portfolio URL"
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
                   />
                 </div>
               </div>
             )}
 
-            {/* Step 2: Education */}
+            {/* 2. Professional Summary */}
             {activeStep === 2 && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <h3 className="text-sm font-bold text-white">Education History</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Professional Summary</h3>
                   <button
-                    onClick={addEdu}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#f59e0b] hover:underline"
+                    onClick={handleAISummary}
+                    disabled={generatingAI}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-bold rounded-lg border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
                   >
-                    <Plus className="w-3 h-3" /> Add Institution
+                    <Sparkles size={11} /> {generatingAI ? "Summarizing..." : "AI Generate"}
                   </button>
                 </div>
-                {education.map((item, i) => (
-                  <div key={i} className="p-4 bg-white/2 border border-white/5 rounded-xl space-y-3 relative">
-                    {education.length > 1 && (
-                      <button
-                        onClick={() => removeEdu(i)}
-                        className="absolute top-2 right-2 text-white/40 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Institution</label>
-                        <input
-                          type="text"
-                          value={item.institution}
-                          onChange={e => updateEdu(i, "institution", e.target.value)}
-                          placeholder="e.g. IIT Delhi"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Degree</label>
-                        <input
-                          type="text"
-                          value={item.degree}
-                          onChange={e => updateEdu(i, "degree", e.target.value)}
-                          placeholder="e.g. B.Tech"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Field of Study</label>
-                        <input
-                          type="text"
-                          value={item.fieldOfStudy}
-                          onChange={e => updateEdu(i, "fieldOfStudy", e.target.value)}
-                          placeholder="e.g. Computer Science"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">GPA / Grade</label>
-                        <input
-                          type="text"
-                          value={item.grade}
-                          onChange={e => updateEdu(i, "grade", e.target.value)}
-                          placeholder="e.g. 9.2 CGPA"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Start Date</label>
-                        <input
-                          type="text"
-                          value={item.startDate}
-                          onChange={e => updateEdu(i, "startDate", e.target.value)}
-                          placeholder="e.g. Aug 2021"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">End Date (or Expected)</label>
-                        <input
-                          type="text"
-                          value={item.endDate}
-                          onChange={e => updateEdu(i, "endDate", e.target.value)}
-                          placeholder="e.g. May 2025"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                <textarea
+                  value={summary}
+                  onChange={e => setSummary(e.target.value)}
+                  placeholder="Summarize your professional experience, technical expertise, and career aspirations..."
+                  className="w-full h-44 bg-black/40 border border-white/10 rounded-lg p-3 text-xs text-white focus:outline-none focus:border-amber-500/50 resize-none"
+                />
               </div>
             )}
 
-            {/* Step 3: Experience */}
+            {/* 3. Education */}
             {activeStep === 3 && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <h3 className="text-sm font-bold text-white">Work Experience</h3>
-                  <button
-                    onClick={addExp}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#f59e0b] hover:underline"
-                  >
-                    <Plus className="w-3 h-3" /> Add Experience
-                  </button>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Education</h3>
+                  <button onClick={addEdu} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
                 </div>
-                {experience.map((item, i) => (
-                  <div key={i} className="p-4 bg-white/2 border border-white/5 rounded-xl space-y-3 relative">
-                    {experience.length > 1 && (
-                      <button
-                        onClick={() => removeExp(i)}
-                        className="absolute top-2 right-2 text-white/40 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Role / Job Title</label>
-                        <input
-                          type="text"
-                          value={item.role}
-                          onChange={e => updateExp(i, "role", e.target.value)}
-                          placeholder="e.g. SDE Intern"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Company / Organization</label>
-                        <input
-                          type="text"
-                          value={item.company}
-                          onChange={e => updateExp(i, "company", e.target.value)}
-                          placeholder="e.g. TechCorp"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Start Date</label>
-                        <input
-                          type="text"
-                          value={item.startDate}
-                          onChange={e => updateExp(i, "startDate", e.target.value)}
-                          placeholder="e.g. June 2024"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">End Date</label>
-                        <input
-                          type="text"
-                          value={item.endDate}
-                          onChange={e => updateExp(i, "endDate", e.target.value)}
-                          placeholder="e.g. Aug 2024 (or Present)"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold">Description / Accomplishments</label>
-                        <button
-                          type="button"
-                          onClick={() => handleAIExperiencePoints(i)}
-                          disabled={generatingAI}
-                          className="inline-flex items-center gap-1 text-[9px] font-bold text-[#f59e0b] hover:underline bg-transparent border-none cursor-pointer"
-                        >
-                          <Sparkles className="w-2.5 h-2.5" /> AI Enhance Points
-                        </button>
-                      </div>
-                      <textarea
-                        rows={3}
-                        value={item.description}
-                        onChange={e => updateExp(i, "description", e.target.value)}
-                        placeholder="Detail accomplishments, e.g., 'Implemented REST API serving 10k users...'"
-                        className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white resize-none"
-                      />
+                {education.map((item, idx) => (
+                  <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                    <button onClick={() => removeEdu(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13}/></button>
+                    <input type="text" placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Degree (e.g. Bachelor of Science)" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Field of Study" value={item.fieldOfStudy} onChange={e => updateEdu(idx, "fieldOfStudy", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <div className="grid grid-cols-3 gap-2">
+                      <input type="text" placeholder="Start Date" value={item.startDate} onChange={e => updateEdu(idx, "startDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                      <input type="text" placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                      <input type="text" placeholder="Grade/GPA" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Step 4: Projects */}
+            {/* 4. Experience */}
             {activeStep === 4 && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <h3 className="text-sm font-bold text-white">Projects</h3>
-                  <button
-                    onClick={addProj}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#f59e0b] hover:underline"
-                  >
-                    <Plus className="w-3 h-3" /> Add Project
-                  </button>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Work Experience</h3>
+                  <button onClick={addExp} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
                 </div>
-                {projects.map((item, i) => (
-                  <div key={i} className="p-4 bg-white/2 border border-white/5 rounded-xl space-y-3 relative">
-                    {projects.length > 1 && (
+                {experience.map((item, idx) => (
+                  <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                    <div className="flex justify-between items-center pr-6">
                       <button
-                        onClick={() => removeProj(i)}
-                        className="absolute top-2 right-2 text-white/40 hover:text-red-500 transition-colors"
+                        onClick={() => handleAIExperience(idx)}
+                        disabled={generatingAI}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Sparkles size={10} /> AI Improve
                       </button>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Project Name</label>
-                        <input
-                          type="text"
-                          value={item.name || item.title || ""}
-                          onChange={e => updateProj(i, "name", e.target.value)}
-                          placeholder="e.g. Chat Assistant"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Technologies Used</label>
-                        <input
-                          type="text"
-                          value={item.techStack}
-                          onChange={e => updateProj(i, "techStack", e.target.value)}
-                          placeholder="e.g. Next.js, Python, Tailwind"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
+                      <button onClick={() => removeExp(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={13}/></button>
                     </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold">Description</label>
-                        <button
-                          type="button"
-                          onClick={() => handleAIProjectDescription(i)}
-                          disabled={generatingAI}
-                          className="inline-flex items-center gap-1 text-[9px] font-bold text-[#f59e0b] hover:underline bg-transparent border-none cursor-pointer"
-                        >
-                          <Sparkles className="w-2.5 h-2.5" /> AI Generate Description
-                        </button>
-                      </div>
-                      <textarea
-                        rows={3}
-                        value={item.description}
-                        onChange={e => updateProj(i, "description", e.target.value)}
-                        placeholder="Summarize challenges and results..."
-                        className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2.5 text-xs text-white resize-none"
-                      />
+                    <input type="text" placeholder="Company Name" value={item.company} onChange={e => updateExp(idx, "company", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Job Role / Title" value={item.role} onChange={e => updateExp(idx, "role", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="Start Date" value={item.startDate} onChange={e => updateExp(idx, "startDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                      <input type="text" placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                     </div>
+                    <textarea placeholder="Job Description (responsibilities and technical achievements)..." value={item.description} onChange={e => updateExp(idx, "description", e.target.value)} className="w-full h-24 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white resize-none" />
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Step 5: Skills */}
+            {/* 5. Projects */}
             {activeStep === 5 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2">Technical Skills</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Projects</h3>
+                  <button onClick={addProj} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
+                </div>
+                {projects.map((item, idx) => (
+                  <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                    <div className="flex justify-between items-center pr-6">
+                      <button
+                        onClick={() => handleAIProject(idx)}
+                        disabled={generatingAI}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                      >
+                        <Sparkles size={10} /> AI Improve
+                      </button>
+                      <button onClick={() => removeProj(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={13}/></button>
+                    </div>
+                    <input type="text" placeholder="Project Name" value={item.name} onChange={e => updateProj(idx, "name", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Technologies Used (comma separated)" value={item.techStack} onChange={e => updateProj(idx, "techStack", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <textarea placeholder="Project Details and description..." value={item.description} onChange={e => updateProj(idx, "description", e.target.value)} className="w-full h-24 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white resize-none" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 6. Technical Skills */}
+            {activeStep === 6 && (
+              <div className="space-y-4">
+                <h3 className="font-bold text-sm text-white">Skills</h3>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={skillInput}
                     onChange={e => setSkillInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && addSkill()}
-                    placeholder="e.g. Python, React, AWS (Press Enter to add)"
-                    className="flex-1 bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
+                    placeholder="Enter a skill..."
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white"
                   />
-                  <button
-                    onClick={addSkill}
-                    className="bg-[#f59e0b] hover:bg-[#d97706] text-black font-bold text-xs px-4 rounded-lg"
-                  >
-                    Add
-                  </button>
+                  <button onClick={addSkill} className="px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-400">Add</button>
                 </div>
-
-                {/* Display Skills */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {skills.length === 0 ? (
-                    <span className="text-xs text-white/40 italic">No skills added yet.</span>
-                  ) : (
-                    skills.map(sk => (
-                      <span
-                        key={sk}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-[#f59e0b] border border-white/5 rounded-full text-xs font-semibold"
-                      >
-                        {sk}
-                        <button
-                          onClick={() => removeSkill(sk)}
-                          className="hover:text-red-500 text-white/50 bg-transparent border-none cursor-pointer"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))
-                  )}
-                </div>
-
-                {/* AI Recommendations */}
-                <div className="border-t border-white/5 pt-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-white/70 font-semibold">AI Skill Recommendations</span>
-                    <button
-                      onClick={handleFetchRecommendations}
-                      disabled={generatingAI || skills.length === 0}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-[#f59e0b] hover:underline bg-transparent border-none cursor-pointer disabled:opacity-40"
-                    >
-                      <Sparkles className="w-3 h-3" /> Fetch Skills Suggestions
-                    </button>
-                  </div>
-                  {recommendedSkills.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {recommendedSkills.map(sk => (
-                        <button
-                          key={sk}
-                          onClick={() => {
-                            if (!skills.includes(sk)) setSkills([...skills, sk]);
-                            setRecommendedSkills(prev => prev.filter(x => x !== sk));
-                          }}
-                          className="px-2.5 py-1 bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/20 hover:bg-[#f59e0b]/20 text-[10px] font-semibold rounded-full transition-colors cursor-pointer"
-                        >
-                          + {sk}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map(s => (
+                    <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                      {s} <button onClick={() => removeSkill(s)} className="text-red-400 hover:text-red-300 font-bold ml-1">&times;</button>
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Step 6: Certifications */}
-            {activeStep === 6 && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <h3 className="text-sm font-bold text-white">Certifications & Licenses</h3>
-                  <button
-                    onClick={addCert}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#f59e0b] hover:underline"
-                  >
-                    <Plus className="w-3 h-3" /> Add Certification
-                  </button>
+            {/* 7. Certifications */}
+            {activeStep === 7 && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Certifications</h3>
+                  <button onClick={addCert} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
                 </div>
-                {certifications.map((item, i) => (
-                  <div key={i} className="p-4 bg-white/2 border border-white/5 rounded-xl space-y-3 relative">
-                    {certifications.length > 1 && (
-                      <button
-                        onClick={() => removeCert(i)}
-                        className="absolute top-2 right-2 text-white/40 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Certification Name</label>
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={e => updateCert(i, "name", e.target.value)}
-                          placeholder="e.g. AWS Certified Solutions Architect"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Issuer</label>
-                        <input
-                          type="text"
-                          value={item.issuer}
-                          onChange={e => updateCert(i, "issuer", e.target.value)}
-                          placeholder="e.g. Amazon Web Services"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-white/50 uppercase font-semibold mb-1">Date</label>
-                        <input
-                          type="text"
-                          value={item.date}
-                          onChange={e => updateCert(i, "date", e.target.value)}
-                          placeholder="e.g. Nov 2024"
-                          className="w-full bg-white/2 border border-white/5 focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs text-white"
-                        />
-                      </div>
-                    </div>
+                {certifications.map((item, idx) => (
+                  <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                    <button onClick={() => removeCert(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13}/></button>
+                    <input type="text" placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Issuer Name" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
+                    <input type="text" placeholder="Date Earned (e.g. Jan 2026)" value={item.date} onChange={e => updateCert(idx, "date", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Step 7: Select Template */}
-            {activeStep === 7 && (
+            {/* 8. Achievements */}
+            {activeStep === 8 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2">Select Template</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {templates.map(t => (
-                    <div
-                      key={t}
-                      onClick={() => setTemplate(t)}
-                      className={`p-4 rounded-xl border text-center cursor-pointer transition-all ${template === t ? "bg-[#f59e0b]/10 border-[#f59e0b] text-[#f59e0b]" : "bg-white/2 border-white/5 text-white/70 hover:border-white/20"}`}
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Achievements</h3>
+                  <button onClick={addAchievement} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
+                </div>
+                {achievements.map((ach, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={ach}
+                      onChange={e => updateAchievement(idx, e.target.value)}
+                      placeholder="e.g. Secured 1st place in National Hackathon 2025"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                    />
+                    <button onClick={() => removeAchievement(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={15}/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 9. Languages */}
+            {activeStep === 9 && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-white">Languages</h3>
+                  <button onClick={addLanguage} className="flex items-center gap-1 text-[10px] text-amber-500 font-bold hover:underline"><Plus size={12}/> Add</button>
+                </div>
+                {languages.map((lang, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={lang}
+                      onChange={e => updateLanguage(idx, e.target.value)}
+                      placeholder="e.g. English (Fluent), Hindi (Native)"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                    />
+                    <button onClick={() => removeLanguage(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={15}/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 10. Optimize & Template Choice */}
+            {activeStep === 10 && (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h3 className="font-bold text-sm text-white">Target Company AI Optimization</h3>
+                  <p className="text-[11px] text-gray-400 leading-normal">
+                    Select a target company to automatically align your technical summaries, project phrasing, and highlighted skills with their core corporate values.
+                  </p>
+                  <div className="flex gap-2">
+                    <select
+                      value={targetCompany}
+                      onChange={e => setTargetCompany(e.target.value)}
+                      className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
                     >
-                      <FileText className="w-6 h-6 mx-auto mb-2 opacity-80" />
-                      <div className="text-xs font-bold">{t}</div>
-                    </div>
-                  ))}
+                      {companies.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <button
+                      onClick={handleAIOptimizeCompany}
+                      disabled={generatingAI}
+                      className="px-4 py-2.5 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-400 transition-all flex items-center gap-1.5"
+                    >
+                      <RefreshCw size={13} className={generatingAI ? "animate-spin" : ""} /> Optimize
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-bold text-sm text-white">Choose Layout Style</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {templates.map(t => (
+                      <div
+                        key={t}
+                        onClick={() => setTemplate(t)}
+                        className={`p-3 rounded-lg border text-center text-[10px] font-bold cursor-pointer transition-all ${template === t ? "bg-amber-500/10 border-amber-500 text-amber-500" : "bg-white/5 border-white/5 text-gray-400 hover:border-white/20"}`}
+                      >
+                        {t}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Right Preview Panel: Col Span 5 */}
-        <div className={`lg:col-span-5 sticky top-24 ${tabMode === "preview" ? "block" : "hidden lg:block"}`}>
-          <h2 className="text-lg font-bold text-white mb-4 hidden lg:flex items-center gap-2">
-            <Eye className="w-5 h-5 text-[#f59e0b]" /> Live Resume Preview
-          </h2>
-          <div className="backdrop-blur-md bg-white/3 border border-white/5 rounded-2xl p-6 min-h-[580px] max-h-[700px] overflow-y-auto shadow-2xl relative">
-            <ResumePreviewTemplate
-              personalInfo={personalInfo}
-              education={education}
-              experience={experience}
-              projects={projects}
-              skills={skills}
-              certifications={certifications}
-              template={template}
-            />
+        {/* Right Preview Panel: 60% */}
+        <div className={`lg:col-span-7 flex flex-col gap-4 overflow-hidden relative ${isFullscreen ? "fixed inset-0 z-[999] bg-[#060b0e] p-8" : ""}`}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <Eye className="w-4 h-4 text-amber-500" /> Live Render Preview
+            </h2>
+            
+            {/* Preview controls */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg p-1">
+                <button onClick={() => setZoom(prev => Math.max(50, prev - 10))} className="p-1 text-gray-400 hover:text-white"><ZoomOut size={13}/></button>
+                <span className="text-[10px] font-bold text-gray-300 min-w-[32px] text-center">{zoom}%</span>
+                <button onClick={() => setZoom(prev => Math.min(150, prev + 10))} className="p-1 text-gray-400 hover:text-white"><ZoomIn size={13}/></button>
+              </div>
+              <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
+                <Maximize2 size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive White A4 Page Sheet */}
+          <div className="flex-1 bg-black/40 border border-white/10 rounded-3xl p-6 overflow-auto flex justify-center items-start min-h-[500px]">
+            <div
+              className="bg-white text-black p-10 shadow-2xl transition-all duration-300 w-[595px] min-h-[842px]"
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: "top center",
+                fontFamily: template === "Minimal" ? "Georgia, serif" : "system-ui, sans-serif"
+              }}
+            >
+              <ResumePreviewTemplate
+                personalInfo={personalInfo}
+                summary={summary}
+                education={education}
+                experience={experience}
+                projects={projects}
+                skills={skills}
+                certifications={certifications}
+                achievements={achievements}
+                languages={languages}
+                template={template}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -866,123 +713,122 @@ export function ResumeBuilderView({ setView }: ResumeBuilderViewProps) {
   );
 }
 
-/**
- * Nested Preview Renderer based on template choice
- */
+// Nested Preview Render Template
 interface PreviewProps {
-  personalInfo: PersonalInfo;
-  education: EducationItem[];
-  experience: ExperienceItem[];
-  projects: ProjectItem[];
+  personalInfo: any;
+  summary: string;
+  education: any[];
+  experience: any[];
+  projects: any[];
   skills: string[];
-  certifications: CertificationItem[];
+  certifications: any[];
+  achievements: string[];
+  languages: string[];
   template: string;
 }
 
 function ResumePreviewTemplate({
-  personalInfo, education, experience, projects, skills, certifications, template
+  personalInfo, summary, education, experience, projects, skills, certifications, achievements, languages, template
 }: PreviewProps) {
-  const p = personalInfo;
-
   return (
-    <div className="text-[10px] text-white/80 leading-relaxed font-sans space-y-4">
-      {/* HEADER BLOCK */}
-      <div className={`text-center space-y-1 ${template === "Minimal" ? "text-left border-b border-white/5 pb-2" : ""}`}>
-        <h4 className={`text-base font-extrabold text-white tracking-wide ${template === "Developer" ? "text-[#f59e0b]" : ""}`}>
-          {p.fullName || "Candidate Name"}
+    <div className="text-[10px] text-gray-800 leading-relaxed space-y-4">
+      {/* Header */}
+      <div className={`text-center space-y-1 ${template === "Minimal" ? "text-left border-b border-gray-300 pb-3" : ""}`}>
+        <h4 className={`text-lg font-extrabold text-black tracking-wide ${template === "Developer" ? "text-amber-600" : ""}`}>
+          {personalInfo.fullName || "Candidate Name"}
         </h4>
-        <div className="text-[9px] text-white/50 flex flex-wrap justify-center gap-2">
-          {p.email && <span>{p.email}</span>}
-          {p.phone && <span>• {p.phone}</span>}
-          {p.location && <span>• {p.location}</span>}
+        <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
+          {personalInfo.email && <span>{personalInfo.email}</span>}
+          {personalInfo.phone && <span>• {personalInfo.phone}</span>}
+          {personalInfo.location && <span>• {personalInfo.location}</span>}
         </div>
-        {p.website && (
-          <div className="text-[9px] text-[#f59e0b] underline">{p.website}</div>
-        )}
+        <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
+          {personalInfo.linkedin && <span>LinkedIn: {personalInfo.linkedin}</span>}
+          {personalInfo.github && <span>• GitHub: {personalInfo.github}</span>}
+          {personalInfo.portfolio && <span>• Web: {personalInfo.portfolio}</span>}
+        </div>
       </div>
 
-      {/* SUMMARY */}
-      {p.summary && (
+      {/* Summary */}
+      {summary && (
         <div className="space-y-1">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Professional Summary</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
-          <p className="text-[9px] text-white/70 text-justify">{p.summary}</p>
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Professional Summary</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
+          <p className="text-[9px] text-gray-700 text-justify">{summary}</p>
         </div>
       )}
 
-      {/* EXPERIENCE */}
+      {/* Experience */}
       {experience.some(e => e.role || e.company) && (
         <div className="space-y-2">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Work Experience</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Work Experience</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
           {experience.map((item, idx) => (
             <div key={idx} className="space-y-1">
-              <div className="flex justify-between font-bold text-white text-[9.5px]">
+              <div className="flex justify-between font-bold text-black text-[9.5px]">
                 <span>{item.role || "Role"} @ {item.company || "Company"}</span>
-                <span className="text-[8.5px] text-white/40">{item.startDate} - {item.endDate}</span>
+                <span className="text-[8.5px] text-gray-400">{item.startDate} - {item.endDate}</span>
               </div>
               {item.description && (
-                <p className="text-[8.5px] text-white/60 pl-2 border-l border-white/5 whitespace-pre-line">{item.description}</p>
+                <p className="text-[8.5px] text-gray-600 pl-2 border-l border-gray-200 whitespace-pre-line">{item.description}</p>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* PROJECTS */}
-      {projects.some(pr => pr.name || pr.techStack) && (
+      {/* Projects */}
+      {projects.some(p => p.name || p.techStack) && (
         <div className="space-y-2">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Projects</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Projects</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
           {projects.map((item, idx) => (
             <div key={idx} className="space-y-0.5">
-              <div className="font-bold text-white text-[9.5px]">{item.name || "Project Title"}</div>
+              <div className="font-bold text-black text-[9.5px]">{item.name || "Project Title"}</div>
               {item.techStack && (
-                <div className="text-[8px] text-[#f59e0b]/80 italic">Tech Stack: {item.techStack}</div>
+                <div className="text-[8px] text-amber-700 italic">Tech Stack: {item.techStack}</div>
               )}
               {item.description && (
-                <p className="text-[8.5px] text-white/60 whitespace-pre-line pl-2 border-l border-white/5">{item.description}</p>
+                <p className="text-[8.5px] text-gray-600 pl-2 border-l border-gray-200 whitespace-pre-line">{item.description}</p>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* EDUCATION */}
-      {education.some(edu => edu.institution || edu.degree) && (
+      {/* Education */}
+      {education.some(e => e.institution || e.degree) && (
         <div className="space-y-2">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Education</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Education</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
           {education.map((item, idx) => (
             <div key={idx} className="space-y-0.5">
-              <div className="flex justify-between font-bold text-white">
+              <div className="flex justify-between font-bold text-black">
                 <span>{item.degree || "Degree"} in {item.fieldOfStudy || "Specialization"}</span>
-                <span className="text-[8.5px] text-white/40">{item.startDate} - {item.endDate}</span>
+                <span className="text-[8.5px] text-gray-400">{item.startDate} - {item.endDate}</span>
               </div>
-              <div className="text-[8.5px] text-white/60">{item.institution}</div>
-              {item.grade && (
-                <div className="text-[8px] text-white/40">GPA / Grade: {item.grade}</div>
-              )}
+              <div className="text-[8.5px] text-gray-600">{item.institution}</div>
+              {item.grade && <div className="text-[8px] text-gray-400">Grade / GPA: {item.grade}</div>}
             </div>
           ))}
         </div>
       )}
 
-      {/* SKILLS */}
+      {/* Skills */}
       {skills.length > 0 && (
         <div className="space-y-1">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Technical Skills</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
-          <p className="text-[9.5px] text-white/70">{skills.join(", ")}</p>
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Technical Skills</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
+          <p className="text-[9.5px] text-gray-700">{skills.join(", ")}</p>
         </div>
       )}
 
-      {/* CERTIFICATIONS */}
+      {/* Certifications */}
       {certifications.some(c => c.name || c.issuer) && (
         <div className="space-y-1">
-          <div className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-wider">Certifications</div>
-          <div className="h-px bg-white/5 w-full mb-1.5" />
-          <ul className="list-disc pl-3 text-[9px] text-white/70 space-y-0.5">
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Certifications</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
+          <ul className="list-disc pl-3 text-[9px] text-gray-700 space-y-0.5">
             {certifications.map((c, idx) => (
               <li key={idx}>
                 {c.name} {c.issuer && `by ${c.issuer}`} {c.date && `(${c.date})`}
@@ -991,6 +837,27 @@ function ResumePreviewTemplate({
           </ul>
         </div>
       )}
+
+      {/* Achievements */}
+      {achievements.some(a => a) && (
+        <div className="space-y-1">
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Key Achievements</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
+          <ul className="list-disc pl-3 text-[9px] text-gray-700 space-y-0.5">
+            {achievements.filter(Boolean).map((ach, idx) => <li key={idx}>{ach}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {/* Languages */}
+      {languages.some(l => l) && (
+        <div className="space-y-1">
+          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Languages</div>
+          <div className="h-px bg-gray-200 w-full mb-1" />
+          <p className="text-[9.5px] text-gray-700">{languages.filter(Boolean).join(", ")}</p>
+        </div>
+      )}
+
     </div>
   );
 }

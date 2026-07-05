@@ -583,3 +583,114 @@ export async function generateMindMapSchema(topic: string): Promise<MindMapResul
     return fallback;
   }
 }
+
+/**
+ * 16. Enhance Project Description
+ */
+export async function enhanceProjectDescription(
+  projectName: string,
+  techStack: string,
+  description: string
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const prompt = `
+    You are an expert technical resume reviewer. 
+    Optimize the description for the project: "${projectName}" built using "${techStack}".
+    Raw Description: "${description}"
+
+    Rewrite this description to be extremely professional, action-oriented, and highlight impact/metrics if possible.
+    Use strong bullet points (limit to 2-3 points). Do not write introduction or outro, just return the optimized description.
+  `;
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Error in enhanceProjectDescription:", error);
+    return description;
+  }
+}
+
+/**
+ * 17. Enhance Experience Bullet-points
+ */
+export async function enhanceExperienceDescription(
+  role: string,
+  company: string,
+  description: string
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const prompt = `
+    You are an expert recruiter. 
+    Optimize the job description for the role: "${role}" at "${company}".
+    Raw Job Description: "${description}"
+
+    Rewrite this description using the STAR method (Situation, Task, Action, Result). Focus on achievements, technical contributions, and metrics.
+    Output 3-4 professional bullet points starting with strong action verbs (e.g. Architected, Orchestrated, Optimized).
+    Return ONLY the bullet points, nothing else.
+  `;
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Error in enhanceExperienceDescription:", error);
+    return description;
+  }
+}
+
+/**
+ * 18. Optimize Entire Resume for Target Company
+ */
+export async function optimizeResumeContent(
+  resumeJson: any,
+  targetCompany: string
+): Promise<any> {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+
+  const companyValues: Record<string, string> = {
+    Google: "Innovation, technical complexity, algorithmic optimization, scalable design, Googley leadership.",
+    Amazon: "Ownership, customer obsession, Bias for Action, frugality, Leadership Principles.",
+    Microsoft: "Engineering excellence, collaborative alignment, security, cloud scale, accessibility.",
+    Meta: "Scale, rapid iteration, impact, Move Fast, focus on business value, system performance.",
+    Apple: "Detail orientation, premium quality, design integration, hardware-software synergy.",
+    Startup: "Versatility, high impact, end-to-end execution, rapid MVP creation, speed.",
+  };
+
+  const values = companyValues[targetCompany] || "General professional excellence.";
+
+  const prompt = `
+    You are an elite career coach. Optimize the following resume data to stand out at "${targetCompany}".
+    The key characteristics and leadership values highly prized at ${targetCompany} are:
+    "${values}"
+
+    Carefully review and refine the professional summary, experience bullet points, project details, and skills in the resume JSON.
+    Align the wording, technologies, and achievements to emphasize alignment with those values.
+
+    Input Resume JSON:
+    ${JSON.stringify(resumeJson)}
+
+    You MUST output a valid JSON object matching the input schema:
+    {
+      "personalInfo": { "fullName": "", "email": "", "phone": "", "linkedin": "", "github": "", "portfolio": "", "location": "", "summary": "" },
+      "summary": "Optimized professional summary",
+      "education": [ { "institution": "", "degree": "", "fieldOfStudy": "", "startDate": "", "endDate": "", "grade": "" } ],
+      "experience": [ { "company": "", "role": "", "startDate": "", "endDate": "", "description": "optimized description" } ],
+      "projects": [ { "name": "", "techStack": "", "description": "optimized description" } ],
+      "skills": ["optimized", "skills", "list"],
+      "certifications": [ { "name": "", "issuer": "", "date": "" } ],
+      "achievements": ["achievement 1", "achievement 2"],
+      "languages": ["language 1", "language 2"]
+    }
+  `;
+
+  try {
+    const result = await model.generateContent(prompt);
+    return parseGeminiJson<any>(result.response.text(), resumeJson);
+  } catch (error) {
+    console.error("Error in optimizeResumeContent:", error);
+    return resumeJson;
+  }
+}
+

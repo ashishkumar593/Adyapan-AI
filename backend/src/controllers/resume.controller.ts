@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
-import { generateResumeSummary } from "../lib/ai/gemini";
+import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent } from "../lib/ai/gemini";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 
@@ -153,6 +153,45 @@ export async function generateSummary(req: Request, res: Response, next: NextFun
     );
 
     res.json({ success: true, summary });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Enhance Project Description
+ */
+export async function enhanceProject(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { name, techStack, description } = req.body;
+    const result = await enhanceProjectDescription(name ?? "", techStack ?? "", description ?? "");
+    res.json({ success: true, description: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Enhance Experience Description
+ */
+export async function enhanceExperience(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { role, company, description } = req.body;
+    const result = await enhanceExperienceDescription(role ?? "", company ?? "", description ?? "");
+    res.json({ success: true, description: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Optimize Entire Resume for Target Company
+ */
+export async function optimizeResume(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { resumeJson, targetCompany } = req.body;
+    const result = await optimizeResumeContent(resumeJson, targetCompany || "Startup");
+    res.json({ success: true, resume: result });
   } catch (error) {
     next(error);
   }

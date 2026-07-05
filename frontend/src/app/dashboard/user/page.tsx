@@ -7,7 +7,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/services/api";
 import Link from "next/link";
 import Image from "next/image";
-import { ResumeHubView } from "@/components/resume-hub/ResumeHubView";
+import { ResumeTemplateMarketplace } from "@/components/resume-hub/ResumeTemplateMarketplace";
 import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
 import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
 import { ResumeAnalyzerView } from "@/components/resume-hub/ResumeAnalyzerView";
@@ -105,9 +105,7 @@ const sidebarItems: SidebarItem[] = [
   {
     id: "resume", label: "Resume Hub", icon: <FileText size={18} />,
     submenu: [
-      { label: "Resume Builder", href: "#" }, { label: "ATS Score Checker", href: "#" },
-      { label: "Resume Analyzer", href: "#" }, { label: "Cover Letter Generator", href: "#" },
-      { label: "LinkedIn Optimizer", href: "#" },
+      { label: "Resume Builder", href: "#" },
     ],
   },
   {
@@ -264,11 +262,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                     href={sub.href}
                     onClick={(e) => {
                       e.preventDefault();
-                      if (sub.label === "Resume Builder") onViewTool("resume-builder");
-                      else if (sub.label === "ATS Score Checker") onViewTool("ats-checker");
-                      else if (sub.label === "Resume Analyzer") onViewTool("resume-analyzer");
-                      else if (sub.label === "Cover Letter Generator") onViewTool("cover-letter");
-                      else if (sub.label === "LinkedIn Optimizer") onViewTool("linkedin-optimizer");
+                      if (sub.label === "Resume Builder") onViewTool("resume-hub");
                       else if (sub.label === "Study Assistant") onViewTool("study-assistant");
                       else if (sub.label === "Notes Generator") onViewTool("notes-generator");
                       else if (sub.label === "Quiz Generator") onViewTool("quiz-generator");
@@ -1096,6 +1090,7 @@ function UserDashboardContent() {
   const [toast, setToast] = useState(false);
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("Modern");
 
   useEffect(() => {
     // Load theme immediately
@@ -1145,9 +1140,14 @@ function UserDashboardContent() {
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
         ) : activeView === "resume-hub" ? (
-          <ResumeHubView setView={setActiveView} />
+          <ResumeTemplateMarketplace
+            onSelectTemplate={(templateName) => {
+              setSelectedTemplate(templateName);
+              setActiveView("resume-builder");
+            }}
+          />
         ) : activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} />
+          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
         ) : activeView === "resume-analyzer" ? (
