@@ -380,27 +380,26 @@ function DashboardTopNav({
         </Link>
         <motion.div className="desktop-search" style={{ position: "relative" }}
           animate={{width: searchFocused ? 300 : 230}}
-          transition={{duration: 0.2}}
+          transition={{duration: 0.2, ease: "easeOut"}}
         >
-          <motion.span
-            animate={{rotate: searchFocused ? 0 : 0, color: searchFocused ? "var(--primary)" : "var(--text-muted)"}}
-            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex" }}
-          >
+          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex", color: searchFocused ? "var(--primary)" : "var(--text-muted)", transition: "color 0.15s ease" }}>
             <Search size={14} />
-          </motion.span>
+          </span>
           <motion.input
             type="text" placeholder="Search tools, notes, jobs..."
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
+            initial={false}
             animate={{
               borderColor: searchFocused ? "rgba(245,158,11,0.5)" : navBorder,
-              boxShadow: searchFocused ? "0 0 10px rgba(245,158,11,0.12)" : "none",
+              boxShadow: searchFocused ? "0 0 0 1px rgba(245,158,11,0.08)" : "0 0 0 0px transparent",
             }}
             transition={{duration: 0.12}}
             style={{
               width: "100%", padding: "0.5rem 1rem 0.5rem 2rem",
               background: navInputBg, border: `1px solid ${navBorder}`,
               borderRadius: 8, color: navInputColor, fontSize: "0.83rem", outline: "none",
+              boxSizing: "border-box",
             }}
           />
         </motion.div>
