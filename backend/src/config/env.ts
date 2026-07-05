@@ -7,6 +7,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "replace-this-local-secret-before-production",
   adminRegisterSecret: process.env.ADMIN_REGISTER_SECRET ?? "adyapan-admin-2024",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
+  groqApiKey: process.env.GROQ_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
