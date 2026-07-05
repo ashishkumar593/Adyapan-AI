@@ -71,6 +71,12 @@ app.get("/", (_req, res) => {
 app.use("/api", apiRouter);
 app.use(errorHandler);
 
-app.listen(env.port, "0.0.0.0", () => {
+import { createServer } from "http";
+import { initSocketServer } from "./lib/socket";
+
+const server = createServer(app);
+initSocketServer(server);
+
+server.listen(env.port, "0.0.0.0", () => {
   console.log(`Adyapan AI API running on http://0.0.0.0:${env.port}`);
 });

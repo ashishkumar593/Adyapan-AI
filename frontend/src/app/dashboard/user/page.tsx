@@ -1,5 +1,6 @@
 "use client";
 
+import { SocketProvider } from "@/context/SocketContext";
 import { useState, useEffect, useRef } from "react";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -1081,6 +1082,14 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
+  return (
+    <SocketProvider>
+      <UserDashboardContent />
+    </SocketProvider>
+  );
+}
+
+function UserDashboardContent() {
   useRequireAuth("USER");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
