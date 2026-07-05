@@ -1,3 +1,5 @@
+
+
 export type ResumeHubViewType =
   | "dashboard"
   | "profile"
@@ -16,7 +18,8 @@ export type ResumeHubViewType =
   | "coding-assistant"
   | "dsa-practice"
   | "coding-challenges"
-  | "github-portfolio";
+  | "github-portfolio"
+  | "notifications";
 
 export interface PersonalInfo {
   fullName: string;

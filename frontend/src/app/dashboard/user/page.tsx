@@ -34,10 +34,8 @@ import {
   Star, Zap,
   LineChart, Trophy, MessageCircle,
   Target, Globe, Edit3, Save, X,
-  Upload, Download, Trash2, RefreshCw,
+  Upload, Download, Trash2, RefreshCw, ArrowLeft,
 } from "lucide-react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface AdyapanUser {
   name: string;
   email: string;
@@ -311,6 +309,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
   user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
+  notifications, setNotifications,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -320,15 +319,12 @@ function DashboardTopNav({
   onAdyChat: () => void;
   onViewTool: (tool: ResumeHubViewType) => void;
   onMenuToggle: () => void;
+  notifications: any[];
+  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "Resume ATS Score updated to 78%", time: "3 hours ago", read: false },
-    { id: 2, text: "New DSA Practice question is available", time: "5 hours ago", read: false },
-    { id: 3, text: "Assignment Generator completed successfully", time: "Yesterday", read: true },
-  ]);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -568,17 +564,27 @@ function DashboardTopNav({
                   ))
                 )}
               </div>
-
-              {notifications.length > 0 && (
-                <div style={{ borderTop: `1px solid ${navBorder}`, paddingTop: "0.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ borderTop: `1px solid ${navBorder}`, paddingTop: "0.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {notifications.length > 0 ? (
                   <button
                     onClick={() => setNotifications([])}
                     style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                   >
                     Clear all
                   </button>
-                </div>
-              )}
+                ) : (
+                  <div />
+                )}
+                <button
+                  onClick={() => {
+                    onViewTool("notifications");
+                    setNotificationsOpen(false);
+                  }}
+                  style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  See all notifications
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1122,6 +1128,138 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
   );
 }
 
+// ─── Notifications View ───────────────────────────────────────────────────────
+function NotificationsView({
+  notifications,
+  setNotifications,
+  onViewDashboard
+}: {
+  notifications: any[];
+  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
+  onViewDashboard: () => void;
+}) {
+  const handleToggleRead = (id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  };
+
+  const handleDelete = (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <p style={{ fontSize: "0.78rem", color: "var(--primary)", fontWeight: 600, marginBottom: 2 }}>NOTIFICATIONS</p>
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>All Notifications</h1>
+        </div>
+        <div style={{ display: "flex", gap: "0.6rem" }}>
+          <button
+            onClick={onViewDashboard}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "0.5rem 1rem", borderRadius: 8, fontSize: "0.82rem",
+              fontWeight: 600, cursor: "pointer", background: "transparent",
+              border: "1px solid var(--border-color)", color: "var(--text-secondary)"
+            }}
+          >
+            <ArrowLeft size={14} /> Back to Dashboard
+          </button>
+          {notifications.length > 0 && (
+            <>
+              <button
+                onClick={handleMarkAllRead}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "0.5rem 1rem", borderRadius: 8, fontSize: "0.82rem",
+                  fontWeight: 600, cursor: "pointer", background: "rgba(245,158,11,0.1)",
+                  border: "1px solid rgba(245,158,11,0.25)", color: "var(--primary)"
+                }}
+              >
+                Mark All as Read
+              </button>
+              <button
+                onClick={handleClearAll}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "0.5rem 1rem", borderRadius: 8, fontSize: "0.82rem",
+                  fontWeight: 600, cursor: "pointer", background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444"
+                }}
+              >
+                <Trash2 size={14} /> Clear All
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: 16, padding: "1.5rem" }}>
+        {notifications.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "3rem 0", color: "var(--text-muted)" }}>
+            <Bell size={48} style={{ opacity: 0.3, marginBottom: "1rem", margin: "0 auto" }} />
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>All caught up!</h3>
+            <p style={{ fontSize: "0.82rem", margin: 0 }}>You have no new notifications.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {notifications.map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "1rem", borderRadius: 12,
+                  background: n.read ? "rgba(255,255,255,0.01)" : "rgba(245,158,11,0.03)",
+                  border: `1px solid ${n.read ? "var(--border-color)" : "rgba(245,158,11,0.2)"}`,
+                  transition: "all 0.2s"
+                }}
+              >
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flex: 1, marginRight: "1rem" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "transparent" : "var(--primary)", marginTop: 6, flexShrink: 0 }} />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: n.read ? 600 : 700, color: "var(--text-primary)" }}>{n.text}</h4>
+                    <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", display: "inline-block", marginTop: 4 }}>{n.time}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    onClick={() => handleToggleRead(n.id)}
+                    style={{
+                      padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
+                      cursor: "pointer", background: "transparent", border: "1px solid var(--border-color)",
+                      color: "var(--text-secondary)"
+                    }}
+                  >
+                    {n.read ? "Mark Unread" : "Mark Read"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(n.id)}
+                    style={{
+                      padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
+                      cursor: "pointer", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)",
+                      color: "#ef4444"
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
@@ -1140,6 +1278,11 @@ function UserDashboardContent() {
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("Modern");
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "Resume ATS Score updated to 78%", time: "3 hours ago", read: false },
+    { id: 2, text: "New DSA Practice question is available", time: "5 hours ago", read: false },
+    { id: 3, text: "Assignment Generator completed successfully", time: "Yesterday", read: true },
+  ]);
 
   const [dashboardStats, setDashboardStats] = useState({
     resumesCount: 0,
@@ -1298,7 +1441,7 @@ function UserDashboardContent() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
@@ -1341,6 +1484,12 @@ function UserDashboardContent() {
           <CodingChallengesView />
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
+        ) : activeView === "notifications" ? (
+          <NotificationsView
+            notifications={notifications}
+            setNotifications={setNotifications}
+            onViewDashboard={handleViewDashboard}
+          />
         ) : (
           statsLoading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "400px", color: "var(--text-secondary)", gap: "0.75rem" }}>
