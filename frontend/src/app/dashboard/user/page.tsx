@@ -2,6 +2,7 @@
 
 import { SocketProvider } from "@/context/SocketContext";
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -179,7 +180,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
     <aside className={`dash-sidebar ${sidebarOpen ? "open" : ""}`}>
       {/* Mobile close button */}
       <div className="mobile-close-btn" style={{ display: "none", justifyContent: "flex-end", padding: "0.5rem 0.5rem 0" }}>
-        <button
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
           onClick={() => setSidebarOpen(false)}
           style={{
             background: "transparent", border: "none", cursor: "pointer",
@@ -188,11 +189,11 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
           }}
         >
           <X size={20} />
-        </button>
+        </motion.button>
       </div>
 
       {/* Dashboard */}
-      <button
+      <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
         onClick={() => {
           onViewDashboard();
           setSidebarOpen(false);
@@ -209,7 +210,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
       >
         <span style={{ flexShrink: 0 }}><LayoutDashboard size={18} /></span>
         <span className="sb-label">Dashboard</span>
-      </button>
+      </motion.button>
 
       {/* Divider */}
       <div style={{ height: 1, background: "var(--border-color)", margin: "0.5rem 0.3rem 0.7rem" }} />
@@ -219,7 +220,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
         const isOpen = openItem === item.id;
         return (
           <div key={item.id} className={isOpen ? "sb-item open" : "sb-item"}>
-            <button
+            <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
               onClick={() => {
                 toggleItem(item.id);
               }}
@@ -245,7 +246,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
               <span className="sb-arrow" style={{ marginLeft: "auto", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
                 <ChevronDown size={13} />
               </span>
-            </button>
+            </motion.button>
             {/* Submenu: visible when open AND sidebar is hovered */}
             {isOpen && (
               <div className="sb-submenu" style={{ paddingLeft: "1.2rem" }}>
@@ -358,7 +359,7 @@ function DashboardTopNav({
       {/* Left */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         {/* Mobile menu trigger */}
-        <button
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
           onClick={onMenuToggle}
           className="mobile-menu-btn"
           style={{
@@ -368,7 +369,7 @@ function DashboardTopNav({
           }}
         >
           <Menu size={20} />
-        </button>
+        </motion.button>
 
         <Link href="/dashboard/user" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
@@ -394,9 +395,9 @@ function DashboardTopNav({
           onMouseEnter={() => setGenerateOpen(true)}
           onMouseLeave={() => setGenerateOpen(false)}
         >
-          <button style={navBtnBase}>
+          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} style={navBtnBase}>
             <Zap size={13} /> Generate <ChevronDown size={12} />
-          </button>
+          </motion.button>
           {generateOpen && (
             <div style={{
               position: "absolute", top: "100%", left: 0, marginTop: 4, minWidth: 170,
@@ -405,7 +406,7 @@ function DashboardTopNav({
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}>
               {genItems.map((item) => (
-                <button key={item} onClick={() => {
+                <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} key={item} onClick={() => {
                   if (item === "Resume") onViewTool("resume-builder");
                   else if (item === "Notes") onViewTool("notes-generator");
                   else if (item === "Assignment") onViewTool("assignment-generator");
@@ -418,24 +419,24 @@ function DashboardTopNav({
                   background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
                 }}>
                   {item}
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
         </div>
 
-        <button onClick={onComingSoon} style={navBtnBase}>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={navBtnBase}>
           <Mic size={13} /> AI Interview
-        </button>
+        </motion.button>
 
         {/* Evaluate dropdown */}
         <div style={{ position: "relative" }}
           onMouseEnter={() => setEvaluateOpen(true)}
           onMouseLeave={() => setEvaluateOpen(false)}
         >
-          <button style={navBtnBase}>
+          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} style={navBtnBase}>
             <Star size={13} /> Evaluate <ChevronDown size={12} />
-          </button>
+          </motion.button>
           {evaluateOpen && (
             <div style={{
               position: "absolute", top: "100%", left: 0, marginTop: 4, minWidth: 180,
@@ -444,7 +445,7 @@ function DashboardTopNav({
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}>
               {evalItems.map((item) => (
-                <button key={item} onClick={() => {
+                <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} key={item} onClick={() => {
                   if (item === "ATS Score") onViewTool("ats-checker");
                   else onComingSoon();
                 }} style={{
@@ -453,17 +454,17 @@ function DashboardTopNav({
                   background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
                 }}>
                   {item}
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
         </div>
 
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
-        <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</button>
-        <button onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</button>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Jobs</motion.button>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onComingSoon} style={{ ...navBtnBase, padding: "0.5rem 0.75rem" }}>Internships</motion.button>
         <span style={{ width: 1, height: 20, background: "var(--border-color)", margin: "0 4px" }} />
-        <button
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
           onClick={onAdyChat}
           style={{
             ...navBtnBase,
@@ -475,26 +476,26 @@ function DashboardTopNav({
           }}
         >
           <MessageCircle size={13} /> Ady Chat
-        </button>
+        </motion.button>
       </div>
 
       {/* Right */}
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <button className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
           <Crown size={13} /> Premium
-        </button>
+        </motion.button>
 
         {/* Theme toggle */}
-        <button onClick={onThemeToggle} aria-label="Toggle theme" style={{
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onThemeToggle} aria-label="Toggle theme" style={{
           background: navBtnBg, border: `1px solid ${navBorder}`, borderRadius: 8,
           width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
           cursor: "pointer", color: "var(--text-secondary)",
         }}>
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
+        </motion.button>
         {/* Notification bell */}
         <div ref={notificationsRef} style={{ position: "relative" }}>
-          <button
+          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
             onClick={() => setNotificationsOpen(prev => !prev)}
             aria-label="Notifications"
             style={{
@@ -514,7 +515,7 @@ function DashboardTopNav({
                 {notifications.filter(n => !n.read).length}
               </span>
             )}
-          </button>
+          </motion.button>
 
           {notificationsOpen && (
             <div style={{
@@ -526,12 +527,12 @@ function DashboardTopNav({
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem", borderBottom: `1px solid ${navBorder}`, paddingBottom: "0.5rem" }}>
                 <span style={{ fontSize: "0.85rem", fontWeight: 700, color: navBtnColor }}>Notifications</span>
                 {notifications.filter(n => !n.read).length > 0 && (
-                  <button
+                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                     onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
                     style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                   >
                     Mark all read
-                  </button>
+                  </motion.button>
                 )}
               </div>
 
@@ -556,16 +557,16 @@ function DashboardTopNav({
               </div>
               <div style={{ borderTop: `1px solid ${navBorder}`, paddingTop: "0.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 {notifications.length > 0 ? (
-                  <button
+                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                     onClick={() => setNotifications([])}
                     style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                   >
                     Clear all
-                  </button>
+                  </motion.button>
                 ) : (
                   <div />
                 )}
-                <button
+                <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                   onClick={() => {
                     onViewTool("notifications");
                     setNotificationsOpen(false);
@@ -573,7 +574,7 @@ function DashboardTopNav({
                   style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   See all notifications
-                </button>
+                </motion.button>
               </div>
             </div>
           )}
@@ -675,7 +676,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
           {/* Action buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.9rem" }}>
             {["View Community Profile", "Manage Account"].map((label) => (
-              <button key={label} onClick={onComingSoon} style={{
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} key={label} onClick={onComingSoon} style={{
                 background: isDarkTheme ? "#0d151c" : "#f1f5f9",
                 color: isDarkTheme ? "#fff" : "#0f172a",
                 border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
@@ -683,7 +684,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
                 cursor: "pointer", transition: "all 0.2s",
               }}>
                 {label}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -875,15 +876,15 @@ function WelcomeBanner({
         </div>
       </div>
       <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-        <button onClick={onStartStudy} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onStartStudy} style={{ ...btnBase, background: "var(--primary)", color: "#000", border: "none" }}>
           Start Study Session
-        </button>
-        <button onClick={onBuildResume} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+        </motion.button>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onBuildResume} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
           Build Resume
-        </button>
-        <button onClick={onPracticeDsa} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+        </motion.button>
+        <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={onPracticeDsa} style={{ ...btnBase, background: "transparent", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
           Practice DSA
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -975,7 +976,7 @@ function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => 
         <PanelCard title="Quick Actions">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
             {quickActions.map((action) => (
-              <button
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                 key={action.label}
                 onClick={() => onViewTool(action.target as any)}
                 style={{
@@ -999,7 +1000,7 @@ function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => 
               >
                 <span style={{ color: action.color }}>{action.icon}</span>
                 {action.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </PanelCard>
@@ -1068,7 +1069,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.5rem",flexWrap:"wrap",gap:"0.75rem"}}>
         <div><p style={{fontSize:"0.78rem",color:"var(--primary)",fontWeight:600,marginBottom:2}}>USER PROFILE</p><h1 style={{fontSize:"1.4rem",fontWeight:800,color:"var(--text-primary)",margin:0}}>{displayName}</h1></div>
         <div style={{display:"flex",gap:"0.6rem"}}>
-          {editMode ? (<><button onClick={()=>setEditMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:600,cursor:"pointer",background:"transparent",border:"1px solid var(--border-color)",color:"var(--text-secondary)"}}><X size={14}/> Cancel</button><button onClick={handleSave} disabled={saving} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000",opacity:saving?0.65:1}}><Save size={14}/> {saving?"Saving…":"Save Changes"}</button></>) : (<button onClick={()=>setEditMode(true)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000"}}><Edit3 size={14}/> Edit Profile</button>)}
+          {editMode ? (<><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={()=>setEditMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:600,cursor:"pointer",background:"transparent",border:"1px solid var(--border-color)",color:"var(--text-secondary)"}}><X size={14}/> Cancel</motion.button><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={handleSave} disabled={saving} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000",opacity:saving?0.65:1}}><Save size={14}/> {saving?"Saving…":"Save Changes"}</motion.button></>) : (<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={()=>setEditMode(true)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"0.5rem 1rem",borderRadius:8,fontSize:"0.82rem",fontWeight:700,cursor:"pointer",background:"var(--primary)",border:"none",color:"#000"}}><Edit3 size={14}/> Edit Profile</motion.button>)}
         </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:"1.2rem",alignItems:"start"}} className="profile-grid">
@@ -1082,7 +1083,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
           </div>
           <div style={{background:"var(--bg-card)",border:"1px solid var(--border-color)",borderRadius:16,padding:"1.1rem",marginBottom:"1rem"}}>
             <div style={{fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",marginBottom:"0.75rem"}}>Quick Actions</div>
-            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("🚀 Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<button key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</button>))}
+            {[{label:"Edit Profile",icon:<Edit3 size={13}/>,fn:()=>setEditMode(true)},{label:"Back to Dashboard",icon:<LayoutDashboard size={13}/>,fn:onViewDashboard},{label:"Download Profile",icon:<Download size={13}/>,fn:()=>setProfileToast("🚀 Coming Soon!")},{label:"Add Portfolio Links",icon:<Globe size={13}/>,fn:()=>setEditMode(true)}].map(a=>(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} key={a.label} onClick={a.fn} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"0.45rem 0.5rem",borderRadius:8,background:"transparent",border:"none",color:"var(--text-secondary)",fontSize:"0.81rem",cursor:"pointer",textAlign:"left",marginBottom:2}} onMouseEnter={e=>(e.currentTarget.style.color="var(--primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-secondary)")}><span style={{color:"var(--primary)"}}>{a.icon}</span>{a.label}</motion.button>))}
           </div>
         </div>
         <div>
@@ -1097,7 +1098,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
               <SectionCard title="Career Goals" icon={<Target size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="Target Role" value={profile?.targetRole} placeholder="Not set"/></div><FieldRow label="Career Objective" value={profile?.careerObjective} placeholder="Describe your professional goals..."/></SectionCard>
               <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1.5rem"}}><FieldRow label="LinkedIn" value={profile?.linkedin} placeholder="Not set"/><FieldRow label="GitHub" value={profile?.github} placeholder="Not set"/><FieldRow label="Portfolio" value={profile?.portfolio} placeholder="Not set"/></div></SectionCard>
               <SectionCard title="Resume" icon={<FileText size={16}/>}>
-                {profile?.resumeUrl?(<div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.75rem",background:"rgba(245,158,11,0.05)",borderRadius:10,border:"1px solid rgba(245,158,11,0.15)"}}><FileText size={20} style={{color:"var(--primary)",flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:"0.85rem",fontWeight:600,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.resumeName||"Resume"}</div></div><a href={profile.resumeUrl} target="_blank" rel="noreferrer" style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.2)",fontSize:"0.78rem",fontWeight:600,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Download size={12}/> View</a><button onClick={handleRemoveResume} style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(239,68,68,0.1)",color:"#ef4444",border:"1px solid rgba(239,68,68,0.2)",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Trash2 size={12}/> Remove</button></div>):(<div style={{textAlign:"center",padding:"1.5rem"}}><Upload size={28} style={{color:"var(--text-muted)",marginBottom:8}}/><p style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:"0.75rem"}}>No resume uploaded yet</p><button onClick={()=>fileRef.current?.click()} disabled={uploading} style={{padding:"0.5rem 1.2rem",borderRadius:8,background:"var(--primary)",border:"none",color:"#000",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"}}>{uploading?"Uploading…":"Upload Resume"}</button></div>)}
+                {profile?.resumeUrl?(<div style={{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.75rem",background:"rgba(245,158,11,0.05)",borderRadius:10,border:"1px solid rgba(245,158,11,0.15)"}}><FileText size={20} style={{color:"var(--primary)",flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:"0.85rem",fontWeight:600,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.resumeName||"Resume"}</div></div><a href={profile.resumeUrl} target="_blank" rel="noreferrer" style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(59,130,246,0.1)",color:"#3b82f6",border:"1px solid rgba(59,130,246,0.2)",fontSize:"0.78rem",fontWeight:600,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Download size={12}/> View</a><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={handleRemoveResume} style={{padding:"0.4rem 0.8rem",borderRadius:7,background:"rgba(239,68,68,0.1)",color:"#ef4444",border:"1px solid rgba(239,68,68,0.2)",fontSize:"0.78rem",fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4,flexShrink:0}}><Trash2 size={12}/> Remove</motion.button></div>):(<div style={{textAlign:"center",padding:"1.5rem"}}><Upload size={28} style={{color:"var(--text-muted)",marginBottom:8}}/><p style={{fontSize:"0.82rem",color:"var(--text-muted)",marginBottom:"0.75rem"}}>No resume uploaded yet</p><motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={()=>fileRef.current?.click()} disabled={uploading} style={{padding:"0.5rem 1.2rem",borderRadius:8,background:"var(--primary)",border:"none",color:"#000",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"}}>{uploading?"Uploading…":"Upload Resume"}</motion.button></div>)}
                 <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];if(file)handleResume(file);e.target.value="";}}/>
               </SectionCard>
             </>
@@ -1105,7 +1106,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
             <>
               <SectionCard title="Personal Information" icon={<User size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="Username" value={f.username} onChange={setField("username")} placeholder="@username"/><ProfileFormInput label="Phone" value={f.phone} onChange={setField("phone")} placeholder="+91 XXXXX XXXXX"/><ProfileFormInput label="Location" value={f.location} onChange={setField("location")} placeholder="City, Country"/></div><ProfileFormTextarea label="About Me" value={f.aboutMe} onChange={setField("aboutMe")} placeholder="Tell us about yourself..."/></SectionCard>
               <SectionCard title="Academic Information" icon={<GraduationCap size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="College / University" value={f.college} onChange={setField("college")} placeholder="e.g. IIT Delhi"/><ProfileFormInput label="Branch / Specialization" value={f.branch} onChange={setField("branch")} placeholder="e.g. CSE"/><ProfileFormInput label="Degree" value={f.degree} onChange={setField("degree")} placeholder="e.g. B.Tech"/><ProfileFormInput label="Graduation Year" value={f.graduationYear} onChange={setField("graduationYear")} placeholder="e.g. 2025"/></div></SectionCard>
-              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}><ProfileFormInput label="Skills" value={f.skills} onChange={setField("skills")} placeholder="Python, React, Machine Learning" hint="Separate with commas"/><div><div style={{fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>Interested Domains</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{DOMAINS.map(d=>{const sel=f.interestedDomains.includes(d);return(<button key={d} onClick={()=>toggleDomain(d)} style={{padding:"0.3rem 0.8rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,cursor:"pointer",background:sel?"rgba(245,158,11,0.15)":"transparent",color:sel?"var(--primary)":"var(--text-secondary)",border:sel?"1px solid rgba(245,158,11,0.35)":"1px solid var(--border-color)",transition:"all 0.15s"}}>{d}</button>);})}</div></div></SectionCard>
+              <SectionCard title="Skills & Interests" icon={<Star size={16}/>}><ProfileFormInput label="Skills" value={f.skills} onChange={setField("skills")} placeholder="Python, React, Machine Learning" hint="Separate with commas"/><div><div style={{fontSize:"0.76rem",fontWeight:600,color:"var(--text-secondary)",marginBottom:8,textTransform:"uppercase" as const,letterSpacing:"0.04em"}}>Interested Domains</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{DOMAINS.map(d=>{const sel=f.interestedDomains.includes(d);return(<motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} key={d} onClick={()=>toggleDomain(d)} style={{padding:"0.3rem 0.8rem",borderRadius:20,fontSize:"0.76rem",fontWeight:600,cursor:"pointer",background:sel?"rgba(245,158,11,0.15)":"transparent",color:sel?"var(--primary)":"var(--text-secondary)",border:sel?"1px solid rgba(245,158,11,0.35)":"1px solid var(--border-color)",transition:"all 0.15s"}}>{d}</motion.button>);})}</div></div></SectionCard>
               <SectionCard title="Career Goals" icon={<Target size={16}/>}><ProfileFormInput label="Target Role" value={f.targetRole} onChange={setField("targetRole")} placeholder="e.g. Full Stack Developer"/><ProfileFormTextarea label="Career Objective" value={f.careerObjective} onChange={setField("careerObjective")} placeholder="Describe your professional goals..."/></SectionCard>
               <SectionCard title="Professional Links" icon={<Globe size={16}/>}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}><ProfileFormInput label="LinkedIn" value={f.linkedin} onChange={setField("linkedin")} placeholder="https://linkedin.com/in/..."/><ProfileFormInput label="GitHub" value={f.github} onChange={setField("github")} placeholder="https://github.com/..."/><ProfileFormInput label="Portfolio" value={f.portfolio} onChange={setField("portfolio")} placeholder="https://yoursite.com"/></div></SectionCard>
             </>
@@ -1152,7 +1153,7 @@ function NotificationsView({
           <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>All Notifications</h1>
         </div>
         <div style={{ display: "flex", gap: "0.6rem" }}>
-          <button
+          <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
             onClick={onViewDashboard}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -1162,10 +1163,10 @@ function NotificationsView({
             }}
           >
             <ArrowLeft size={14} /> Back to Dashboard
-          </button>
+          </motion.button>
           {notifications.length > 0 && (
             <>
-              <button
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                 onClick={handleMarkAllRead}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
@@ -1175,8 +1176,8 @@ function NotificationsView({
                 }}
               >
                 Mark All as Read
-              </button>
-              <button
+              </motion.button>
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                 onClick={handleClearAll}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
@@ -1186,7 +1187,7 @@ function NotificationsView({
                 }}
               >
                 <Trash2 size={14} /> Clear All
-              </button>
+              </motion.button>
             </>
           )}
         </div>
@@ -1220,7 +1221,7 @@ function NotificationsView({
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button
+                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                     onClick={() => handleToggleRead(n.id)}
                     style={{
                       padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
@@ -1229,8 +1230,8 @@ function NotificationsView({
                     }}
                   >
                     {n.read ? "Mark Unread" : "Mark Read"}
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
                     onClick={() => handleDelete(n.id)}
                     style={{
                       padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
@@ -1239,7 +1240,7 @@ function NotificationsView({
                     }}
                   >
                     Delete
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             ))}
