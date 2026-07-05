@@ -2,8 +2,31 @@ import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
 import { generateResumeSummary, enhanceProjectDescription, enhanceExperienceDescription, optimizeResumeContent, resumeAIChat } from "../lib/ai/gemini";
+import { groqGenerateResumeSummary, groqEnhanceProjectDescription, groqEnhanceExperienceDescription, groqOptimizeResumeContent, groqResumeAIChat } from "../lib/ai/groq";
 import PDFDocument from "pdfkit";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+
+// AI wrapper — tries Gemini first, falls back to Groq
+async function aiResumeSummary(p: object, e: object[], ex: object[], s: string[]) {
+  try { return await generateResumeSummary(p, e, ex, s); }
+  catch { return groqGenerateResumeSummary(p, e, ex, s); }
+}
+async function aiEnhanceProject(name: string, tech: string, desc: string) {
+  try { return await enhanceProjectDescription(name, tech, desc); }
+  catch { return groqEnhanceProjectDescription(name, tech, desc); }
+}
+async function aiEnhanceExperience(role: string, company: string, desc: string) {
+  try { return await enhanceExperienceDescription(role, company, desc); }
+  catch { return groqEnhanceExperienceDescription(role, company, desc); }
+}
+async function aiOptimizeResume(resumeJson: object, company: string) {
+  try { return await optimizeResumeContent(resumeJson, company); }
+  catch { return groqOptimizeResumeContent(resumeJson, company); }
+}
+async function aiResumeChat(resumeData: object, message: string) {
+  try { return await resumeAIChat(resumeData, message); }
+  catch { return groqResumeAIChat(resumeData, message); }
+}
 
 /**
  * Helper to ensure a resume belongs to the logged-in user
