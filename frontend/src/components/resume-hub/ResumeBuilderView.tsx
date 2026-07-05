@@ -167,45 +167,29 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   const handleGenerate = async () => {
     setGenerating(true);
     setGenStep(0);
-    // Step 1: Generate summary
-    await new Promise((r) => setTimeout(r, 600));
     try {
-      const res = await api.post("/resume/generate-summary", { personalInfo, education, experience, skills });
-      if (res.data.success && res.data.summary) setSummary(res.data.summary);
+      const [summaryRes] = await Promise.all([
+        api.post("/resume/generate-summary", { personalInfo, education, experience, skills }),
+      ]);
+      if (summaryRes.data.success && summaryRes.data.summary) setSummary(summaryRes.data.summary);
     } catch {}
     setGenStep(1);
-    // Step 2: Optimize for company
-    await new Promise((r) => setTimeout(r, 500));
     try {
-      const res = await api.post("/resume/optimize-resume", { resumeJson: resumeJSON, targetCompany: setup.company });
-      if (res.data.success && res.data.resume) {
-        const r = res.data.resume;
+      const optRes = await api.post("/resume/optimize-resume", { resumeJson: resumeJSON, targetCompany: setup.company });
+      if (optRes.data.success && optRes.data.resume) {
+        const r = optRes.data.resume;
         if (r.summary) setSummary(r.summary);
         if (r.experience) setExperience(r.experience);
         if (r.projects) setProjects(r.projects);
         if (r.skills) setSkills(r.skills);
       }
     } catch {}
-    setGenStep(2);
-    // Step 3: Optimize for profession
-    await new Promise((r) => setTimeout(r, 500));
-    try {
-      const res = await api.post("/resume/optimize-resume", { resumeJson: resumeJSON, targetCompany: setup.company });
-      if (res.data.success && res.data.resume) {
-        const r = res.data.resume;
-        if (r.experience) setExperience(r.experience);
-        if (r.projects) setProjects(r.projects);
-      }
-    } catch {}
     setGenStep(3);
-    // Step 4: Save resume
-    await new Promise((r) => setTimeout(r, 400));
     try {
       const res = await api.post("/resume/create", { title: `My ${setup.profession} Resume`, template: setup.resumeStyle, ...resumeJSON, targetCompany: setup.company, careerLevel: setup.careerLevel });
       if (res.data.success && res.data.resume) setResumeId(res.data.resume.id);
     } catch {}
     setGenStep(4);
-    await new Promise((r) => setTimeout(r, 500));
     setGenerating(false);
     setScreen(4);
   };
