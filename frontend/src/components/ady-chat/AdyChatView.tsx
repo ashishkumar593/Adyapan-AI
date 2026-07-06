@@ -432,7 +432,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
           <Menu className="w-4 h-4" />
         </button>
         <button
-          onClick={() => setView("resume-hub")}
+          onClick={() => setView("dashboard")}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
           style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
         >
