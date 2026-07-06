@@ -54,6 +54,14 @@ model User {
   // Ady Chat Relations
   chatSessions        ChatSession[]
 
+  // Payment / Subscription Relations
+  plan                String   @default("free")
+  razorpayCustomerId  String?  @map("razorpay_customer_id")
+  razorpaySubscriptionId String? @map("razorpay_subscription_id")
+  subscriptionStatus  String?  @map("subscription_status") // "active" | "cancelled" | "expired"
+  subscriptionEnd     DateTime? @map("subscription_end")
+  payments            Payment[]
+
   @@map("users")
 }
 
@@ -566,4 +574,22 @@ model ChatMessage {
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  orderId   String   @unique @map("order_id")
+  paymentId String?  @unique @map("payment_id")
+  signature String?  @map("signature")
+  amount    Int
+  currency  String   @default("INR")
+  plan      String   // "pro_monthly" | "pro_yearly"
+  status    String   @default("created") // "created" | "paid" | "failed"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }

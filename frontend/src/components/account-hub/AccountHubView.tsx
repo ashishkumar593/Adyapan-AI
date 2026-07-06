@@ -52,7 +52,7 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
 
   // Sync tab with activeModule from props
   useEffect(() => {
-    if (activeModule === "profile") setTab("profile");
+    if (activeModule === "profile" || activeModule === "community-profile") setTab("profile");
     else if (activeModule === "settings") setTab("settings");
     else if (activeModule === "profile-learning") setTab("learning");
     else if (activeModule === "billing") setTab("billing");

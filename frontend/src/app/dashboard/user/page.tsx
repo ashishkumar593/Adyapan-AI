@@ -744,7 +744,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSetti
           {/* Action buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.9rem" }}>
             {["View Community Profile", "Manage Account"].map((label) => (
-              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={label} onClick={() => { setOpen(false); if (label === "View Community Profile") onViewProfile(); else onViewSettings?.(); }} style={{
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={label} onClick={() => { setOpen(false); if (label === "View Community Profile") onViewTool("community-profile"); else onViewSettings?.(); }} style={{
                 background: isDarkTheme ? "#0d151c" : "#f1f5f9",
                 color: isDarkTheme ? "#fff" : "#0f172a",
                 border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
@@ -1629,7 +1629,7 @@ function UserDashboardContent() {
   const router = useRouter();
   const showComingSoon = () => setToast(true);
   const handleViewProfile = () => setActiveView("profile");
-  const handlePremium = () => router.push("/#pricing");
+  const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => setActiveView("dashboard");
   const handleAdyChat = () => setActiveView("ady-chat");
 
@@ -1639,7 +1639,9 @@ function UserDashboardContent() {
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
-        {activeView === "profile" || activeView === "settings" || activeView === "profile-learning" || activeView === "billing" ? (
+        {activeView === "profile" ? (
+          <ProfileView onViewDashboard={handleViewDashboard} />
+        ) : activeView === "community-profile" || activeView === "settings" || activeView === "profile-learning" || activeView === "billing" ? (
           <AccountHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
           <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />

@@ -20,6 +20,7 @@ import { challengesRouter } from "./challenges.routes";
 import { githubRouter } from "./github.routes";
 import { interviewRouter } from "./interview.routes";
 import { adyChatRouter } from "./ady-chat.routes";
+import { paymentRouter } from "./payment.routes";
 
 export const apiRouter = Router();
 
@@ -46,3 +47,4 @@ apiRouter.use("/challenges", challengesRouter);
 apiRouter.use("/github", githubRouter);
 apiRouter.use("/interview", interviewRouter);
 apiRouter.use("/ady-chat", adyChatRouter);
+apiRouter.use("/payment", paymentRouter);

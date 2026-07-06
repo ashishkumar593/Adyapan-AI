@@ -1,0 +1,381 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/services/api";
+import { motion } from "framer-motion";
+import {
+  Crown, Check, X, ArrowLeft, Sparkles, Zap,
+  Shield, Loader2, Star, ChevronDown,
+} from "lucide-react";
+
+interface SubscriptionStatus {
+  plan: string;
+  status: string;
+  endDate: string | null;
+  razorpaySubscriptionId: string | null;
+}
+
+const PLANS = [
+  {
+    id: "free",
+    name: "Free",
+    price: 0,
+    period: "",
+    color: "#64748b",
+    features: [
+      "1 Resume",
+      "Basic AI Chat",
+      "3 Cover Letters/mo",
+      "Basic ATS Check",
+      "Study Assistant",
+    ],
+    missing: [
+      "Premium AI Models",
+      "Unlimited Cover Letters",
+      "Advanced ATS Analysis",
+      "Interview Hub",
+      "Priority Support",
+    ],
+  },
+  {
+    id: "pro_monthly",
+    name: "Pro Monthly",
+    price: 149,
+    period: "/mo",
+    popular: true,
+    color: "#f59e0b",
+    features: [
+      "Unlimited Resumes",
+      "All AI Models (GPT-4o, Claude, Gemini)",
+      "Unlimited Cover Letters",
+      "Advanced ATS Checker",
+      "Full Interview Hub",
+      "Ady Chat with file uploads",
+      "Coding Hub (DSA, Challenges)",
+      "Priority Support",
+    ],
+    missing: [],
+    yearlyNote: "Billed ₹149/month",
+  },
+  {
+    id: "pro_yearly",
+    name: "Pro Yearly",
+    price: 999,
+    period: "/yr",
+    color: "#8b5cf6",
+    features: [
+      "Everything in Pro Monthly",
+      "2 Months Free",
+      "Early Access to New Features",
+      "Premium Badge",
+    ],
+    missing: [],
+    yearlyNote: "Billed ₹999/year (₹83/mo)",
+  },
+];
+
+const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
+
+export default function PremiumPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [sub, setSub] = useState<SubscriptionStatus | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [processing, setProcessing] = useState<string | null>(null);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("adyapan-token");
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+    try {
+      const u = JSON.parse(localStorage.getItem("adyapan-user") || "{}");
+      setUser(u);
+    } catch { /* ignore */ }
+
+    api.get("/payment/status").then((res) => {
+      if (res.data.success) setSub(res.data.subscription);
+    }).catch(() => {}).finally(() => setLoading(false));
+
+    // Load Razorpay script
+    if (!(window as any).Razorpay) {
+      const script = document.createElement("script");
+      script.src = RAZORPAY_SCRIPT;
+      script.onload = () => setRazorpayLoaded(true);
+      script.onerror = () => setRazorpayLoaded(false);
+      document.body.appendChild(script);
+    } else {
+      setRazorpayLoaded(true);
+    }
+  }, [router]);
+
+  const handleSubscribe = async (planId: string) => {
+    if (!razorpayLoaded) {
+      alert("Payment gateway is loading. Please wait.");
+      return;
+    }
+    if (processing) return;
+
+    setProcessing(planId);
+    try {
+      const orderRes = await api.post("/payment/create-order", { plan: planId });
+      if (!orderRes.data.success) throw new Error("Failed to create order");
+
+      const { order, key } = orderRes.data;
+
+      const options = {
+        key,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Adyapan AI",
+        description: planId === "pro_yearly" ? "Pro Yearly Plan" : "Pro Monthly Plan",
+        order_id: order.id,
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#f59e0b" },
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await api.post("/payment/verify", {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+            if (verifyRes.data.success) {
+              setSub({
+                plan: planId,
+                status: "active",
+                endDate: null,
+                razorpaySubscriptionId: response.razorpay_order_id,
+              });
+              alert("Payment successful! Your Pro plan is now active.");
+            }
+          } catch {
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        modal: {
+          ondismiss: () => setProcessing(null),
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", () => {
+        alert("Payment failed. Please try again.");
+        setProcessing(null);
+      });
+      rzp.open();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to initiate payment");
+      setProcessing(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#080710" }}>
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  const isPro = sub?.status === "active";
+
+  return (
+    <div className="min-h-screen" style={{ background: "#080710", color: "#fff" }}>
+      {/* Nav */}
+      <header className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <button
+          onClick={() => router.push("/dashboard/user")}
+          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-2 font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <Crown className="w-5 h-5 text-amber-500" />
+          Premium
+        </div>
+        <div className="flex-1" />
+        {isPro && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold"
+            style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+            <Sparkles className="w-3.5 h-3.5" />
+            {sub?.plan === "pro_yearly" ? "Pro Yearly" : "Pro Monthly"} Active
+          </div>
+        )}
+      </header>
+
+      {/* Hero */}
+      <div className="text-center py-16 px-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+            <Crown className="w-8 h-8 text-amber-500" />
+          </div>
+          <h1 className="text-4xl font-extrabold mb-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            Unlock <span style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Premium</span>
+          </h1>
+          <p className="text-sm max-w-lg mx-auto" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Get unlimited access to all AI features, premium models, and advanced tools to accelerate your career.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Plans */}
+      <div className="max-w-5xl mx-auto px-4 pb-20">
+        <div className="grid md:grid-cols-3 gap-5">
+          {PLANS.map((plan, i) => {
+            const isCurrentPlan = isPro && sub?.plan === plan.id;
+            const isFreePlan = plan.id === "free";
+            const showUpgradeBtn = !isCurrentPlan && !isFreePlan;
+            const showCurrentLabel = isCurrentPlan || (!isPro && isFreePlan);
+
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="relative rounded-2xl p-6 flex flex-col"
+                style={{
+                  background: plan.popular
+                    ? "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.04))"
+                    : "rgba(255,255,255,0.03)",
+                  border: plan.popular
+                    ? "1px solid rgba(245,158,11,0.3)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: plan.popular ? "0 0 40px rgba(245,158,11,0.1)" : "none",
+                }}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-bold"
+                    style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}>
+                    <Star className="w-3 h-3 inline mr-1" />Most Popular
+                  </div>
+                )}
+
+                <div className="mb-5">
+                  <h3 className="text-lg font-extrabold mb-1" style={{ color: plan.color }}>
+                    {plan.name}
+                  </h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold">₹{plan.price}</span>
+                    <span style={{ color: "rgba(255,255,255,0.4)" }}>{plan.period}</span>
+                  </div>
+                  {plan.yearlyNote && (
+                    <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      {plan.yearlyNote}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-2 mb-6">
+                  {plan.features.map((f, j) => (
+                    <div key={j} className="flex items-start gap-2 text-xs">
+                      <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span style={{ color: "rgba(255,255,255,0.8)" }}>{f}</span>
+                    </div>
+                  ))}
+                  {plan.missing.map((f, j) => (
+                    <div key={j} className="flex items-start gap-2 text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+                      <X className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {showCurrentLabel && (
+                  <div className="w-full py-3 rounded-xl text-center text-xs font-bold"
+                    style={{
+                      background: isPro ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)",
+                      color: isPro ? "#f59e0b" : "rgba(255,255,255,0.4)",
+                      border: `1px solid ${isPro ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)"}`,
+                    }}>
+                    {isPro ? "Current Plan" : "Free Plan"}
+                  </div>
+                )}
+
+                {showUpgradeBtn && (
+                  <button
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={processing !== null}
+                    className="w-full py-3 rounded-xl text-xs font-extrabold transition-all disabled:opacity-50"
+                    style={{
+                      background: plan.popular
+                        ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                        : "rgba(255,255,255,0.06)",
+                      color: plan.popular ? "#000" : "#fff",
+                      border: plan.popular ? "none" : "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    {processing === plan.id ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      `Upgrade to ${plan.name.split(" ")[0]}`
+                    )}
+                  </button>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Features Comparison */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-16 rounded-2xl p-8"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <h2 className="text-xl font-extrabold mb-6 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-500" />
+            Everything in Premium
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { icon: <Sparkles className="w-4 h-4" />, title: "All AI Models", desc: "GPT-4o, Claude Sonnet 4, Gemini 2.5, DeepSeek, Llama 3.3, Mistral Large" },
+              { icon: <Crown className="w-4 h-4" />, title: "Unlimited Resumes", desc: "Create and manage unlimited professional resumes" },
+              { icon: <Shield className="w-4 h-4" />, title: "Advanced ATS", desc: "Deep keyword analysis with personalized optimization" },
+              { icon: <Zap className="w-4 h-4" />, title: "Interview Hub", desc: "AI mock interviews with real-time feedback" },
+              { icon: <Crown className="w-4 h-4" />, title: "Cover Letters", desc: "Unlimited AI-generated cover letters" },
+              { icon: <Sparkles className="w-4 h-4" />, title: "Priority Support", desc: "Get help within 24 hours" },
+            ].map((feature, i) => (
+              <div key={i} className="flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-amber-500">{feature.icon}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-bold mb-0.5">{feature.title}</div>
+                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{feature.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Test Mode Notice */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8 text-center"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold"
+            style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.15)" }}>
+            <Shield className="w-3 h-3" />
+            Test Mode — Use card 4111 1111 1111 1111 for test payments
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

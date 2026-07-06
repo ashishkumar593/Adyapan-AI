@@ -54,6 +54,7 @@ export type ResumeHubViewType =
   | "settings"
   | "profile-learning"
   | "billing"
+  | "community-profile"
   | "research-hub"
   | "research-paper-ai"
   | "research-plagiarism";
