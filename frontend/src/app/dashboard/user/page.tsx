@@ -25,6 +25,12 @@ import { DsaPracticeView } from "@/components/coding-hub/DsaPracticeView";
 import { CodingChallengesView } from "@/components/coding-hub/CodingChallengesView";
 import { GithubPortfolioView } from "@/components/coding-hub/GithubPortfolioView";
 import { InterviewHubView } from "@/components/interview-hub/InterviewHubView";
+import { InternshipHubView } from "@/components/internship-hub/InternshipHubView";
+import { JobHubView } from "@/components/job-hub/JobHubView";
+import { PlacementHubView } from "@/components/placement-hub/PlacementHubView";
+import { ProductivityHubView } from "@/components/productivity-hub/ProductivityHubView";
+import { AnalyticsHubView } from "@/components/analytics-hub/AnalyticsHubView";
+import { AccountHubView } from "@/components/account-hub/AccountHubView";
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -275,6 +281,26 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "AI HR Interview") onViewTool("interview-hr");
                       else if (sub.label === "AI Technical Interview") onViewTool("interview-technical");
                       else if (sub.label === "Mock Interviews") onViewTool("interview-mock");
+                      else if (sub.label === "Internship Finder") onViewTool("internship-finder");
+                      else if (sub.label === "Recommendations") onViewTool("internship-recommendations");
+                      else if (sub.label === "Internship Tracker") onViewTool("internship-tracker");
+                      else if (sub.label === "Job Matching") onViewTool("job-matching");
+                      else if (sub.label === "Resume vs JD Match") onViewTool("job-jd-match");
+                      else if (sub.label === "Job Referrals") onViewTool("job-referrals");
+                      else if (sub.label === "Hiring Challenges") onViewTool("job-challenges");
+                      else if (sub.label === "Aptitude Practice") onViewTool("placement-aptitude");
+                      else if (sub.label === "Logical Reasoning") onViewTool("placement-reasoning");
+                      else if (sub.label === "Technical MCQs") onViewTool("placement-mcqs");
+                      else if (sub.label === "Mock Tests") onViewTool("placement-mocks");
+                      else if (sub.label === "Readiness Score") onViewTool("placement-readiness");
+                      else if (sub.label === "Email Writer") onViewTool("prod-email");
+                      else if (sub.label === "SOP Generator") onViewTool("prod-sop");
+                      else if (sub.label === "LinkedIn Post Gen") onViewTool("prod-linkedin");
+                      else if (sub.label === "Content Writer") onViewTool("prod-content");
+                      else if (sub.label === "Learning Progress") onViewTool("analytics-learning");
+                      else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
+                      else if (sub.label === "Resume Score") onViewTool("analytics-resume");
+                      else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -616,14 +642,14 @@ function DashboardTopNav({
           )}
         </div>
         {/* Profile dropdown */}
-        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} onViewSettings={onViewSettings} />
+        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} onViewSettings={onViewSettings} onViewTool={onViewTool} />
       </div>
     </header>
   );
 }
 
 // ─── Profile Dropdown ─────────────────────────────────────────────────────────
-function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void }) {
+function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: any) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -650,10 +676,10 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSetti
 
   const menuItems = [
     { icon: <User size={15} />, label: "My Profile", href: "#", onClickFn: onViewProfile },
-    { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", cs: true },
+    { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", onClickFn: () => onViewTool("profile-learning") },
     null,
     { icon: <Settings size={15} />, label: "Settings", href: "#", onClickFn: onViewSettings },
-    { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
+    { icon: <CreditCard size={15} />, label: "Billing", href: "#", onClickFn: () => onViewTool("billing") },
     null,
     { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
   ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean; onClickFn?: () => void } | null>;
@@ -715,7 +741,7 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSetti
           {/* Action buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.9rem" }}>
             {["View Community Profile", "Manage Account"].map((label) => (
-              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={label} onClick={onComingSoon} style={{
+              <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}} key={label} onClick={() => { setOpen(false); if (label === "View Community Profile") onViewProfile(); else onViewSettings?.(); }} style={{
                 background: isDarkTheme ? "#0d151c" : "#f1f5f9",
                 color: isDarkTheme ? "#fff" : "#0f172a",
                 border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
@@ -1610,10 +1636,8 @@ function UserDashboardContent() {
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
-        {activeView === "profile" ? (
-          <ProfileView onViewDashboard={handleViewDashboard} />
-        ) : activeView === "settings" ? (
-          <SettingsView user={user} onViewDashboard={handleViewDashboard} />
+        {activeView === "profile" || activeView === "settings" || activeView === "profile-learning" || activeView === "billing" ? (
+          <AccountHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
           <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
         ) : activeView === "ats-checker" ? (
@@ -1644,6 +1668,16 @@ function UserDashboardContent() {
           <AdyChatView setView={setActiveView} />
         ) : activeView === "interview-hub" || activeView === "interview-hr" || activeView === "interview-technical" || activeView === "interview-mock" ? (
           <InterviewHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "internship-hub" || activeView === "internship-finder" || activeView === "internship-recommendations" || activeView === "internship-tracker" ? (
+          <InternshipHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "job-hub" || activeView === "job-matching" || activeView === "job-jd-match" || activeView === "job-referrals" || activeView === "job-challenges" ? (
+          <JobHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "placement-hub" || activeView === "placement-aptitude" || activeView === "placement-reasoning" || activeView === "placement-mcqs" || activeView === "placement-mocks" || activeView === "placement-readiness" ? (
+          <PlacementHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "productivity-hub" || activeView === "prod-email" || activeView === "prod-sop" || activeView === "prod-linkedin" || activeView === "prod-content" ? (
+          <ProductivityHubView setView={setActiveView} activeModule={activeView} theme={theme} />
+        ) : activeView === "analytics-hub" || activeView === "analytics-learning" || activeView === "analytics-interview" || activeView === "analytics-resume" || activeView === "analytics-skills" ? (
+          <AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} />
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
         ) : activeView === "notifications" ? (

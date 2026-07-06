@@ -10,6 +10,7 @@ import {
   Zap, Eye, Edit3
 } from "lucide-react";
 import type { ResumeHubViewType } from "@/types/resume";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -92,6 +93,8 @@ interface CoverLetterViewProps {
 export function CoverLetterView({ setView }: CoverLetterViewProps) {
   const theme = useTheme();
   const c = colors(theme);
+
+  const [confirm, confirmModal] = useConfirm();
 
   // Screen
   const [screen, setScreen] = useState<
@@ -264,7 +267,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Delete this cover letter?")) return;
+    if (!(await confirm("Delete this cover letter?", { danger: true, confirmLabel: "Delete" }))) return;
     try {
       await api.delete(`/cover-letter/${id}`);
       setHistory(prev => prev.filter(item => item.id !== id));
@@ -1037,6 +1040,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           {renderHistory()}
         </div>
       </div>
+      {confirmModal}
     </div>
   );
 }

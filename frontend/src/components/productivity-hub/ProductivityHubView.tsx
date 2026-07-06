@@ -1,0 +1,816 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search, Calendar, DollarSign, Send, Sparkles, CheckCircle2,
+  XCircle, Info, Heart, ArrowRight, Share2, Trash2, Plus, Clock,
+  MessageSquare, Award, ArrowLeft, ArrowRightLeft, ChevronRight,
+  AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw,
+  Copy, Download, FileSpreadsheet, Eye, Save, Edit3, Clipboard, CheckSquare
+} from "lucide-react";
+
+interface Document {
+  id: string;
+  title: string;
+  type: "Email" | "SOP" | "LinkedIn" | "Content";
+  content: string;
+  dateCreated: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+interface ProductivityHubViewProps {
+  setView: (v: any) => void;
+  activeModule?: string;
+  theme?: string;
+}
+
+export function ProductivityHubView({ setView, activeModule = "productivity-hub", theme = "dark" }: ProductivityHubViewProps) {
+  const isDark = theme === "dark";
+  const c = {
+    bg: isDark ? "#080710" : "#f0f4ff",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+    surfaceHover: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+    border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+    text: isDark ? "#ffffff" : "#0f172a",
+    textSec: isDark ? "rgba(255,255,255,0.7)" : "#475569",
+    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#94a3b8",
+    primary: "#f59e0b",
+    primaryDark: "#d97706",
+    cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
+    inputBg: isDark ? "rgba(0,0,0,0.4)" : "#ffffff",
+    green: "#10b981",
+    red: "#ef4444",
+  };
+
+  // Tab State: "email" | "sop" | "linkedin" | "content"
+  const [tab, setTab] = useState<"email" | "sop" | "linkedin" | "content">("email");
+
+  // Output Workspace
+  const [generatedOutput, setGeneratedOutput] = useState("");
+  const [subjectLine, setSubjectLine] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [editingContent, setEditingContent] = useState("");
+  const [isPreview, setIsPreview] = useState(false);
+
+  // Email state
+  const [emailCat, setEmailCat] = useState("Job Application");
+  const [emailTone, setEmailTone] = useState("Professional");
+  const [emailLength, setEmailLength] = useState("Detailed");
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailDetails, setEmailDetails] = useState("");
+
+  // SOP state
+  const [sopCat, setSopCat] = useState("Master's Program");
+  const [sopBackground, setSopBackground] = useState("");
+  const [sopGoals, setSopGoals] = useState("");
+  const [sopTargetUni, setSopTargetUni] = useState("");
+  const [sopCourse, setSopCourse] = useState("");
+
+  // LinkedIn state
+  const [liCat, setLiCat] = useState("Project Showcase");
+  const [liFormat, setLiFormat] = useState("Storytelling");
+  const [liIncludeEmojis, setLiIncludeEmojis] = useState(true);
+  const [liIncludeHashtags, setLiIncludeHashtags] = useState(true);
+  const [liTopic, setLiTopic] = useState("");
+
+  // Content state
+  const [contentCat, setContentCat] = useState("Blog Article");
+  const [contentStyle, setContentStyle] = useState("SEO Optimized");
+  const [contentKeywords, setContentKeywords] = useState("");
+  const [contentOutline, setContentOutline] = useState("");
+
+  // Saved Documents
+  const [savedDocs, setSavedDocs] = useState<Document[]>([]);
+  const [creditsUsed, setCreditsUsed] = useState(64);
+
+  // AI Assistant panel state
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { role: "assistant", content: "Hello! I am your AI Productivity Coach. Ask me to draft emails, compile Statements of Purpose, structure articles, or write LinkedIn posts!" }
+  ]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync tab with activeModule from props
+  useEffect(() => {
+    if (activeModule === "prod-email") setTab("email");
+    else if (activeModule === "prod-sop") setTab("sop");
+    else if (activeModule === "prod-linkedin") setTab("linkedin");
+    else if (activeModule === "prod-content") setTab("content");
+  }, [activeModule]);
+
+  // Load drafts from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("ady-productivity-docs");
+    if (saved) {
+      try { setSavedDocs(JSON.parse(saved)); } catch { /* ignore */ }
+    } else {
+      const defaults: Document[] = [
+        { id: "doc-1", title: "Job Application Email - Google", type: "Email", content: "Dear Hiring Team,\n\nI am writing to express my interest...", dateCreated: new Date().toISOString() }
+      ];
+      setSavedDocs(defaults);
+      localStorage.setItem("ady-productivity-docs", JSON.stringify(defaults));
+    }
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const handleCopyText = () => {
+    const textToCopy = subjectLine ? `Subject: ${subjectLine}\n\n${editingContent}` : editingContent;
+    navigator.clipboard.writeText(textToCopy);
+    alert("📋 Copied to clipboard successfully!");
+  };
+
+  const handleSaveDraft = () => {
+    if (!editingContent.trim()) return;
+    const newDoc: Document = {
+      id: `doc-${Date.now()}`,
+      title: subjectLine ? `Email: ${subjectLine.slice(0, 30)}...` : `${tab.toUpperCase()} Draft - ${new Date().toLocaleDateString()}`,
+      type: tab === "email" ? "Email" : tab === "sop" ? "SOP" : tab === "linkedin" ? "LinkedIn" : "Content",
+      content: editingContent,
+      dateCreated: new Date().toISOString()
+    };
+    const updated = [newDoc, ...savedDocs];
+    setSavedDocs(updated);
+    localStorage.setItem("ady-productivity-docs", JSON.stringify(updated));
+    setCreditsUsed(prev => Math.min(prev + 2, 100));
+    alert("💾 Draft saved successfully to your dashboard history.");
+  };
+
+  // Generate handlers
+  const handleGenerateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenerating(true);
+    try {
+      await new Promise(r => setTimeout(r, 1500));
+      const generatedSubject = `Application for ${emailCat} - Professional Request`;
+      const generatedBody = `Dear hiring team,\n\nI hope this email finds you well.\n\nI am writing to submit my candidature for the ${emailCat} position. Based on my academic goals and hands-on projects, I am confident in my capacity to add value to your current workflows.\n\nHere are some details regarding my background:\n${emailDetails || "[Detail description]"}\n\nI look forward to discussing how my qualifications align with your requirements. Please find my resume attached.\n\nSincerely,\nCandidate`;
+      setSubjectLine(generatedSubject);
+      setGeneratedOutput(generatedBody);
+      setEditingContent(generatedBody);
+      setIsPreview(false);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateSop = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenerating(true);
+    try {
+      await new Promise(r => setTimeout(r, 1800));
+      const generatedSop = `STATEMENT OF PURPOSE\n\nMy decision to pursue the ${sopCourse} at ${sopTargetUni} is rooted in my career goal to research technical integrations. During my bachelor studies, I focused on data foundations and built several applications. My target is to specialize in large scale operations.\n\nAcademic Background:\n${sopBackground || "[Academic details]"}\n\nCareer Objectives & Research:\n${sopGoals || "[Objectives]"}\n\nI am convinced that target syllabus structure and research options at ${sopTargetUni} represent the ideal environment for my academic growth.`;
+      setSubjectLine("");
+      setGeneratedOutput(generatedSop);
+      setEditingContent(generatedSop);
+      setIsPreview(false);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateLinkedIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenerating(true);
+    try {
+      await new Promise(r => setTimeout(r, 1200));
+      let post = `🚀 Thrilled to share my latest progress!\n\nI just finalized work on my new project: ${liTopic || "Full Stack Application"}.\n\nThis build represents key learnings in scale, performance tuning, and clean component structures. Grateful to everyone who provided feedback along the way!\n\nCheck it out and let me know your thoughts. 👇`;
+      if (liIncludeEmojis) post += " 💻 🔥 ✨";
+      if (liIncludeHashtags) post += "\n\n#SoftwareDevelopment #TechCommunity #BuildingInPublic";
+      setSubjectLine("");
+      setGeneratedOutput(post);
+      setEditingContent(post);
+      setIsPreview(false);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateContent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenerating(true);
+    try {
+      await new Promise(r => setTimeout(r, 2000));
+      const content = `TECHNICAL BRIEF - ${contentCat.toUpperCase()}\n\nOverview:\nThis documentation details the structural foundations for the project. Using modern modular templates, developers can maintain reusable layers and avoid dependency conflicts.\n\nOutline & Scope:\n${contentOutline || "[Outline summary]"}\n\nKeyword Optimization:\nTarget keywords: ${contentKeywords || "[Keywords]"}\n\nKey Recommendations:\nMaintain clear documentation parameters and ensure test environments are isolated from build dependencies.`;
+      setSubjectLine("");
+      setGeneratedOutput(content);
+      setEditingContent(content);
+      setIsPreview(false);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleAssistantSend = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const promptText = chatInput.trim();
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: "user", content: promptText }]);
+    setChatLoading(true);
+
+    try {
+      await new Promise(r => setTimeout(r, 1500));
+      let responseText = "I parsed your query but didn't find any direct triggers. I can help compose letters, edit summaries, or outline articles. Try:\n- *'Write a job application email'* \n- *'Generate SOP draft'*";
+
+      if (promptText.toLowerCase().includes("email")) {
+        setTab("email");
+        setEmailCat("Job Application");
+        setEmailDetails("Targeting Frontend SDE position. 1 year React experience.");
+        responseText = "✍️ **Action Triggered**: Configured the **Email Writer** for a Job Application. Click 'Generate Email' to draft the layout.";
+      } else if (promptText.toLowerCase().includes("sop")) {
+        setTab("sop");
+        setSopTargetUni("Stanford");
+        setSopCourse("Master's in Computer Science");
+        responseText = "📄 **Action Triggered**: Configured the **SOP Generator** for a Master's Program. Click 'Generate SOP' to compile the paragraphs.";
+      } else if (promptText.toLowerCase().includes("linkedin") || promptText.toLowerCase().includes("post")) {
+        setTab("linkedin");
+        setLiTopic("My new ML project with Gemini models");
+        responseText = "🚀 **Action Triggered**: Configured the **LinkedIn Post Generator** for a project showcase. Click 'Generate Post' to view the layout.";
+      } else if (promptText.toLowerCase().includes("blog") || promptText.toLowerCase().includes("content")) {
+        setTab("content");
+        setContentCat("Blog Article");
+        setContentKeywords("Generative AI, LLM frameworks");
+        responseText = "📝 **Action Triggered**: Configured the **Content Writer** for a blog article. Click 'Generate Content' to view the structured text.";
+      }
+
+      setChatMessages(prev => [...prev, { role: "assistant", content: responseText }]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+      <div className="flex-1 flex flex-col gap-6">
+
+        {/* ==================== 1. DASHBOARD CARDS ==================== */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+          {[
+            { label: "AI Credits Used", val: `${creditsUsed} / 100`, icon: <Sparkles className="text-amber-500" /> },
+            { label: "Saved Drafts", val: `${savedDocs.length}`, icon: <Save className="text-emerald-500" /> },
+            { label: "Recent Documents", val: "14", icon: <FileText className="text-cyan-500" /> },
+            { label: "Writing History", val: "24 Runs", icon: <Award className="text-purple-500" /> }
+          ].map((card, idx) => (
+            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
+                <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
+              </div>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
+                {card.icon}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ==================== 2. NAVIGATION TABS ==================== */}
+        <div className="flex justify-between items-center border-b shrink-0" style={{ borderColor: c.border }}>
+          <div className="flex gap-2">
+            {[
+              { id: "email" as const, label: "Email Writer" },
+              { id: "sop" as const, label: "SOP Generator" },
+              { id: "linkedin" as const, label: "LinkedIn Post Generator" },
+              { id: "content" as const, label: "Content Writer" }
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => { setTab(t.id); setGeneratedOutput(""); setEditingContent(""); }}
+                className={`py-2.5 px-4 font-bold text-xs border-b-2 transition-colors -mb-[1px]`}
+                style={{
+                  color: tab === t.id ? c.primary : c.textSec,
+                  borderColor: tab === t.id ? c.primary : "transparent"
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setAssistantOpen(!assistantOpen)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
+          >
+            <Sparkles size={12} className="animate-pulse" /> AI Assistant
+          </button>
+        </div>
+
+        {/* ==================== 3. SPLIT PANEL: INPUT FORM & LIVE EDITOR ==================== */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* LEFT SIDE: INPUT OPTIONS */}
+          <div className="overflow-y-auto pr-2 custom-scrollbar">
+            <AnimatePresence mode="wait">
+
+              {/* EMAIL WRITER FORM */}
+              {tab === "email" && (
+                <motion.form
+                  key="email-form"
+                  onSubmit={handleGenerateEmail}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-4 p-5 border rounded-2xl"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
+                  <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-500">Email Configuration</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Category</label>
+                      <select
+                        value={emailCat}
+                        onChange={(e) => setEmailCat(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Job Application">Job Application</option>
+                        <option value="Internship Application">Internship Application</option>
+                        <option value="Leave Request">Leave Request</option>
+                        <option value="Follow-up Email">Follow-up Email</option>
+                        <option value="HR Communication">HR Communication</option>
+                        <option value="Interview Invitation Reply">Interview Reply</option>
+                        <option value="Cold Outreach">Cold Outreach</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Tone</label>
+                      <select
+                        value={emailTone}
+                        onChange={(e) => setEmailTone(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Professional">Professional</option>
+                        <option value="Friendly">Friendly</option>
+                        <option value="Formal">Formal</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Details / Background</label>
+                    <textarea
+                      required
+                      value={emailDetails}
+                      onChange={(e) => setEmailDetails(e.target.value)}
+                      placeholder="e.g. Applying for Software Intern position, listing my project credentials..."
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-28"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {generating ? "Generating..." : "Generate Email"}
+                  </button>
+                </motion.form>
+              )}
+
+              {/* SOP GENERATOR FORM */}
+              {tab === "sop" && (
+                <motion.form
+                  key="sop-form"
+                  onSubmit={handleGenerateSop}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-4 p-5 border rounded-2xl"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
+                  <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-500">SOP Parameters</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Category</label>
+                      <select
+                        value={sopCat}
+                        onChange={(e) => setSopCat(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Study Abroad">Study Abroad</option>
+                        <option value="University Admission">University Admission</option>
+                        <option value="Master's Program">Master's Program</option>
+                        <option value="Scholarship Application">Scholarship Application</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Target Course</label>
+                      <input
+                        required
+                        value={sopCourse}
+                        onChange={(e) => setSopCourse(e.target.value)}
+                        placeholder="e.g. Master's in CS"
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Target University / Company</label>
+                    <input
+                      required
+                      value={sopTargetUni}
+                      onChange={(e) => setSopTargetUni(e.target.value)}
+                      placeholder="e.g. Stanford University"
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Academic Background</label>
+                    <textarea
+                      value={sopBackground}
+                      onChange={(e) => setSopBackground(e.target.value)}
+                      placeholder="Major projects, scores, key courses..."
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-16"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Career Goals</label>
+                    <textarea
+                      value={sopGoals}
+                      onChange={(e) => setSopGoals(e.target.value)}
+                      placeholder="Target milestones, research objectives..."
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-16"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {generating ? "Generating..." : "Generate SOP"}
+                  </button>
+                </motion.form>
+              )}
+
+              {/* LINKEDIN POST WRITER */}
+              {tab === "linkedin" && (
+                <motion.form
+                  key="li-form"
+                  onSubmit={handleGenerateLinkedIn}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-4 p-5 border rounded-2xl"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
+                  <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-500">LinkedIn Post Settings</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Post Category</label>
+                      <select
+                        value={liCat}
+                        onChange={(e) => setLiCat(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Project Showcase">Project Showcase</option>
+                        <option value="Internship Announcement">Internship Announcement</option>
+                        <option value="Job Update">Job Update</option>
+                        <option value="Certification">Certification</option>
+                        <option value="Career Advice">Career Advice</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Format Style</label>
+                      <select
+                        value={liFormat}
+                        onChange={(e) => setLiFormat(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Storytelling">Storytelling</option>
+                        <option value="Motivational">Motivational</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Short Format">Short Format</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Post Topic / Details</label>
+                    <textarea
+                      required
+                      value={liTopic}
+                      onChange={(e) => setLiTopic(e.target.value)}
+                      placeholder="Describe what you built or achieved..."
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-24"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-1.5 text-xs font-semibold select-none">
+                      <input
+                        type="checkbox"
+                        checked={liIncludeEmojis}
+                        onChange={(e) => setLiIncludeEmojis(e.target.checked)}
+                        className="rounded accent-amber-500"
+                      />
+                      <span>Include Emojis</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 text-xs font-semibold select-none">
+                      <input
+                        type="checkbox"
+                        checked={liIncludeHashtags}
+                        onChange={(e) => setLiIncludeHashtags(e.target.checked)}
+                        className="rounded accent-amber-500"
+                      />
+                      <span>Include Hashtags</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {generating ? "Generating..." : "Generate LinkedIn Post"}
+                  </button>
+                </motion.form>
+              )}
+
+              {/* GENERAL CONTENT WRITER */}
+              {tab === "content" && (
+                <motion.form
+                  key="content-form"
+                  onSubmit={handleGenerateContent}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-4 p-5 border rounded-2xl"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
+                  <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-500">Content Composer</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Content Type</label>
+                      <select
+                        value={contentCat}
+                        onChange={(e) => setContentCat(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="Blog Article">Blog Article</option>
+                        <option value="Technical Documentation">Technical Docs</option>
+                        <option value="Research Summary">Research Summary</option>
+                        <option value="Case Study">Case Study</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Style Option</label>
+                      <select
+                        value={contentStyle}
+                        onChange={(e) => setContentStyle(e.target.value)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="SEO Optimized">SEO Optimized</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Academic">Academic</option>
+                        <option value="Creative">Creative</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Target Keywords</label>
+                    <input
+                      value={contentKeywords}
+                      onChange={(e) => setContentKeywords(e.target.value)}
+                      placeholder="e.g. Generative AI, Next.js, API scaling (comma separated)"
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Outline Instructions</label>
+                    <textarea
+                      required
+                      value={contentOutline}
+                      onChange={(e) => setContentOutline(e.target.value)}
+                      placeholder="Outline sections or paragraphs targets..."
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs resize-none h-24"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {generating ? "Generating..." : "Generate Content"}
+                  </button>
+                </motion.form>
+              )}
+
+            </AnimatePresence>
+          </div>
+
+          {/* RIGHT SIDE: LIVE PREVIEW & EDIT CONSOLE */}
+          <div className="flex flex-col border rounded-2xl overflow-hidden h-[450px]" style={{ background: c.cardBg, borderColor: c.border }}>
+            {/* Header controls */}
+            <div className="px-4 py-3 border-b flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
+              <span className="text-xs font-extrabold" style={{ color: c.text }}>Output Workspace</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsPreview(true)}
+                  className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
+                    isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
+                  }`}
+                  style={{ borderColor: c.border }}
+                >
+                  <Eye size={12} className="inline mr-1" /> Preview
+                </button>
+                <button
+                  onClick={() => setIsPreview(false)}
+                  className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
+                    !isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
+                  }`}
+                  style={{ borderColor: c.border }}
+                >
+                  <Edit3 size={12} className="inline mr-1" /> Edit
+                </button>
+              </div>
+            </div>
+
+            {/* Content Display/Edit */}
+            <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
+              {isPreview ? (
+                <div className="text-xs leading-relaxed whitespace-pre-wrap p-2 h-full select-text" style={{ color: c.textSec }}>
+                  {subjectLine && (
+                    <div className="font-extrabold pb-2 mb-2 border-b" style={{ borderColor: c.border }}>
+                      Subject: {subjectLine}
+                    </div>
+                  )}
+                  {editingContent || <span className="italic" style={{ color: c.textMuted }}>Draft content will be rendered here...</span>}
+                </div>
+              ) : (
+                <textarea
+                  value={editingContent}
+                  onChange={(e) => setEditingContent(e.target.value)}
+                  placeholder="Draft content will generate here. You can manually type and tweak details here directly..."
+                  className="w-full h-full bg-transparent border-0 focus:outline-none focus:ring-0 text-xs leading-relaxed resize-none p-1"
+                  style={{ color: c.text }}
+                />
+              )}
+            </div>
+
+            {/* Quick Actions Bar */}
+            <div className="p-3 border-t bg-white/[0.01] flex justify-between items-center gap-2" style={{ borderColor: c.border }}>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyText}
+                  disabled={!editingContent.trim()}
+                  className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
+                  style={{ borderColor: c.border, color: c.text }}
+                >
+                  <Copy size={12} /> Copy
+                </button>
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={!editingContent.trim()}
+                  className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
+                  style={{ borderColor: c.border, color: c.text }}
+                >
+                  <Save size={12} /> Save Draft
+                </button>
+              </div>
+
+              {tab === "sop" && (
+                <button
+                  onClick={() => alert("💾 Downloading PDF Statement of Purpose.")}
+                  disabled={!editingContent.trim()}
+                  className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
+                >
+                  <Download size={12} /> Download PDF
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ==================== 4. FLOATING CHAT SIDEBAR PANEL ==================== */}
+      <AnimatePresence>
+        {assistantOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed top-[70px] right-0 bottom-0 z-[190] w-80 border-l flex flex-col shadow-2xl"
+            style={{ background: isDark ? "#0d1117" : "#ffffff", borderColor: c.border }}
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={14} className="text-amber-500" />
+                <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Productivity Coach</span>
+              </div>
+              <button
+                onClick={() => setAssistantOpen(false)}
+                className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
+              >
+                <XCircle size={14} />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {chatMessages.map((msg, idx) => {
+                const isAI = msg.role === "assistant";
+                return (
+                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                    <div
+                      className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
+                        isAI
+                          ? "bg-white/5 border border-white/10 rounded-tl-sm"
+                          : "bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-tr-sm"
+                      }`}
+                      style={{ borderColor: c.border }}
+                    >
+                      <p className="whitespace-pre-line">{msg.content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
+                    <Clock size={12} className="text-amber-500 animate-spin" />
+                    <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Suggestions */}
+            <div className="p-3 border-t bg-white/[0.01] flex flex-col gap-1.5" style={{ borderColor: c.border }}>
+              <span className="text-[8px] uppercase tracking-wider font-extrabold" style={{ color: c.textMuted }}>Suggestions</span>
+              {[
+                "Write a professional internship email",
+                "Generate an SOP for MS in Computer Science",
+                "Create a LinkedIn post for ML project"
+              ].map(s => (
+                <button
+                  key={s}
+                  onClick={() => { setChatInput(s); }}
+                  className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
+                  style={{ borderColor: c.border, color: c.textSec }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {/* Input form */}
+            <div className="p-3 border-t flex gap-1.5" style={{ borderColor: c.border }}>
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask productivity coach..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAssistantSend();
+                }}
+                className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+              />
+              <button
+                onClick={handleAssistantSend}
+                disabled={!chatInput.trim() || chatLoading}
+                className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
+              >
+                <Send size={12} />
+              </button>
+            </div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

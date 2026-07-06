@@ -8,6 +8,7 @@ import {
   Award, ShieldAlert, Volume2, Briefcase, Loader2, Calendar, ChevronLeft,
   Trash2, CheckCircle2, XCircle, Info, GraduationCap, Flame, ArrowLeft
 } from "lucide-react";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 interface InterviewFeedback {
   overallScore: number;
@@ -61,6 +62,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     green: "#10b981",
     red: "#ef4444",
   };
+
+  const [confirm, confirmModal] = useConfirm();
 
   // View state: "dashboard" | "active" | "feedback"
   const [screen, setScreen] = useState<"dashboard" | "active" | "feedback">("dashboard");
@@ -175,7 +178,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
 
   const handleEndInterview = async () => {
     if (!activeSession || ending) return;
-    if (!confirm("Are you sure you want to end this interview? This will submit your answers and generate AI feedback.")) return;
+    if (!(await confirm("Are you sure you want to end this interview? This will submit your answers and generate AI feedback.", { danger: true, confirmLabel: "End Interview" }))) return;
 
     setEnding(true);
     try {
@@ -715,6 +718,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
         )}
 
       </AnimatePresence>
+      {confirmModal}
     </div>
   );
 }
