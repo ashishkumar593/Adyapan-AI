@@ -3,6 +3,7 @@
 export type ResumeHubViewType =
   | "dashboard"
   | "profile"
+  | "settings"
   | "resume-hub"
   | "resume-builder"
   | "ats-checker"

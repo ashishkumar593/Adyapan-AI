@@ -205,6 +205,244 @@ Output JSON:
   return generateJSON<JobMatchResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
+// ============================================================================
+// ENHANCED ATS CHECKER AI FUNCTIONS
+// ============================================================================
+
+/**
+ * 21. Comprehensive ATS Deep Analysis
+ */
+export interface SectionScore {
+  score: number;
+  suggestions: string[];
+}
+export interface ATSDeepAnalysis {
+  score: number;
+  scoreLabel: string;
+  keywordsFound: string[];
+  keywordsMissing: string[];
+  readability: string;
+  length: string;
+  formatting: string;
+  recruiterScore: number;
+  sectionScores: {
+    summary: SectionScore;
+    skills: SectionScore;
+    experience: SectionScore;
+    projects: SectionScore;
+    education: SectionScore;
+  };
+  keywordAnalysis: {
+    found: string[];
+    missing: string[];
+  };
+  formattingCheck: {
+    onePage: boolean;
+    fontsConsistent: boolean;
+    atsFriendly: boolean;
+    headingsCorrect: boolean;
+    contactPresent: boolean;
+  };
+  strengthBars: {
+    summary: number;
+    projects: number;
+    skills: number;
+    experience: number;
+    education: number;
+  };
+  recommendations: string[];
+  formattingIssues: string[];
+  strengths: string[];
+}
+
+export async function analyzeResumeDeep(
+  resumeText: string,
+  targetRole: string,
+  jobDescription?: string
+): Promise<ATSDeepAnalysis> {
+  const prompt = `Perform an exhaustive ATS audit of this resume for the target role: "${targetRole}".
+${jobDescription ? `\nAlso compare against this Job Description:\n"""\n${jobDescription}\n"""\n` : ""}
+
+Resume:
+"""
+${resumeText}
+"""
+
+Output a JSON object with this exact schema:
+{
+  "score": integer 0-100 (overall ATS readiness score),
+  "scoreLabel": string (one of "Poor", "Fair", "Good", "Very Good", "Excellent"),
+  "keywordsFound": array of strings (keywords present in resume that match the target role),
+  "keywordsMissing": array of strings (important keywords for the role not found in resume),
+  "readability": string ("Excellent", "Good", "Fair", "Poor"),
+  "length": string (e.g. "1 Page", "2 Pages"),
+  "formatting": string ("Excellent", "Good", "Fair", "Poor"),
+  "recruiterScore": number 0-10 (how a recruiter would rate it),
+  "sectionScores": {
+    "summary": { "score": 0-10, "suggestions": [string] },
+    "skills": { "score": 0-10, "suggestions": [string] },
+    "experience": { "score": 0-10, "suggestions": [string] },
+    "projects": { "score": 0-10, "suggestions": [string] },
+    "education": { "score": 0-10, "suggestions": [string] }
+  },
+  "keywordAnalysis": {
+    "found": [strings of matched keywords],
+    "missing": [strings of important missing keywords]
+  },
+  "formattingCheck": {
+    "onePage": boolean,
+    "fontsConsistent": boolean,
+    "atsFriendly": boolean,
+    "headingsCorrect": boolean,
+    "contactPresent": boolean
+  },
+  "strengthBars": {
+    "summary": 0-100,
+    "projects": 0-100,
+    "skills": 0-100,
+    "experience": 0-100,
+    "education": 0-100
+  },
+  "recommendations": [string],
+  "formattingIssues": [string],
+  "strengths": [string]
+}
+
+Be thorough and specific. Score honestly.`;
+
+  const fallback: ATSDeepAnalysis = {
+    score: 65, scoreLabel: "Fair",
+    keywordsFound: ["Python", "JavaScript"], keywordsMissing: ["Docker", "AWS", "Kubernetes"],
+    readability: "Good", length: "1 Page", formatting: "Good", recruiterScore: 7.2,
+    sectionScores: {
+      summary: { score: 7, suggestions: ["Add measurable achievements"] },
+      skills: { score: 8, suggestions: ["Add cloud technologies"] },
+      experience: { score: 6, suggestions: ["Quantify achievements"] },
+      projects: { score: 7, suggestions: ["Add tech stack details"] },
+      education: { score: 8, suggestions: ["Add relevant coursework"] },
+    },
+    keywordAnalysis: { found: ["Python", "JavaScript"], missing: ["Docker", "AWS"] },
+    formattingCheck: { onePage: true, fontsConsistent: true, atsFriendly: true, headingsCorrect: true, contactPresent: true },
+    strengthBars: { summary: 70, projects: 65, skills: 80, experience: 60, education: 85 },
+    recommendations: ["Add missing keywords", "Quantify achievements"],
+    formattingIssues: [], strengths: ["Strong technical skills"],
+  };
+
+  return generateJSON<ATSDeepAnalysis>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+}
+
+/**
+ * 22. ATS AI Chat - Interactive resume improvement
+ */
+export async function atsAIChat(
+  resumeText: string,
+  analysis: any,
+  message: string
+): Promise<{ reply: string; updatedSections?: Record<string, any> }> {
+  const prompt = `You are an ATS optimization expert embedded in a resume checker. The user message: "${message}"
+
+Current Resume Text:
+"""
+${resumeText}
+"""
+
+ATS Analysis Summary: ${JSON.stringify(analysis)}
+
+Interpret the user's intent and respond helpfully. If the user asks to improve something specific (summary, skills, experience, projects), return the updated content.
+
+Examples:
+- "Improve my ATS score" → suggest specific improvements
+- "Optimize for Google" → tailor resume for Google
+- "Rewrite my summary" → return new summary text
+- "Add missing keywords" → return keywords to add and where
+- "Reduce resume length" → suggest what to cut
+
+Output JSON:
+{
+  "reply": "Your conversational response to the user",
+  "updatedSections": { optional section updates }
+}`;
+
+  const fallback = { reply: "I understand you want help with your resume. Could you be more specific about what you'd like to improve?", updatedSections: undefined };
+  return generateJSON<{ reply: string; updatedSections?: Record<string, any> }>(
+    ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback
+  );
+}
+
+/**
+ * 23. Generate ATS Improvement Suggestions
+ */
+export interface ATSSuggestion {
+  id: string;
+  section: string;
+  title: string;
+  description: string;
+  impact: "high" | "medium" | "low";
+  original: string;
+  improved: string;
+}
+
+export async function generateATSSuggestions(
+  resumeText: string,
+  analysis: ATSDeepAnalysis,
+  targetRole: string
+): Promise<ATSSuggestion[]> {
+  const prompt = `Generate specific, actionable suggestions to improve this resume for the target role "${targetRole}".
+
+ATS Analysis:
+${JSON.stringify(analysis, null, 2)}
+
+Resume:
+"""
+${resumeText}
+"""
+
+Output a JSON array of suggestion objects. Each suggestion must include:
+{
+  "id": string (unique, e.g. "sugg-1"),
+  "section": string (which section: "summary", "skills", "experience", "projects", "education", "formatting", "keywords"),
+  "title": string (short title like "Improve Summary" or "Add Docker"),
+  "description": string (detailed explanation),
+  "impact": "high" | "medium" | "low",
+  "original": string (the current text or context),
+  "improved": string (the improved version)
+}
+
+Generate 5-8 suggestions. Be specific and actionable.`;
+
+  const fallback: ATSSuggestion[] = [
+    { id: "sugg-1", section: "summary", title: "Improve Summary", description: "Add measurable achievements", impact: "high", original: "", improved: "" },
+    { id: "sugg-2", section: "skills", title: "Add Docker", description: "Docker is commonly required", impact: "high", original: "", improved: "" },
+  ];
+  return generateJSON<ATSSuggestion[]>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+}
+
+/**
+ * 24. Apply single ATS suggestion (improve specific section)
+ */
+export async function applyATSSuggestion(
+  resumeSection: string,
+  currentContent: string,
+  suggestion: string
+): Promise<string> {
+  const prompt = `Improve this resume ${resumeSection} section based on the suggestion.
+
+Current Content:
+"""
+${currentContent}
+"""
+
+Suggestion: ${suggestion}
+
+Return ONLY the improved content. Be concise and professional.`;
+
+  try {
+    return await generateText(ATS_SYSTEM, prompt, { model: MODELS.FAST });
+  } catch {
+    return currentContent;
+  }
+}
+
 /**
  * 8. Cover Letter Generator
  */

@@ -1,12 +1,104 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { httpError } from "../utils/httpError";
-import { analyzeResumeATS } from "../lib/ai/gemini";
+import {
+  analyzeResumeATS,
+  analyzeResumeDeep,
+  analyzeJobMatch,
+  generateATSSuggestions,
+  applyATSSuggestion,
+  atsAIChat,
+} from "../lib/ai/gemini";
 const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  const mimeType = file.mimetype;
+  if (mimeType === "application/pdf") {
+    const parsed = await pdfParse(file.buffer);
+    return parsed.text;
+  } else if (
+    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType === "application/msword"
+  ) {
+    const parsed = await mammoth.extractRawText({ buffer: file.buffer });
+    return parsed.value;
+  }
+  throw httpError(400, "Unsupported file format. Please upload a PDF or DOCX file.");
+}
+
+function serializeResumeToText(resume: any): string {
+  const p = resume.personalInfo || {};
+  const edu = (resume.education as any[]) || [];
+  const exp = (resume.experience as any[]) || [];
+  const proj = (resume.projects as any[]) || [];
+  const skills = (resume.skills as string[]) || [];
+  const certs = (resume.certifications as any[]) || [];
+  const achievements = (resume.achievements as string[]) || [];
+  const languages = (resume.languages as string[]) || [];
+
+  return `
+Candidate Name: ${p.fullName || p.name || "N/A"}
+Email: ${p.email || "N/A"}
+Phone: ${p.phone || "N/A"}
+Location: ${p.location || "N/A"}
+Summary: ${p.summary || "N/A"}
+LinkedIn: ${p.linkedin || "N/A"}
+GitHub: ${p.github || "N/A"}
+Portfolio: ${p.portfolio || "N/A"}
+
+EDUCATION:
+${edu.map((e: any) => `• ${e.degree || "Degree"} in ${e.fieldOfStudy || "Specialization"} from ${e.institution || "Institution"} (${e.startDate || ""} - ${e.endDate || ""})${e.grade ? ` — GPA: ${e.grade}` : ""}`).join("\n")}
+
+WORK EXPERIENCE:
+${exp.map((x: any) => `• ${x.role || "Role"} at ${x.company || "Company"} (${x.startDate || ""} - ${x.endDate || ""}): ${x.description || ""}`).join("\n")}
+
+PROJECTS:
+${proj.map((pr: any) => `• ${pr.name || pr.title || "Project"} (${pr.techStack || ""}): ${pr.description || ""}`).join("\n")}
+
+TECHNICAL SKILLS:
+${skills.join(", ")}
+
+CERTIFICATIONS:
+${certs.map((c: any) => `• ${c.name || c.title || "Certification"} from ${c.issuer || ""}${c.date ? ` (${c.date})` : ""}`).join("\n")}
+
+ACHIEVEMENTS:
+${achievements.filter(Boolean).join("\n")}
+
+LANGUAGES:
+${languages.filter(Boolean).join(", ")}
+  `.trim();
+}
+
+async function getOrCreateResumeId(userId: string, resumeId?: string): Promise<string> {
+  if (resumeId) return resumeId;
+  const latestResume = await prisma.resume.findFirst({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (latestResume) return latestResume.id;
+  const placeholder = await prisma.resume.create({
+    data: {
+      userId,
+      title: `Imported Resume (${new Date().toLocaleDateString()})`,
+      template: "Modern",
+      personalInfo: {},
+      education: [],
+      experience: [],
+      projects: [],
+      skills: [],
+      certifications: [],
+    },
+  });
+  return placeholder.id;
+}
+
+// ─── Endpoints ────────────────────────────────────────────────────────────────
+
 /**
- * 1. Analyze Uploaded Resume File for ATS Score
+ * 1. Analyze Uploaded Resume File or Saved Resume for ATS
  */
 export async function analyzeATSReport(req: Request, res: Response, next: NextFunction) {
   try {
@@ -14,74 +106,38 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
     if (!userId) throw httpError(401, "Unauthorized");
 
     const targetRole = req.body.targetRole || "Software Engineer";
-    const resumeId = req.body.resumeId || ""; // Optional, link to an existing Resume draft if provided
+    const resumeId = req.body.resumeId || "";
+    const jobDescription = req.body.jobDescription || "";
 
-    if (!req.file) {
-      throw httpError(400, "Please upload a PDF or DOCX resume file");
-    }
-
-    const fileBuffer = req.file.buffer;
-    const mimeType = req.file.mimetype;
     let resumeText = "";
 
-    // Extract text based on file format
-    if (mimeType === "application/pdf") {
-      const parsed = await pdfParse(fileBuffer);
-      resumeText = parsed.text;
-    } else if (
-      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      mimeType === "application/msword"
-    ) {
-      const parsed = await mammoth.extractRawText({ buffer: fileBuffer });
-      resumeText = parsed.value;
+    if (req.file) {
+      resumeText = await extractTextFromFile(req.file);
+    } else if (resumeId) {
+      const resume = await prisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (!resume) throw httpError(404, "Resume not found");
+      resumeText = serializeResumeToText(resume);
     } else {
-      throw httpError(400, "Unsupported file format. Please upload a PDF or DOCX file.");
-    }
-
-    if (!resumeText.trim()) {
-      throw httpError(400, "Could not extract text from the uploaded file.");
-    }
-
-    // Call Gemini AI for ATS scoring
-    const analysis = await analyzeResumeATS(resumeText, targetRole);
-
-    // If a resumeId is not provided, we can look up or associate a dummy or create a blank one,
-    // or since the schema has resumeId, we can just save it. Wait, the schema has:
-    // model ATSReport {
-    //   id            String   @id @default(cuid())
-    //   userId        String   @map("user_id")
-    //   resumeId      String   @map("resume_id")
-    //   score         Int
-    //   ...
-    // }
-    // If no resumeId is passed, we can find the user's latest resume, or if they have none, we can create a dummy one or write a placeholder.
-    // Let's check if the user has any resumes.
-    let associatedResumeId = resumeId;
-    if (!associatedResumeId) {
+      // Try to find saved resume
       const latestResume = await prisma.resume.findFirst({
         where: { userId },
         orderBy: { updatedAt: "desc" },
       });
       if (latestResume) {
-        associatedResumeId = latestResume.id;
+        resumeText = serializeResumeToText(latestResume);
       } else {
-        // Create a quick placeholder draft so we don't violate the DB constraint
-        const placeholder = await prisma.resume.create({
-          data: {
-            userId,
-            title: `Imported Resume (${new Date().toLocaleDateString()})`,
-            template: "Modern",
-            personalInfo: {},
-            education: [],
-            experience: [],
-            projects: [],
-            skills: [],
-            certifications: [],
-          },
-        });
-        associatedResumeId = placeholder.id;
+        throw httpError(400, "No resume found. Please upload a file or create a resume first.");
       }
     }
+
+    if (!resumeText.trim()) {
+      throw httpError(400, "Could not extract text from the resume.");
+    }
+
+    // Deep ATS Analysis
+    const analysis = await analyzeResumeDeep(resumeText, targetRole, jobDescription);
+
+    const associatedResumeId = await getOrCreateResumeId(userId, resumeId);
 
     // Save ATS report to DB
     const report = await prisma.aTSReport.create({
@@ -89,23 +145,164 @@ export async function analyzeATSReport(req: Request, res: Response, next: NextFu
         userId,
         resumeId: associatedResumeId,
         score: analysis.score,
-        missingKeywords: analysis.missingKeywords,
-        recommendations: {
+        missingKeywords: analysis.keywordsMissing,
+        recommendations: JSON.parse(JSON.stringify({
           recommendations: analysis.recommendations,
           formattingIssues: analysis.formattingIssues,
           strengths: analysis.strengths,
-        },
+          sectionScores: analysis.sectionScores,
+          keywordAnalysis: analysis.keywordAnalysis,
+          formattingCheck: analysis.formattingCheck,
+          strengthBars: analysis.strengthBars,
+          readability: analysis.readability,
+          resumeLength: analysis.length,
+          formatting: analysis.formatting,
+          recruiterScore: analysis.recruiterScore,
+          scoreLabel: analysis.scoreLabel,
+          keywordsFound: analysis.keywordsFound,
+        })),
       },
     });
 
-    res.json({ success: true, report });
+    res.json({ success: true, report, analysis });
   } catch (error) {
     next(error);
   }
 }
 
 /**
- * 2. Get User ATS Auditing History
+ * 2. Compare Resume with Job Description
+ */
+export async function analyzeJDMatch(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) throw httpError(401, "Unauthorized");
+
+    const { resumeId, jobDescription } = req.body;
+    if (!jobDescription) throw httpError(400, "jobDescription is required");
+
+    let resumeText = "";
+
+    if (req.file) {
+      resumeText = await extractTextFromFile(req.file);
+    } else if (resumeId) {
+      const resume = await prisma.resume.findFirst({ where: { id: resumeId, userId } });
+      if (!resume) throw httpError(404, "Resume not found");
+      resumeText = serializeResumeToText(resume);
+    } else {
+      const latestResume = await prisma.resume.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (latestResume) {
+        resumeText = serializeResumeToText(latestResume);
+      } else {
+        throw httpError(400, "No resume found.");
+      }
+    }
+
+    const matchResult = await analyzeJobMatch(resumeText, jobDescription);
+
+    res.json({ success: true, matchResult });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 3. Get ATS Suggestions for Improvement
+ */
+export async function getATSSuggestions(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) throw httpError(401, "Unauthorized");
+
+    const { targetRole } = req.body;
+    let resumeText = "";
+    let analysis: any = null;
+
+    if (req.body.resumeId) {
+      const resume = await prisma.resume.findFirst({ where: { id: req.body.resumeId, userId } });
+      if (!resume) throw httpError(404, "Resume not found");
+      resumeText = serializeResumeToText(resume);
+    } else {
+      const latestResume = await prisma.resume.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (latestResume) resumeText = serializeResumeToText(latestResume);
+    }
+
+    if (req.body.analysis) {
+      analysis = req.body.analysis;
+    }
+
+    if (!resumeText) throw httpError(400, "No resume content found");
+
+    // If we don't have analysis yet, do a quick one
+    if (!analysis) {
+      const atsResult = await analyzeResumeATS(resumeText, targetRole || "Software Engineer");
+      analysis = atsResult;
+    }
+
+    const suggestions = await generateATSSuggestions(resumeText, analysis, targetRole || "Software Engineer");
+
+    res.json({ success: true, suggestions });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 4. Apply a single ATS improvement
+ */
+export async function applyImprovement(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) throw httpError(401, "Unauthorized");
+
+    const { section, originalContent, suggestionText } = req.body;
+    if (!section || !originalContent || !suggestionText) {
+      throw httpError(400, "section, originalContent, and suggestionText are required");
+    }
+
+    const improved = await applyATSSuggestion(section, originalContent, suggestionText);
+
+    res.json({ success: true, improved });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 5. ATS AI Chat
+ */
+export async function atsChatHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) throw httpError(401, "Unauthorized");
+
+    const { message, resumeText, analysis } = req.body;
+    if (!message) throw httpError(400, "message is required");
+
+    let text = resumeText || "";
+    if (!text && req.body.resumeId) {
+      const resume = await prisma.resume.findFirst({
+        where: { id: req.body.resumeId, userId },
+      });
+      if (resume) text = serializeResumeToText(resume);
+    }
+
+    const result = await atsAIChat(text, analysis || {}, message);
+
+    res.json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * 6. Get User ATS Auditing History
  */
 export async function listATSReports(req: Request, res: Response, next: NextFunction) {
   try {
@@ -129,7 +326,7 @@ export async function listATSReports(req: Request, res: Response, next: NextFunc
 }
 
 /**
- * 3. Get Specific ATS Report
+ * 7. Get Specific ATS Report
  */
 export async function getATSReport(req: Request, res: Response, next: NextFunction) {
   try {

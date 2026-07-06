@@ -34,7 +34,7 @@ import {
   Star, Zap,
   LineChart, Trophy, MessageCircle,
   Target, Globe, Edit3, Save, X,
-  Upload, Download, Trash2, RefreshCw, ArrowLeft,
+  Upload, Download, Trash2, RefreshCw, ArrowLeft, Lock, Shield,
 } from "lucide-react";
 interface AdyapanUser {
   name: string;
@@ -301,7 +301,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
   user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
-  notifications, setNotifications, onPremium,
+  notifications, setNotifications, onPremium, onViewSettings,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -313,6 +313,7 @@ function DashboardTopNav({
   onMenuToggle: () => void;
   notifications: any[];
   onPremium?: () => void;
+  onViewSettings?: () => void;
   setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
@@ -609,14 +610,14 @@ function DashboardTopNav({
           )}
         </div>
         {/* Profile dropdown */}
-        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} />
+        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} onViewSettings={onViewSettings} />
       </div>
     </header>
   );
 }
 
 // ─── Profile Dropdown ─────────────────────────────────────────────────────────
-function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void }) {
+function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -644,9 +645,8 @@ function ProfileDropdown({ user, onComingSoon, theme, onViewProfile }: { user: A
   const menuItems = [
     { icon: <User size={15} />, label: "My Profile", href: "#", onClickFn: onViewProfile },
     { icon: <TrendingUp size={15} />, label: "Learning Progress", href: "#", cs: true },
-    { icon: <Award size={15} />, label: "Certificates", href: "#", cs: true },
     null,
-    { icon: <Settings size={15} />, label: "Settings", href: "#", cs: true },
+    { icon: <Settings size={15} />, label: "Settings", href: "#", onClickFn: onViewSettings },
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", cs: true },
     null,
     { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
@@ -1284,6 +1284,139 @@ function NotificationsView({
   );
 }
 
+// ─── Settings View ────────────────────────────────────────────────────────────
+function SettingsView({ user, onViewDashboard }: { user: AdyapanUser | null; onViewDashboard: () => void }) {
+  const [saved, setSaved] = useState(false);
+  const [notifications, setNotifications] = useState({ email: true, browser: false, marketing: false });
+  const [privacy, setPrivacy] = useState({ profilePublic: true, showEmail: false });
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: "var(--bg-card)", border: "1px solid var(--border-color)",
+    borderRadius: 16, padding: "1.4rem", marginBottom: "1.2rem",
+  };
+  const sectionTitle: React.CSSProperties = {
+    fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.1rem",
+    display: "flex", alignItems: "center", gap: 8,
+  };
+  const row: React.CSSProperties = {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "0.65rem 0", borderBottom: "1px solid var(--border-color)",
+  };
+  const toggle = (on: boolean, onToggle: () => void) => (
+    <button onClick={onToggle} style={{
+      width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+      background: on ? "var(--primary)" : "rgba(255,255,255,0.12)",
+      position: "relative", transition: "background 0.2s",
+    }}>
+      <span style={{
+        position: "absolute", top: 3, left: on ? 22 : 3,
+        width: 18, height: 18, borderRadius: "50%", background: "#fff",
+        transition: "left 0.2s", display: "block",
+      }} />
+    </button>
+  );
+
+  return (
+    <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div style={{ marginBottom: "1.5rem" }}>
+        <p style={{ fontSize: "0.78rem", color: "var(--primary)", fontWeight: 600, marginBottom: 2 }}>SETTINGS</p>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>Account Settings</h1>
+      </div>
+
+      {/* Account Info */}
+      <div style={cardStyle}>
+        <div style={sectionTitle}><Settings size={16} style={{ color: "var(--primary)" }} /> Account Information</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1.5rem" }}>
+          <div style={{ marginBottom: "0.9rem" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" as const }}>Full Name</label>
+            <input defaultValue={user?.name ?? ""} style={{ width: "100%", padding: "0.55rem 0.85rem", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: 8, color: "var(--text-primary)", fontSize: "0.84rem", outline: "none", boxSizing: "border-box" as const }}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--primary)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--border-color)")} />
+          </div>
+          <div style={{ marginBottom: "0.9rem" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" as const }}>Email Address</label>
+            <input defaultValue={user?.email ?? ""} disabled style={{ width: "100%", padding: "0.55rem 0.85rem", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: 8, color: "var(--text-muted)", fontSize: "0.84rem", outline: "none", boxSizing: "border-box" as const, cursor: "not-allowed" }} />
+          </div>
+        </div>
+        <button onClick={handleSave} style={{ padding: "0.52rem 1.2rem", background: saved ? "#10b981" : "var(--primary)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", transition: "background 0.3s" }}>
+          {saved ? "✓ Saved" : "Save Changes"}
+        </button>
+      </div>
+
+      {/* Password */}
+      <div style={cardStyle}>
+        <div style={sectionTitle}><Lock size={16} style={{ color: "var(--primary)" }} /> Change Password</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0 1rem", marginBottom: "0.9rem" }}>
+          {["Current Password", "New Password", "Confirm Password"].map(label => (
+            <div key={label}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" as const }}>{label}</label>
+              <input type="password" placeholder="••••••••" style={{ width: "100%", padding: "0.55rem 0.85rem", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: 8, color: "var(--text-primary)", fontSize: "0.84rem", outline: "none", boxSizing: "border-box" as const }}
+                onFocus={e => (e.currentTarget.style.borderColor = "var(--primary)")}
+                onBlur={e => (e.currentTarget.style.borderColor = "var(--border-color)")} />
+            </div>
+          ))}
+        </div>
+        <button onClick={handleSave} style={{ padding: "0.52rem 1.2rem", background: "var(--primary)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}>
+          Update Password
+        </button>
+      </div>
+
+      {/* Notifications */}
+      <div style={cardStyle}>
+        <div style={sectionTitle}><Bell size={16} style={{ color: "var(--primary)" }} /> Notification Preferences</div>
+        <div style={row}>
+          <div><div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Email Notifications</div><div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Receive updates about your learning progress</div></div>
+          {toggle(notifications.email, () => setNotifications(p => ({ ...p, email: !p.email })))}
+        </div>
+        <div style={row}>
+          <div><div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Browser Notifications</div><div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Get notified in your browser</div></div>
+          {toggle(notifications.browser, () => setNotifications(p => ({ ...p, browser: !p.browser })))}
+        </div>
+        <div style={{ ...row, borderBottom: "none" }}>
+          <div><div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Marketing Emails</div><div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Tips, features, and promotional content</div></div>
+          {toggle(notifications.marketing, () => setNotifications(p => ({ ...p, marketing: !p.marketing })))}
+        </div>
+      </div>
+
+      {/* Privacy */}
+      <div style={cardStyle}>
+        <div style={sectionTitle}><Shield size={16} style={{ color: "var(--primary)" }} /> Privacy Settings</div>
+        <div style={row}>
+          <div><div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Public Profile</div><div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Allow others to view your profile</div></div>
+          {toggle(privacy.profilePublic, () => setPrivacy(p => ({ ...p, profilePublic: !p.profilePublic })))}
+        </div>
+        <div style={{ ...row, borderBottom: "none" }}>
+          <div><div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Show Email</div><div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Display email on your public profile</div></div>
+          {toggle(privacy.showEmail, () => setPrivacy(p => ({ ...p, showEmail: !p.showEmail })))}
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div style={{ ...cardStyle, border: "1px solid rgba(239,68,68,0.25)" }}>
+        <div style={{ ...sectionTitle, color: "#ef4444" }}><Trash2 size={16} style={{ color: "#ef4444" }} /> Danger Zone</div>
+        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "1rem" }}>Once you delete your account, all your data will be permanently removed. This action cannot be undone.</p>
+        {!deleting ? (
+          <button onClick={() => setDeleting(true)} style={{ padding: "0.52rem 1.2rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}>
+            Delete Account
+          </button>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.82rem", color: "#ef4444", fontWeight: 600 }}>Are you sure? This cannot be undone.</span>
+            <button style={{ padding: "0.45rem 1rem", background: "#ef4444", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}>Yes, Delete</button>
+            <button onClick={() => setDeleting(false)} style={{ padding: "0.45rem 1rem", background: "transparent", border: "1px solid var(--border-color)", borderRadius: 8, color: "var(--text-secondary)", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>Cancel</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
@@ -1467,12 +1600,14 @@ function UserDashboardContent() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} onPremium={handlePremium} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
         {activeView === "profile" ? (
           <ProfileView onViewDashboard={handleViewDashboard} />
+        ) : activeView === "settings" ? (
+          <SettingsView user={user} onViewDashboard={handleViewDashboard} />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
           <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
         ) : activeView === "ats-checker" ? (

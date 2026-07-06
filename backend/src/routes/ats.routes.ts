@@ -1,6 +1,14 @@
 import { Router } from "express";
 import multer from "multer";
-import { analyzeATSReport, listATSReports, getATSReport } from "../controllers/ats.controller";
+import {
+  analyzeATSReport,
+  listATSReports,
+  getATSReport,
+  analyzeJDMatch,
+  getATSSuggestions,
+  applyImprovement,
+  atsChatHandler,
+} from "../controllers/ats.controller";
 import { requireAuth } from "../middleware/auth";
 
 export const atsRouter = Router();
@@ -11,5 +19,9 @@ const uploadMemory = multer({
 });
 
 atsRouter.post("/analyze", requireAuth, uploadMemory.single("resume"), analyzeATSReport);
+atsRouter.post("/jd-match", requireAuth, uploadMemory.single("resume"), analyzeJDMatch);
+atsRouter.post("/suggestions", requireAuth, getATSSuggestions);
+atsRouter.post("/apply-improvement", requireAuth, applyImprovement);
+atsRouter.post("/chat", requireAuth, atsChatHandler);
 atsRouter.get("/history", requireAuth, listATSReports);
 atsRouter.get("/:id", requireAuth, getATSReport);

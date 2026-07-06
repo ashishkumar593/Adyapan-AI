@@ -167,26 +167,32 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   const handleGenerate = async () => {
     setGenerating(true);
     setGenStep(0);
+    // Snapshot current state to avoid stale closures
+    const snap = {
+      personalInfo, summary, education, experience, projects, skills,
+      certifications: [...certifications], achievements: [...achievements], languages: [...languages],
+      company: setup.company, profession: setup.profession, resumeStyle: setup.resumeStyle,
+    };
+    const snapJSON = { personalInfo: snap.personalInfo, summary: snap.summary, education: snap.education, experience: snap.experience, projects: snap.projects, skills: snap.skills, certifications: snap.certifications, achievements: snap.achievements, languages: snap.languages };
+
     try {
-      const [summaryRes] = await Promise.all([
-        api.post("/resume/generate-summary", { personalInfo, education, experience, skills }),
-      ]);
+      const summaryRes = await api.post("/resume/generate-summary", { personalInfo: snap.personalInfo, education: snap.education, experience: snap.experience, skills: snap.skills });
       if (summaryRes.data.success && summaryRes.data.summary) setSummary(summaryRes.data.summary);
     } catch {}
     setGenStep(1);
     try {
-      const optRes = await api.post("/resume/optimize-resume", { resumeJson: resumeJSON, targetCompany: setup.company });
+      const optRes = await api.post("/resume/optimize-resume", { resumeJson: snapJSON, targetCompany: snap.company });
       if (optRes.data.success && optRes.data.resume) {
         const r = optRes.data.resume;
         if (r.summary) setSummary(r.summary);
-        if (r.experience) setExperience(r.experience);
-        if (r.projects) setProjects(r.projects);
-        if (r.skills) setSkills(r.skills);
+        if (r.experience) setExperience(r.experience || snap.experience);
+        if (r.projects) setProjects(r.projects || snap.projects);
+        if (r.skills) setSkills(r.skills || snap.skills);
       }
     } catch {}
     setGenStep(3);
     try {
-      const res = await api.post("/resume/create", { title: `My ${setup.profession} Resume`, template: setup.resumeStyle, ...resumeJSON, targetCompany: setup.company, careerLevel: setup.careerLevel });
+      const res = await api.post("/resume/create", { title: `My ${snap.profession} Resume`, template: snap.resumeStyle, ...snapJSON, targetCompany: snap.company });
       if (res.data.success && res.data.resume) setResumeId(res.data.resume.id);
     } catch {}
     setGenStep(4);
@@ -469,7 +475,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     <ArrowLeft size={14} /> Back
                   </button>
                   <motion.button whileHover={{ scale: canContinue(2) ? 1.02 : 1 }} whileTap={{ scale: canContinue(2) ? 0.98 : 1 }}
-                    onClick={() => canContinue(2) && setScreen(3)} disabled={!canContinue(2)}
+                    onClick={() => { if (canContinue(2)) { setScreen(3); handleGenerate(); } }} disabled={!canContinue(2)}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all"
                     style={{
                       background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.stepCircle,
