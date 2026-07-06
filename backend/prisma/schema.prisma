@@ -61,6 +61,7 @@ model User {
   subscriptionStatus  String?  @map("subscription_status") // "active" | "cancelled" | "expired"
   subscriptionEnd     DateTime? @map("subscription_end")
   payments            Payment[]
+  notifications       Notification[]
 
   @@map("users")
 }
@@ -574,6 +575,21 @@ model ChatMessage {
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String   // "system", "subscription", "achievement", "ats_update", "interview", "admin", "payment"
+  title     String
+  message   String
+  link      String?  // optional deep link e.g. "/premium"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }
 
 model Payment {

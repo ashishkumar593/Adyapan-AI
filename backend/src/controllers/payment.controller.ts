@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { httpError } from "../utils/httpError";
+import { emitNotification } from "../lib/notificationEmitter";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
@@ -130,6 +131,18 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
       },
     });
 
+    // Create notification and emit real-time event
+    const notif = await prisma.notification.create({
+      data: {
+        userId,
+        type: "subscription",
+        title: "Subscription Activated!",
+        message: `Your ${planLabel} plan is now active${payment.plan === "pro_yearly" ? " for one year" : " until " + end.toLocaleDateString()}.`,
+        link: "/premium",
+      },
+    });
+    emitNotification(userId, notif);
+
     res.json({ success: true, message: "Payment verified and subscription activated" });
   } catch (error) {
     next(error);
@@ -198,6 +211,18 @@ export async function cancelSubscription(req: Request, res: Response, next: Next
         subscriptionEnd: new Date(),
       },
     });
+
+    // Create notification and emit real-time event
+    const notif = await prisma.notification.create({
+      data: {
+        userId,
+        type: "subscription",
+        title: "Subscription Cancelled",
+        message: "Your subscription has been cancelled. You'll lose access to premium features at the end of the billing period.",
+        link: "/premium",
+      },
+    });
+    emitNotification(userId, notif);
 
     res.json({ success: true, message: "Subscription cancelled" });
   } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
-import { SocketProvider } from "@/context/SocketContext";
-import { useState, useEffect, useRef } from "react";
+import { SocketProvider, useSocket } from "@/context/SocketContext";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { clearAuthSession } from "@/hooks/useAuth";
@@ -336,7 +336,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 function DashboardTopNav({
   user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
-  notifications, setNotifications, onPremium, onViewSettings,
+  notifications, setNotifications, unreadCount, onMarkAllRead, onClearAll, onPremium, onViewSettings,
 }: {
   user: AdyapanUser | null;
   theme: string;
@@ -350,6 +350,9 @@ function DashboardTopNav({
   onPremium?: () => void;
   onViewSettings?: () => void;
   setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
+  unreadCount: number;
+  onMarkAllRead: () => void;
+  onClearAll: () => void;
 }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [evaluateOpen, setEvaluateOpen] = useState(false);
@@ -571,13 +574,13 @@ function DashboardTopNav({
             }}
           >
             <Bell size={19} />
-            {notifications.filter(n => !n.read).length > 0 && (
+            {unreadCount > 0 && (
               <span style={{
                 position: "absolute", top: 0, right: 0, background: "#ef4444",
                 color: "#fff", fontSize: "0.6rem", fontWeight: 800, width: 14, height: 14,
                 borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                {notifications.filter(n => !n.read).length}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </motion.button>
@@ -591,9 +594,9 @@ function DashboardTopNav({
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem", borderBottom: `1px solid ${navBorder}`, paddingBottom: "0.5rem" }}>
                 <span style={{ fontSize: "0.85rem", fontWeight: 700, color: navBtnColor }}>Notifications</span>
-                {notifications.filter(n => !n.read).length > 0 && (
+                {unreadCount > 0 && (
                   <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
-                    onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                    onClick={onMarkAllRead}
                     style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                   >
                     Mark all read
@@ -607,14 +610,16 @@ function DashboardTopNav({
                     No notifications
                   </div>
                 ) : (
-                  notifications.map((n) => (
+                  notifications.slice(0, 5).map((n) => (
                     <div key={n.id} style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", padding: "0.45rem", borderRadius: 8, background: n.read ? "transparent" : "rgba(245,158,11,0.05)", border: `1px solid ${n.read ? "transparent" : "rgba(245,158,11,0.15)"}` }}>
                       {!n.read && (
                         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)", marginTop: 6, flexShrink: 0 }} />
                       )}
                       <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-primary)", fontWeight: n.read ? 500 : 600, lineHeight: 1.3 }}>{n.text}</p>
-                        <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>{n.time}</span>
+                        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--text-primary)", fontWeight: n.read ? 500 : 600, lineHeight: 1.3 }}>{n.title || n.message}</p>
+                        <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                          {n.createdAt ? new Date(n.createdAt).toLocaleDateString() + " " + new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                        </span>
                       </div>
                     </div>
                   ))
@@ -623,7 +628,7 @@ function DashboardTopNav({
               <div style={{ borderTop: `1px solid ${navBorder}`, paddingTop: "0.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 {notifications.length > 0 ? (
                   <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
-                    onClick={() => setNotifications([])}
+                    onClick={onClearAll}
                     style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
                   >
                     Clear all
@@ -1191,26 +1196,42 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
 function NotificationsView({
   notifications,
   setNotifications,
-  onViewDashboard
+  onViewDashboard,
+  onMarkAllRead,
+  onClearAll,
 }: {
   notifications: any[];
   setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
   onViewDashboard: () => void;
+  onMarkAllRead: () => void;
+  onClearAll: () => void;
 }) {
-  const handleToggleRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  const handleToggleRead = async (id: string) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch { /* ignore */ }
   };
 
-  const handleDelete = (id: number) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch { /* ignore */ }
   };
 
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleMarkAllRead = async () => {
+    try {
+      await api.put("/notifications/read-all");
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch { /* ignore */ }
   };
 
-  const handleClearAll = () => {
-    setNotifications([]);
+  const handleClearAll = async () => {
+    try {
+      await api.delete("/notifications/clear");
+      setNotifications([]);
+    } catch { /* ignore */ }
   };
 
   return (
@@ -1284,21 +1305,26 @@ function NotificationsView({
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flex: 1, marginRight: "1rem" }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "transparent" : "var(--primary)", marginTop: 6, flexShrink: 0 }} />
                   <div>
-                    <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: n.read ? 600 : 700, color: "var(--text-primary)" }}>{n.text}</h4>
-                    <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", display: "inline-block", marginTop: 4 }}>{n.time}</span>
+                    <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: n.read ? 600 : 700, color: "var(--text-primary)" }}>{n.title || n.message}</h4>
+                    {n.message !== n.title && <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text-secondary)" }}>{n.message}</p>}
+                    <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", display: "inline-block", marginTop: 4 }}>
+                      {n.createdAt ? new Date(n.createdAt).toLocaleDateString() + " " + new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                    </span>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
-                    onClick={() => handleToggleRead(n.id)}
-                    style={{
-                      padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
-                      cursor: "pointer", background: "transparent", border: "1px solid var(--border-color)",
-                      color: "var(--text-secondary)"
-                    }}
-                  >
-                    {n.read ? "Mark Unread" : "Mark Read"}
-                  </motion.button>
+                  {!n.read && (
+                    <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
+                      onClick={() => handleToggleRead(n.id)}
+                      style={{
+                        padding: "0.35rem 0.75rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
+                        cursor: "pointer", background: "transparent", border: "1px solid var(--border-color)",
+                        color: "var(--text-secondary)"
+                      }}
+                    >
+                      Mark Read
+                    </motion.button>
+                  )}
                   <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} transition={{duration:0.12}}
                     onClick={() => handleDelete(n.id)}
                     style={{
@@ -1470,11 +1496,62 @@ function UserDashboardContent() {
   const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const selectedTemplate = "ATS Modern";
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "Resume ATS Score updated to 78%", time: "3 hours ago", read: false },
-    { id: 2, text: "New DSA Practice question is available", time: "5 hours ago", read: false },
-    { id: 3, text: "Assignment Generator completed successfully", time: "Yesterday", read: true },
-  ]);
+  const { socket, isConnected } = useSocket();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(true);
+
+  // ─── Fetch notifications from API ──────────────────────────────
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await api.get("/notifications?limit=50");
+      setNotifications(res.data.notifications);
+    } catch { /* ignore */ }
+  }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await api.get("/notifications/unread-count");
+      setUnreadCount(res.data.count);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications().finally(() => setNotifLoading(false));
+    fetchUnreadCount();
+  }, [fetchNotifications, fetchUnreadCount]);
+
+  // ─── Keep unread count in sync with local state ────────────────
+  useEffect(() => {
+    setUnreadCount(notifications.filter(n => !n.read).length);
+  }, [notifications]);
+
+  // ─── Socket.io: join user room & listen for new notifications ──
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    let userId: string | null = null;
+    try {
+      const raw = localStorage.getItem("adyapan-user");
+      if (raw) userId = (JSON.parse(raw) as { id?: string })?.id ?? null;
+    } catch { /* ignore */ }
+
+    if (userId) {
+      socket.emit("join_user", userId);
+    }
+
+    const handler = (notification: any) => {
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(c => c + 1);
+    };
+
+    socket.on("notification:new", handler);
+
+    return () => {
+      if (userId) socket.emit("leave_user", userId);
+      socket.off("notification:new", handler);
+    };
+  }, [socket, isConnected]);
 
   const [dashboardStats, setDashboardStats] = useState({
     resumesCount: 0,
@@ -1635,7 +1712,7 @@ function UserDashboardContent() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main resume-hub-theme">
@@ -1692,6 +1769,12 @@ function UserDashboardContent() {
             notifications={notifications}
             setNotifications={setNotifications}
             onViewDashboard={handleViewDashboard}
+            onMarkAllRead={async () => {
+              try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); } catch {}
+            }}
+            onClearAll={async () => {
+              try { await api.delete("/notifications/clear"); setNotifications([]); } catch {}
+            }}
           />
         ) : (
           statsLoading ? (
