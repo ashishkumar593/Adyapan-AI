@@ -19,6 +19,7 @@ import { dsaRouter } from "./dsa.routes";
 import { challengesRouter } from "./challenges.routes";
 import { githubRouter } from "./github.routes";
 import { interviewRouter } from "./interview.routes";
+import { adyChatRouter } from "./ady-chat.routes";
 
 export const apiRouter = Router();
 
@@ -44,3 +45,4 @@ apiRouter.use("/dsa", dsaRouter);
 apiRouter.use("/challenges", challengesRouter);
 apiRouter.use("/github", githubRouter);
 apiRouter.use("/interview", interviewRouter);
+apiRouter.use("/ady-chat", adyChatRouter);

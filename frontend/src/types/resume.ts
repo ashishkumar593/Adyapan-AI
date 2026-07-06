@@ -19,7 +19,8 @@ export type ResumeHubViewType =
   | "dsa-practice"
   | "coding-challenges"
   | "github-portfolio"
-  | "notifications";
+  | "notifications"
+  | "ady-chat";
 
 export interface PersonalInfo {
   fullName: string;

@@ -13,6 +13,7 @@ import { ResumeBuilderView } from "@/components/resume-hub/ResumeBuilderView";
 import { AtsCheckerView } from "@/components/resume-hub/AtsCheckerView";
 import { CoverLetterView } from "@/components/resume-hub/CoverLetterView";
 import { LinkedInView } from "@/components/resume-hub/LinkedInView";
+import { AdyChatView } from "@/components/ady-chat/AdyChatView";
 import { StudyAssistantView } from "@/components/learning-hub/StudyAssistantView";
 import { NotesGeneratorView } from "@/components/learning-hub/NotesGeneratorView";
 import { QuizGeneratorView } from "@/components/learning-hub/QuizGeneratorView";
@@ -269,6 +270,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "DSA Practice") onViewTool("dsa-practice");
                       else if (sub.label === "Coding Challenges") onViewTool("coding-challenges");
                       else if (sub.label === "GitHub Portfolio Builder") onViewTool("github-portfolio");
+                      else if (sub.label === "AI Chat Assistant") onViewTool("ady-chat");
                       else onComingSoon();
                       setSidebarOpen(false);
                     }}
@@ -1596,7 +1598,7 @@ function UserDashboardContent() {
   const handleViewProfile = () => setActiveView("profile");
   const handlePremium = () => router.push("/#pricing");
   const handleViewDashboard = () => setActiveView("dashboard");
-  const handleAdyChat = () => { window.open("/chat", "_blank"); };
+  const handleAdyChat = () => setActiveView("ady-chat");
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
@@ -1634,6 +1636,8 @@ function UserDashboardContent() {
           <DsaPracticeView />
         ) : activeView === "coding-challenges" ? (
           <CodingChallengesView />
+        ) : activeView === "ady-chat" ? (
+          <AdyChatView setView={setActiveView} />
         ) : activeView === "github-portfolio" ? (
           <GithubPortfolioView />
         ) : activeView === "notifications" ? (

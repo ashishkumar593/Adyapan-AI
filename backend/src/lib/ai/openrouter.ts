@@ -101,3 +101,19 @@ export const MODELS = {
   CODE: "anthropic/claude-sonnet-4",
   CHEAP: "openai/gpt-4o-mini",
 } as const;
+
+// Available models for Ady Chat
+export const CHAT_MODELS = [
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", cheap: true },
+  { id: "openai/gpt-4o", name: "GPT-4o", provider: "OpenAI", cheap: false },
+  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", provider: "Anthropic", cheap: false },
+  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku", provider: "Anthropic", cheap: true },
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", cheap: true },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", cheap: false },
+  { id: "deepseek/deepseek-chat", name: "DeepSeek V3", provider: "DeepSeek", cheap: true },
+  { id: "deepseek/deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek", cheap: true },
+  { id: "meta-llama/llama-3.3-70b", name: "Llama 3.3 70B", provider: "Meta", cheap: true },
+  { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", cheap: false },
+] as const;
+
+export type ChatModelId = (typeof CHAT_MODELS)[number]["id"];

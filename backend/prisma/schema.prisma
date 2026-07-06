@@ -51,6 +51,9 @@ model User {
   // Interview Hub Relations
   interviewSessions   InterviewSession[]
 
+  // Ady Chat Relations
+  chatSessions        ChatSession[]
+
   @@map("users")
 }
 
@@ -537,4 +540,30 @@ model InterviewMessage {
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("interview_messages")
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String   @default("New Chat")
+  model     String   @default("openai/gpt-4o-mini")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  role      String   // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
 }
