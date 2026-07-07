@@ -228,9 +228,17 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 text-xs font-bold rounded-full uppercase tracking-wider">
                   <Flame size={12} className="animate-pulse" /> AI Interview Coach
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>AI Interview Simulator</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  {activeModule === "interview-hr" && "AI HR / Behavioral Interview"}
+                  {activeModule === "interview-technical" && "AI Technical Panel Interview"}
+                  {activeModule === "interview-mock" && "Mock Interview Simulator"}
+                  {activeModule !== "interview-hr" && activeModule !== "interview-technical" && activeModule !== "interview-mock" && "AI Interview Simulator"}
+                </h2>
                 <p className="text-sm" style={{ color: c.textSec }}>
-                  Test your readiness with conversational simulations. Practice HR/behavioral questions or face code/architectural challenges to pass real technical panels.
+                  {activeModule === "interview-hr" && "Leadership traits, STAR methodology validation, team culture, and behavioral queries."}
+                  {activeModule === "interview-technical" && "Coding tasks, software designs, stack concepts, and optimization discussions."}
+                  {activeModule === "interview-mock" && "Configure specific target roles, difficulty tiers, and target companies."}
+                  {activeModule !== "interview-hr" && activeModule !== "interview-technical" && activeModule !== "interview-mock" && "Test your readiness with conversational simulations. Practice HR/behavioral questions or face code/architectural challenges to pass real technical panels."}
                 </p>
               </div>
               <div className="flex items-center gap-2 p-3.5 rounded-2xl shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
@@ -242,129 +250,139 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
               </div>
             </div>
 
-            {/* Quick Cards Setup */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "AI HR / Behavioral",
-                  desc: "Leadership traits, STAR methodology validation, team culture, and behavioral queries.",
-                  icon: <User size={24} className="text-amber-500" />,
-                  type: "behavioral" as const,
-                  label: "HR behavioral assessment"
-                },
-                {
-                  title: "AI Technical panel",
-                  desc: "Coding tasks, software designs, stack concepts, and optimization discussions.",
-                  icon: <Code size={24} className="text-cyan-500" />,
-                  type: "technical" as const,
-                  label: "Tech stack assessment"
-                },
-                {
-                  title: "Mock Interview Setup",
-                  desc: "Fully customizable session allowing specific target roles, difficulty tiers, and target companies.",
-                  icon: <Briefcase size={24} className="text-emerald-500" />,
-                  type: "general" as const,
-                  label: "Custom simulation"
-                }
-              ].map((card) => (
-                <div
-                  key={card.title}
-                  className="rounded-2xl p-5 border flex flex-col justify-between hover:shadow-xl transition-all cursor-pointer group"
-                  style={{ background: c.cardBg, borderColor: c.border }}
-                  onClick={() => {
-                    setType(card.type);
-                    if (card.type !== "general") {
-                      handleStart(card.type);
-                    } else {
-                      // Custom Mock needs input variables, scroll to setup
-                      document.getElementById("custom-setup-section")?.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }}
-                >
-                  <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-amber-500/20 group-hover:bg-amber-500/5 transition-all">
-                      {card.icon}
+            {/* Quick Cards Setup (Only on general hub dashboard) */}
+            {activeModule === "interview-hub" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: "AI HR / Behavioral",
+                    desc: "Leadership traits, STAR methodology validation, team culture, and behavioral queries.",
+                    icon: <User size={24} className="text-amber-500" />,
+                    type: "behavioral" as const,
+                    label: "HR behavioral assessment"
+                  },
+                  {
+                    title: "AI Technical panel",
+                    desc: "Coding tasks, software designs, stack concepts, and optimization discussions.",
+                    icon: <Code size={24} className="text-cyan-500" />,
+                    type: "technical" as const,
+                    label: "Tech stack assessment"
+                  },
+                  {
+                    title: "Mock Interview Setup",
+                    desc: "Fully customizable session allowing specific target roles, difficulty tiers, and target companies.",
+                    icon: <Briefcase size={24} className="text-emerald-500" />,
+                    type: "general" as const,
+                    label: "Custom simulation"
+                  }
+                ].map((card) => (
+                  <div
+                    key={card.title}
+                    className="rounded-2xl p-5 border flex flex-col justify-between hover:shadow-xl transition-all cursor-pointer group"
+                    style={{ background: c.cardBg, borderColor: c.border }}
+                    onClick={() => {
+                      setType(card.type);
+                      if (card.type !== "general") {
+                        handleStart(card.type);
+                      } else {
+                        // Custom Mock needs input variables, scroll to setup
+                        document.getElementById("custom-setup-section")?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-amber-500/20 group-hover:bg-amber-500/5 transition-all">
+                        {card.icon}
+                      </div>
+                      <h3 className="font-extrabold text-base" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.title}</h3>
+                      <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>{card.desc}</p>
                     </div>
-                    <h3 className="font-extrabold text-base" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.title}</h3>
-                    <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>{card.desc}</p>
+                    <div className="mt-6 flex items-center justify-between text-[11px] font-bold text-amber-500 group-hover:text-amber-400">
+                      <span>{card.type === "general" ? "Configure mock" : "Start session now"}</span>
+                      <ChevronRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                  <div className="mt-6 flex items-center justify-between text-[11px] font-bold text-amber-500 group-hover:text-amber-400">
-                    <span>{card.type === "general" ? "Configure mock" : "Start session now"}</span>
-                    <ChevronRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Custom Configuration Section */}
-            <div id="custom-setup-section" className="p-6 rounded-2xl border" style={{ background: c.cardBg, borderColor: c.border }}>
-              <h3 className="text-base font-extrabold mb-4 flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                <Sparkles size={16} className="text-amber-500" /> Customize Interview Session
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Target Role</label>
-                  <input
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    placeholder="e.g. SDE-1 / Data Analyst"
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  />
+            {(activeModule !== "interview-hub" || type === "general") && (
+              <div id="custom-setup-section" className="p-6 rounded-2xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+                <h3 className="text-base font-extrabold mb-4 flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  <Sparkles size={16} className="text-amber-500" />
+                  {activeModule === "interview-hr" && "Configure HR Interview"}
+                  {activeModule === "interview-technical" && "Configure Technical Interview"}
+                  {activeModule === "interview-mock" && "Configure Mock Interview"}
+                  {activeModule === "interview-hub" && "Customize Interview Session"}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Target Role</label>
+                    <input
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      placeholder="e.g. SDE-1 / Data Analyst"
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Target Company</label>
+                    <input
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="e.g. Google / Microsoft"
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                  </div>
+                  {(activeModule === "interview-hub" || activeModule === "interview-mock") && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Session Category</label>
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value as any)}
+                        className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                        style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                      >
+                        <option value="technical">Technical / System Design</option>
+                        <option value="behavioral">HR / Behavioral</option>
+                        <option value="general">General Fit / Mixed</option>
+                      </select>
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Difficulty Tier</label>
+                    <select
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value as any)}
+                      className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    >
+                      <option value="easy">Beginner / Easy</option>
+                      <option value="medium">Standard / Medium</option>
+                      <option value="hard">Expert / Hard</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Target Company</label>
-                  <input
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="e.g. Google / Microsoft"
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Session Category</label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  >
-                    <option value="technical">Technical / System Design</option>
-                    <option value="behavioral">HR / Behavioral</option>
-                    <option value="general">General Fit / Mixed</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Difficulty Tier</label>
-                  <select
-                    value={difficulty}
-                    onChange={(e) => setDifficulty(e.target.value as any)}
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
-                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                  >
-                    <option value="easy">Beginner / Easy</option>
-                    <option value="medium">Standard / Medium</option>
-                    <option value="hard">Expert / Hard</option>
-                  </select>
-                </div>
+                <button
+                  onClick={() => handleStart()}
+                  disabled={starting}
+                  className="inline-flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-black font-extrabold text-xs py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {starting ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" /> Preparing Panel...
+                    </>
+                  ) : (
+                    <>
+                      Launch Session <ChevronRight size={12} />
+                    </>
+                  )}
+                </button>
               </div>
-              <button
-                onClick={() => handleStart()}
-                disabled={starting}
-                className="inline-flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-black font-extrabold text-xs py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {starting ? (
-                  <>
-                    <Loader2 size={12} className="animate-spin" /> Preparing Panel...
-                  </>
-                ) : (
-                  <>
-                    Launch Session <ChevronRight size={12} />
-                  </>
-                )}
-              </button>
-            </div>
+            )}
 
             {/* Audit / Practice History */}
             <div className="space-y-4">

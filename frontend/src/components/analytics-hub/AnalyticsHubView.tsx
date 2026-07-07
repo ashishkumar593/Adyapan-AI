@@ -116,49 +116,18 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
 
   return (
     <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
-      <div className="flex-1 flex flex-col gap-6">
+      <div className="flex-1 flex flex-col gap-4">
 
-        {/* ==================== 1. DASHBOARD CARDS ==================== */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
-          {[
-            { label: "Overall Performance Score", val: "78%", icon: <TrendingUp className="text-amber-500" /> },
-            { label: "Learning Completion", val: "84%", icon: <GraduationCap className="text-emerald-500" /> },
-            { label: "Interview Readiness", val: "80%", icon: <UserCheck className="text-cyan-500" /> },
-            { label: "Resume Completion", val: "90%", icon: <FileText className="text-purple-500" /> }
-          ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
-                <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
-              </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
-                {card.icon}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ==================== 2. NAVIGATION TABS ==================== */}
-        <div className="flex justify-between items-center border-b shrink-0" style={{ borderColor: c.border }}>
-          <div className="flex gap-2">
-            {[
-              { id: "learning" as const, label: "Learning Progress" },
-              { id: "interview" as const, label: "Interview Progress" },
-              { id: "resume" as const, label: "Resume Score" },
-              { id: "skills" as const, label: "Skill Growth" }
-            ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`py-2.5 px-4 font-bold text-xs border-b-2 transition-colors -mb-[1px]`}
-                style={{
-                  color: tab === t.id ? c.primary : c.textSec,
-                  borderColor: tab === t.id ? c.primary : "transparent"
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
+        {/* Compact Module Header */}
+        <div className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Analytics Workspace</p>
+            <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              {tab === "learning" && "Learning Progress"}
+              {tab === "interview" && "Interview Progress"}
+              {tab === "resume" && "Resume Score"}
+              {tab === "skills" && "Skill Growth"}
+            </h2>
           </div>
           <button
             onClick={() => setAssistantOpen(!assistantOpen)}

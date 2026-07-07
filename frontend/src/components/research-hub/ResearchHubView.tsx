@@ -181,44 +181,17 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
 
   return (
     <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
-      <div className="flex-1 flex flex-col gap-6">
+      <div className="flex-1 flex flex-col gap-4">
 
-        {/* ==================== 1. DASHBOARD OVERVIEW CARDS ==================== */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
-          {[
-            { label: "Papers Audited", val: "8", icon: <BookOpen className="text-amber-500" /> },
-            { label: "Citations Compiled", val: "32 Refs", icon: <Layers className="text-cyan-500" /> },
-            { label: "Avg Similarity Index", val: "11%", icon: <Award className="text-emerald-500" /> },
-            { label: "Plagiarism Checks", val: "14", icon: <SearchCode className="text-purple-500" /> }
-          ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
-                <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
-              </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
-                {card.icon}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ==================== 2. HEADER TITLE & AI ASSISTANT ==================== */}
+        {/* Compact Module Header */}
         <div className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Research Portal</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Research Workspace</p>
             <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
               {tab === "paper-ai" ? "Research Paper AI" : "Plagiarism Checker"}
             </h2>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setTab(tab === "paper-ai" ? "plagiarism" : "paper-ai")}
-              className="py-1.5 px-3 rounded-lg border text-xs font-bold transition-all hover:bg-white/5"
-              style={{ borderColor: c.border, color: c.textSec }}
-            >
-              Toggle Hub Module
-            </button>
             <button
               onClick={() => setAssistantOpen(!assistantOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
