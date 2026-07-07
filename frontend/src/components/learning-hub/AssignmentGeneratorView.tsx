@@ -3,555 +3,468 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  PenTool, Download, Copy, Loader2, RefreshCw, CheckCircle2,
-  Plus, History, HelpCircle, ChevronRight, Search, FileText, Cpu, FileDown, Printer
+  PenTool, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
+  CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, Layers, Quote
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
 
-interface AssignmentContent {
-  introduction: string;
-  body: string;
-  conclusion: string;
-  references: string[];
+function useTheme() {
+  const [theme, setTheme] = useState("dark");
+  useEffect(() => {
+    const t = document.documentElement.getAttribute("data-theme") || "dark";
+    setTheme(t);
+    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
 }
 
+const mkColors = (theme: string) => {
+  const isDark = theme === "dark";
+  return {
+    isDark, text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8", textOnAmber: "#000000",
+    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9", cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", cardBgAlt: isDark ? "rgba(0,0,0,0.25)" : "#f8fafc",
+    stickyBg: isDark ? "rgba(10,10,20,0.88)" : "rgba(248,250,252,0.92)",
+    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)", amberActive: isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.1)",
+    purpleBg: isDark ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)", purpleBorder: isDark ? "rgba(139,92,246,0.14)" : "rgba(139,92,246,0.15)",
+    cyanBg: isDark ? "rgba(6,182,212,0.06)" : "rgba(6,182,212,0.05)", cyanBorder: isDark ? "rgba(6,182,212,0.14)" : "rgba(6,182,212,0.15)",
+    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
+    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+  };
+};
+
+interface AssignmentContent { introduction: string; body: string; conclusion: string; references: string[]; }
+
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }) };
+const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }) };
+const slideRight = { hidden: { opacity: 0, x: -24 }, visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.07, duration: 0.4 } }) };
+
 export function AssignmentGeneratorView() {
+  const theme = useTheme();
+  const c = mkColors(theme);
+
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<{ introduction: string; body: string; conclusion: string; references: string[] } | null>(null);
   const [topic, setTopic] = useState("Quantum Computing & Cryptography");
   const [level, setLevel] = useState("Undergraduate");
   const [wordCount, setWordCount] = useState("1000 words");
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
-  const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
-  const [activeSection, setActiveSection] = useState("Introduction");
-  const [history, setHistory] = useState<Array<{ name: string; date: string; level: string; words: string; data: string }>>([]);
+  const [activeSection, setActiveSection] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; level: string; words: string; data: any }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-  };
-
-  const scaleInVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.35 } }
-  };
 
   const MOCK_ASSIGNMENT = {
     introduction: "Quantum computing introduces a paradigm shift in processing power, leveraging superposition and entanglement to execute operations far beyond classical limitations. However, this advancement poses a direct threat to existing cryptographic standards, specifically public-key infrastructures such as RSA.",
     body: "Shor's algorithm, executable on a sufficiently large quantum computer, can solve prime factorization in polynomial time. Consequently, this compromises standard encryption techniques that rely on the computational difficulty of factoring large integers. Research into post-quantum cryptography (PQC) focuses on lattice-based cryptography, multivariate equations, and code-based cryptosystems to withstand quantum-level audits.",
     conclusion: "In conclusion, the advent of quantum processing necessitates a rapid transition to quantum-safe standards. Developing and implementing new protocols will protect critical infrastructures against future quantum adversaries.",
-    references: [
-      "Shor, P. W. (1994). Algorithms for quantum computation: discrete logarithms and factoring.",
-      "NIST. (2022). Post-Quantum Cryptography Standardization Report."
-    ]
+    references: ["Shor, P. W. (1994). Algorithms for quantum computation: discrete logarithms and factoring.", "NIST. (2022). Post-Quantum Cryptography Standardization Report."]
   };
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("adyapan-user");
-      if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? "";
-    } catch { /* */ }
-
-    try {
-      const stored = localStorage.getItem("adyapan-assign-history");
-      if (stored) setHistory(JSON.parse(stored));
-    } catch {}
+    try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
+    try { const stored = localStorage.getItem("adyapan-assign-history"); if (stored) setHistory(JSON.parse(stored)); } catch {}
   }, []);
 
   useEffect(() => {
     if (!socket) return;
-
-    const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => {
-      setProgress(p);
-      setStatusMsg(statusMessage);
-    };
-
+    const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => { setProgress(p); setStatusMsg(statusMessage); };
     const handleComplete = ({ assignment }: { assignment: AssignmentContent }) => {
-      setGenerating(false);
-      const text = `# ${topic}\n\n## Introduction\n${assignment.introduction}\n\n## Main Body\n${assignment.body}\n\n## Conclusion\n${assignment.conclusion}\n\n## References\n${assignment.references.map(r => `- ${r}`).join("\n")}`;
-      setResult(text);
-      setActiveSection("Introduction");
-
-      const newHistoryItem = {
-        name: topic,
-        date: "Just now",
-        level,
-        words: wordCount,
-        data: text
-      };
+      setGenerating(false); setResult(assignment); setActiveSection("Introduction");
+      const newHistoryItem = { name: topic, date: "Just now", level, words: wordCount, data: assignment };
       const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
-      setHistory(updatedHistory);
-      localStorage.setItem("adyapan-assign-history", JSON.stringify(updatedHistory));
+      setHistory(updatedHistory); localStorage.setItem("adyapan-assign-history", JSON.stringify(updatedHistory));
     };
-
-    const handleError = ({ error }: { error: string }) => {
-      setGenerating(false);
-      toast.error(`Generation error: ${error}`);
-    };
-
+    const handleError = ({ error }: { error: string }) => { setGenerating(false); toast.error(`Generation error: ${error}`); };
     socket.on("generate:progress", handleProgress);
     socket.on("generate:complete", handleComplete);
     socket.on("generate:error", handleError);
-
-    return () => {
-      socket.off("generate:progress", handleProgress);
-      socket.off("generate:complete", handleComplete);
-      socket.off("generate:error", handleError);
-    };
+    return () => { socket.off("generate:progress", handleProgress); socket.off("generate:complete", handleComplete); socket.off("generate:error", handleError); };
   }, [socket, topic, level, wordCount, history]);
 
   const handleGenerate = () => {
-    setGenerating(true);
-    setProgress(0);
-    setStatusMsg("Initializing Assignment Generator...");
-
+    setGenerating(true); setProgress(0); setStatusMsg("Initializing Assignment Generator...");
     if (socket && isConnected) {
-      socket.emit("generate:start", {
-        moduleName: "assignment",
-        payload: {
-          topic,
-          level,
-          wordCount: wordCount.split(" ")[0],
-          userId: userIdRef.current
-        }
-      });
+      socket.emit("generate:start", { moduleName: "assignment", payload: { topic, level, wordCount: wordCount.split(" ")[0], userId: userIdRef.current } });
     } else {
-      const stages = [
-        { msg: "Researching topic sources...", prg: 25 },
-        { msg: "Drafting introduction module...", prg: 50 },
-        { msg: "Validating reference materials...", prg: 75 },
-        { msg: "Compiling draft document (Offline Demo)...", prg: 100 }
-      ];
-
+      const stages = [{ msg: "Researching topic sources...", prg: 25 }, { msg: "Drafting introduction module...", prg: 50 }, { msg: "Validating reference materials...", prg: 75 }, { msg: "Compiling draft document (Offline Demo)...", prg: 100 }];
       let step = 0;
       const timer = setInterval(() => {
-        if (step < stages.length) {
-          setStatusMsg(stages[step].msg);
-          setProgress(stages[step].prg);
-          step++;
-        } else {
-          clearInterval(timer);
-          setGenerating(false);
-          const text = `# ${topic}\n\n## Introduction\n${MOCK_ASSIGNMENT.introduction}\n\n## Main Body\n${MOCK_ASSIGNMENT.body}\n\n## Conclusion\n${MOCK_ASSIGNMENT.conclusion}\n\n## References\n${MOCK_ASSIGNMENT.references.map(r => `- ${r}`).join("\n")}`;
-          setResult(text);
-          setActiveSection("Introduction");
-        }
+        if (step < stages.length) { setStatusMsg(stages[step].msg); setProgress(stages[step].prg); step++; }
+        else { clearInterval(timer); setGenerating(false); setResult(MOCK_ASSIGNMENT); setActiveSection("Introduction"); }
       }, 600);
     }
   };
 
-  const handleScrollToSection = (name: string) => {
-    setActiveSection(name);
-    const element = document.getElementById(`assign-${name.replace(/\s+/g, "-")}`);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const handleScrollToSection = (title: string) => {
+    setActiveSection(prev => (prev === title ? "" : title));
   };
 
-  const loadHistoryItem = (topicName: string) => {
-    const item = history.find(h => h.name === topicName);
-    if (!item) return;
-    setTopic(item.name);
-    setLevel(item.level);
-    setWordCount(item.words);
-    setResult(item.data);
-    setActiveSection("Introduction");
+  const loadHistoryItem = (item: typeof history[0]) => {
+    setTopic(item.name); setLevel(item.level); setWordCount(item.words); setResult(item.data); setActiveSection("Introduction"); setShowHistory(false);
   };
+
+  const sections = result ? [
+    { title: "Introduction", content: result.introduction, color: c.purpleBg, border: c.purpleBorder, accent: "#a78bfa" },
+    { title: "Main Body", content: result.body, color: c.cyanBg, border: c.cyanBorder, accent: "#22d3ee" },
+    { title: "Conclusion", content: result.conclusion, color: c.amberBg, border: c.amberBorder, accent: c.amber },
+    { title: "References", content: result.references.join("\n\n"), color: c.surface, border: c.border, accent: c.textMuted, isRefs: true }
+  ] : [];
+
+  const stages = ["Research Topic", "Draft Introduction", "Write Body", "Add References", "Compile Output", "Completed"];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="flex flex-col gap-3 p-1 antialiased text-white w-full text-xs"
-    >
-      {/* SECTION 1 — HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-4">
-        <div>
-          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }} className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-            <PenTool className="text-amber-500" size={20} /> Assignment Generator
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.35 }} className="text-[11px] text-gray-400 mt-0.5 max-w-xl">
-            Create structured academic drafts and essay outlines with references.
-          </motion.p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased" style={{ color: c.text }}>
+      <style>{`.ag-scroll { scrollbar-width: none; -ms-overflow-style: none; } .ag-scroll::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
+        <div className="flex items-center gap-2.5">
+          <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+            <PenTool size={18} style={{ color: "#000" }} />
+          </motion.div>
+          <div>
+            <motion.h1 initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} className="text-base font-extrabold leading-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Assignment Generator</motion.h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="text-xs leading-tight" style={{ color: c.textMuted }}>AI-powered academic drafts with references</motion.p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => { setResult(null); setGenerating(false); }}
-            className="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition-all"
-          >
-            <Plus size={16} /> Create New
-          </motion.button>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => {
-              const el = document.getElementById("recent-assignments-section");
-              if (el) el.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
-          >
-            <History size={16} /> History
-          </motion.button>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => setActiveView(activeView === "help" ? "dashboard" : "help")}
-            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
-          >
-            <HelpCircle size={16} /> Help
+        <div className="flex items-center gap-2">
+          {result && (
+            <motion.button initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              onClick={() => { setResult(null); }} className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
+              <Plus size={14} /> New Topic
+            </motion.button>
+          )}
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            onClick={() => setShowHistory(!showHistory)} className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+            style={{ background: showHistory ? c.amberActive : c.surface, border: `1px solid ${showHistory ? c.amberBorder : c.border}`, color: showHistory ? c.amber : c.text }}>
+            <History size={14} /> History
+            {history.length > 0 && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black" style={{ background: c.amberBg, color: c.amber }}>{history.length}</span>}
           </motion.button>
         </div>
       </div>
 
-      {activeView === "help" ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-2.5">
-          <h2 className="text-sm font-bold text-white">Assignment Generator Help</h2>
-          <p className="text-xs text-gray-300 leading-relaxed">
-            Specify a research assignment topic and word count constraints. The generator outlines the conceptual introduction, details body paragraphs, states logical conclusions, and adds reference citations.
-          </p>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={() => setActiveView("dashboard")} className="h-8 px-3 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">
-            Back to Dashboard
-          </motion.button>
-        </motion.div>
-      ) : (
-        <>
-          {generating ? (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}
-              className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/[0.01] rounded-xl space-y-4 max-w-xl mx-auto w-full text-center"
-            >
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500"
-              >
-                <Cpu size={24} />
-              </motion.div>
-              <div>
-                <h3 className="text-xs font-bold text-white">Writing Assignment via AI Pipeline</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">{statusMsg}</p>
-              </div>
-              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.5 }}
-                  className="bg-amber-500 h-full"
-                />
-              </div>
-              <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5 justify-center">
-                <Loader2 className="animate-spin" size={12} /> {progress}% Complete
-              </div>
-            </motion.div>
-          ) : !result ? (
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
-              {/* SECTION 3 — CONFIGURATION WORKSPACE */}
-              <motion.div variants={itemVariants} className="p-4 border border-white/5 bg-white/[0.01] rounded-xl max-w-2xl mx-auto w-full space-y-4">
-                <h3 className="text-xs font-bold text-white">Configure Assignment Draft</h3>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-gray-300">Assignment Topic</label>
-                    <input
-                      type="text"
-                      value={topic}
-                      onChange={e => setTopic(e.target.value)}
-                      placeholder="e.g. The impact of quantum computing on cryptography"
-                      className="w-full h-9 bg-black/20 border border-white/10 rounded-lg px-3 text-xs text-white focus:outline-none focus:border-amber-500/50"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-300">Academic Level</label>
-                      <select
-                        value={level}
-                        onChange={e => setLevel(e.target.value)}
-                        className="w-full h-9 bg-black/20 border border-white/10 rounded-lg px-3 text-xs text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none"
-                      >
-                        <option>High School</option>
-                        <option>Undergraduate</option>
-                        <option>Master's</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-300">Word Count</label>
-                      <select
-                        value={wordCount}
-                        onChange={e => setWordCount(e.target.value)}
-                        className="w-full h-9 bg-black/20 border border-white/10 rounded-lg px-3 text-xs text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none"
-                      >
-                        <option>500 words</option>
-                        <option>1000 words</option>
-                        <option>2000 words</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                    onClick={handleGenerate}
-                    className="h-8 flex-1 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1"
-                  >
-                    <PenTool size={16} /> Generate Assignment
-                  </motion.button>
-                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => setTopic("")}
-                    className="h-8 px-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold transition-all"
-                  >
-                    Clear
-                  </motion.button>
-                </div>
-              </motion.div>
-
-              {/* SECTION 4 — PRESETS SECTION */}
-              <motion.div variants={itemVariants} className="space-y-2">
-                <h2 className="text-sm font-bold text-white">Choose Preset Templates</h2>
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { title: "Scientific Report Outlines", desc: "Formats assignment briefs into introduction, experimental body paragraphs, and conclusion blocks." },
-                    { title: "Literature Review Drafts", desc: "Synthesizes existing papers, highlights critical differences, and references source databases." },
-                    { title: "Analytical Essays Reviews", desc: "Constructs essays focused on comparing conceptual parameters, detailing arguments, and citing sources." }
-                  ].map(tpl => (
-                    <motion.div
-                      key={tpl.title}
-                      variants={itemVariants}
-                      whileHover={{ y: -3, scale: 1.01 }}
-                      onClick={() => setTopic(tpl.title)}
-                      className="p-4 border border-white/5 rounded-xl bg-white/[0.01] hover:bg-amber-500/[0.01] hover:border-amber-500/30 transition-all cursor-pointer space-y-1"
-                    >
-                      <h4 className="text-xs font-bold text-white">{tpl.title}</h4>
-                      <p className="text-[11px] text-gray-400 leading-relaxed">{tpl.desc}</p>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-
-              {/* SECTION 12 — HOW IT WORKS */}
-              <motion.div variants={itemVariants} className="space-y-2">
-                <h2 className="text-sm font-bold text-white">How It Works</h2>
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { step: "Outline Topic", desc: "State the research assignment questions and specify academic degree level." },
-                    { step: "Process Context", desc: "AI references publications, writes cohesive paragraphs, and matches styles." },
-                    { step: "Export Outputs", desc: "Review the full essay draft in the editor, copy sections, or download files." }
-                  ].map((item, idx) => (
-                    <motion.div key={item.step} variants={itemVariants} whileHover={{ y: -3, scale: 1.01 }} className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-1">
-                      <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Step 0{idx + 1}</div>
-                      <h4 className="text-xs font-bold text-white">{item.step}</h4>
-                      <p className="text-[11px] text-gray-300 leading-relaxed">{item.desc}</p>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
-            >
-              {/* LEFT SIDEBAR (3 Cols) */}
-              <div className="md:col-span-3 space-y-3">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
-                >
-                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
-                    Document Sections
-                  </span>
-                  <div className="space-y-0.5">
-                    {["Introduction", "Main Body", "Conclusion", "References"].map((sect, i) => (
-                      <motion.button
-                        key={sect}
-                        initial={{ opacity: 0, x: -15 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 + i * 0.08, duration: 0.3 }}
-                        onClick={() => handleScrollToSection(sect)}
-                        whileHover={{ x: 3 }}
-                        className={`w-full text-left py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
-                          activeSection === sect
-                            ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                            : "text-gray-400 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        <span className="text-[12px]">{sect}</span>
-                        <ChevronRight size={12} className={activeSection === sect ? "text-amber-500" : "text-gray-600"} />
+      {/* HISTORY PANEL */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div initial={{ opacity: 0, height: 0, y: -10 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0, y: -10 }} transition={{ duration: 0.3 }} className="mb-4 rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.amberBorder}`, background: c.amberBg }}>
+            <div className="p-4">
+              <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><History size={15} style={{ color: c.amber }} /> Recent Assignments</h3>
+              {history.length === 0 ? (
+                <p className="text-sm py-2" style={{ color: c.textMuted }}>No assignments generated yet. Submit a topic to begin.</p>
+              ) : (
+                <div className="space-y-2">
+                  {history.map((doc, i) => (
+                    <motion.div key={doc.name} custom={i} variants={fadeUp} initial="hidden" animate="visible"
+                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                      onClick={() => loadHistoryItem(doc)} whileHover={{ scale: 1.01, borderColor: c.amberBorder }}>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                          <FileText size={14} style={{ color: c.amber }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{doc.name}</p>
+                          <p className="text-xs" style={{ color: c.textMuted }}>{doc.date} · {doc.level} · {doc.words}</p>
+                        </div>
+                      </div>
+                      <motion.button whileHover={{ x: 2 }} className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-all" style={{ background: c.amberActive, color: c.amber }}>
+                        Open <ChevronRight size={12} />
                       </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* MAIN CONTENT EDITOR (6 Cols) */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="md:col-span-6 space-y-4"
-              >
-                <motion.div variants={scaleInVariants} className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-4">
-                  <h3 className="text-xs font-bold text-white border-b border-white/5 pb-2">
-                    Assignment Preview & Draft
-                  </h3>
-
-                  <div className="space-y-4 font-serif text-[12px] leading-relaxed text-gray-200">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} id="assign-Introduction" className="space-y-1">
-                      <h4 className="text-xs font-bold text-amber-500">1. Introduction</h4>
-                      <p>{MOCK_ASSIGNMENT.introduction}</p>
                     </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} id="assign-Main-Body" className="space-y-1">
-                      <h4 className="text-xs font-bold text-amber-500">2. Main Body</h4>
-                      <p>{MOCK_ASSIGNMENT.body}</p>
-                    </motion.div>
+      <div className="flex-1">
+        <AnimatePresence mode="wait">
 
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} id="assign-Conclusion" className="space-y-1">
-                      <h4 className="text-xs font-bold text-amber-500">3. Conclusion</h4>
-                      <p>{MOCK_ASSIGNMENT.conclusion}</p>
-                    </motion.div>
-
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} id="assign-References" className="space-y-1">
-                      <h4 className="text-xs font-bold text-amber-500">4. References</h4>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        {MOCK_ASSIGNMENT.references.map((r, i) => (
-                          <li key={i}>{r}</li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  </div>
-                </motion.div>
-
-                {/* Footer Controls */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="p-2 border border-white/5 bg-white/[0.01] rounded-xl flex flex-wrap gap-1.5 justify-between items-center"
-                >
-                  <div className="flex gap-1.5">
-                    <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => { navigator.clipboard.writeText(result || ""); toast.success("Copied assignment draft."); }}
-                      className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all"
-                    >
-                      <Copy size={14} /> Copy
-                    </motion.button>
-                    <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => toast.success("Exported assignment formatted DOCX.")}
-                      className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all"
-                    >
-                      <FileDown size={14} /> Export DOCX
+          {/* EMPTY STATE */}
+          {!generating && !result && (
+            <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              {/* Config Form */}
+              <motion.div className="p-6 rounded-3xl relative overflow-hidden" style={{ background: c.surface, border: `2px solid ${c.border}` }}>
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-4 right-8 w-24 h-24 rounded-full" style={{ opacity: c.isDark ? 0.05 : 0.08, background: "radial-gradient(circle, #f59e0b, transparent)" }} />
+                  <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full" style={{ opacity: c.isDark ? 0.04 : 0.06, background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
+                </div>
+                <div className="relative z-10 space-y-4">
+                  <h3 className="text-lg font-extrabold text-center" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Configure Assignment Draft</h3>
+                  <div className="space-y-3 max-w-xl mx-auto">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold" style={{ color: c.textSec }}>Assignment Topic</label>
+                      <input type="text" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. The impact of quantum computing on cryptography"
+                        className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Academic Level</label>
+                        <select value={level} onChange={e => setLevel(e.target.value)}
+                          className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
+                          <option>High School</option><option>Undergraduate</option><option>Master's</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold" style={{ color: c.textSec }}>Word Count</label>
+                        <select value={wordCount} onChange={e => setWordCount(e.target.value)}
+                          className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
+                          <option>500 words</option><option>1000 words</option><option>2000 words</option>
+                        </select>
+                      </div>
+                    </div>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={handleGenerate}
+                      className="w-full py-2.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}>
+                      <PenTool size={16} /> Generate Assignment
                     </motion.button>
                   </div>
-                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => setResult(null)}
-                    className="h-8 px-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all"
-                  >
-                    Start New Draft
-                  </motion.button>
-                </motion.div>
+                </div>
               </motion.div>
 
-              {/* RIGHT SIDEBAR STATS (3 Cols) */}
-              <div className="md:col-span-3 space-y-3">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                  className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
-                >
-                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">
-                    Document Metadata
-                  </span>
-                  <div className="space-y-1 text-xs">
-                    {[
-                      { label: "Topic Category", val: "Science / Security" },
-                      { label: "Level Target", val: level },
-                      { label: "Word Limit", val: wordCount },
-                      { label: "Citations Added", val: "2 Sources" }
-                    ].map((stat, i) => (
-                      <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 + i * 0.08 }}
-                        className="flex justify-between items-center py-0.5 border-b border-white/[0.03]"
-                      >
-                        <span className="text-gray-400 text-[11px]">{stat.label}</span>
-                        <span className="font-extrabold text-white text-[12px]">{stat.val}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
+              {/* Presets */}
+              <div>
+                <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Zap size={15} style={{ color: c.amber }} /> Choose Preset Templates</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { title: "Scientific Report Outlines", desc: "Formats assignment briefs into introduction, experimental body paragraphs, and conclusion blocks.", icon: <Star size={18} style={{ color: c.amber }} /> },
+                    { title: "Literature Review Drafts", desc: "Synthesizes existing papers, highlights critical differences, and references source databases.", icon: <Brain size={18} style={{ color: "#a78bfa" }} /> },
+                    { title: "Analytical Essays Reviews", desc: "Constructs essays focused on comparing conceptual parameters, detailing arguments, and citing sources.", icon: <Sparkles size={18} style={{ color: "#22d3ee" }} /> }
+                  ].map((item, i) => (
+                    <motion.div key={item.title} custom={i} variants={fadeUp} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.01 }}
+                      onClick={() => setTopic(item.title)} className="p-5 rounded-2xl relative overflow-hidden cursor-pointer group transition-all" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>{item.icon}</div>
+                        <div><h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4></div>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{item.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* How It Works */}
+              <div>
+                <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Zap size={15} style={{ color: c.amber }} /> How It Works</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { step: "01", title: "Outline Topic", desc: "State the research assignment questions and specify academic degree level.", icon: <PenTool size={18} style={{ color: c.amber }} /> },
+                    { step: "02", title: "Process Context", desc: "AI references publications, writes cohesive paragraphs, and matches styles.", icon: <Brain size={18} style={{ color: "#a78bfa" }} /> },
+                    { step: "03", title: "Export Outputs", desc: "Review the full essay draft, copy sections, or download formatted documents.", icon: <Sparkles size={18} style={{ color: "#22d3ee" }} /> }
+                  ].map((item, i) => (
+                    <motion.div key={item.step} custom={i} variants={fadeUp} initial="hidden" animate="visible" whileHover={{ y: -4, scale: 1.01 }} className="p-5 rounded-2xl relative overflow-hidden group transition-all" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}` }}>{item.icon}</div>
+                        <div><span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Step {item.step}</span><h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4></div>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{item.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Features */}
+              <motion.div variants={fadeUp} custom={3} initial="hidden" animate="visible" className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                <h2 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}><Star size={14} style={{ color: c.amber }} /> Features</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                  {["Introduction", "Body Content", "Conclusion", "References", "Multiple Levels", "Copy & Export"].map((feat, i) => (
+                    <motion.div key={feat} custom={i} variants={scaleIn} initial="hidden" animate="visible" className="flex items-center gap-2 text-sm" style={{ color: c.textSec }}>
+                      <CheckCircle2 size={14} style={{ color: c.amber }} className="shrink-0" />
+                      <span>{feat}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* PROCESSING */}
+          {generating && (
+            <motion.div key="generating" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 gap-8">
+              <div className="relative w-24 h-24">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="absolute inset-0 rounded-full" style={{ border: `3px solid transparent`, borderTopColor: c.amber, borderRightColor: c.amberBg }} />
+                <motion.div animate={{ rotate: -360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} className="absolute inset-3 rounded-full" style={{ border: `2px solid transparent`, borderTopColor: "rgba(139,92,246,0.6)", borderLeftColor: "rgba(139,92,246,0.2)" }} />
+                <div className="absolute inset-0 flex items-center justify-center"><Brain size={28} style={{ color: c.amber }} /></div>
+              </div>
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Writing Assignment...</h3>
+                <p className="text-sm" style={{ color: c.textMuted }}>{statusMsg}</p>
+              </div>
+              <div className="w-full max-w-lg grid grid-cols-3 gap-3">
+                {stages.map((step, idx) => {
+                  const stageIdx = stages.indexOf(statusMsg);
+                  const isActive = idx <= stageIdx;
+                  return (
+                    <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
+                      className="p-3 rounded-xl text-center space-y-1.5 transition-all duration-500" style={{ background: isActive ? c.amberBg : c.surface, border: `1px solid ${isActive ? c.amberBorder : c.border}` }}>
+                      <span className="text-[9px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Stage {idx + 1}</span>
+                      <span className="text-xs font-semibold block" style={{ color: c.text }}>{step}</span>
+                      {isActive && idx === stageIdx && <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 rounded-full mx-auto" style={{ background: c.amber }} />}
+                      {isActive && idx < stageIdx && <CheckCircle2 size={12} style={{ color: c.green }} className="mx-auto" />}
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
 
-          {/* SECTION 11 — RECENT ASSIGNMENTS TABLE */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5 }}
-            id="recent-assignments-section"
-            className="space-y-2.5 pt-4 border-t border-white/5"
-          >
-            <h2 className="text-sm font-bold text-white">Recent Outlines</h2>
-            <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02] text-gray-400 font-bold text-[10px] uppercase tracking-wider">
-                    <th className="p-2.5">Topic</th>
-                    <th className="p-2.5">Date Completed</th>
-                    <th className="p-2.5">Academic Level</th>
-                    <th className="p-2.5 text-center">Word Count</th>
-                    <th className="p-2.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {history.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-6 text-center text-gray-500 font-semibold text-xs">
-                        No assignments generated yet. Submit a topic above to create your first outline.
-                      </td>
-                    </tr>
-                  ) : (
-                    history.map((doc, i) => (
-                      <motion.tr
-                        key={doc.name}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.08, duration: 0.3 }}
-                        className="hover:bg-white/[0.02] transition-colors"
-                      >
-                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                          <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
-                        </td>
-                        <td className="p-2.5 text-gray-400">{doc.date}</td>
-                        <td className="p-2.5 text-gray-300 font-medium">{doc.level}</td>
-                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.words}</td>
-                        <td className="p-2.5 text-right">
-                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => loadHistoryItem(doc.name)}
-                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                          >
-                            Open
-                          </motion.button>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        </>
-      )}
+          {/* READY — 30/70 SPLIT */}
+          {!generating && result && (
+            <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-0" style={{ minHeight: "600px" }}>
+              {/* LEFT PANEL 30% */}
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+                className="ag-scroll flex flex-col gap-3 overflow-y-auto pr-3" style={{ width: "30%", minWidth: "200px", maxHeight: "80vh", position: "sticky", top: 0 }}>
+                {/* Info Card */}
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-2xl shrink-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                      <FileText size={14} style={{ color: c.amber }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate" style={{ color: c.text }}>{topic}</p>
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase" style={{ background: c.greenBg, color: c.green }}>Generated</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "Sections", value: 4 },
+                      { label: "Level", value: level },
+                      { label: "Target Words", value: wordCount },
+                      { label: "References", value: result.references.length }
+                    ].map(stat => (
+                      <div key={stat.label} className="p-2 rounded-lg text-center" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}` }}>
+                        <span className="text-[10px] block" style={{ color: c.textMuted }}>{stat.label}</span>
+                        <span className="text-xs font-extrabold" style={{ color: c.text }}>{stat.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Sections Nav */}
+                <div className="flex-1 rounded-2xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <div className="p-3 border-b" style={{ borderColor: c.divider, background: c.stickyBg }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.amber }}>Document Sections</span>
+                  </div>
+                  <div className="p-2 space-y-0.5">
+                    {sections.map((s, i) => (
+                      <motion.button key={s.title} custom={i} variants={slideRight} initial="hidden" animate="visible"
+                        onClick={() => handleScrollToSection(s.title)} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+                        className="w-full text-left py-2.5 px-3 rounded-xl flex items-center justify-between transition-all duration-200"
+                        style={{ background: activeSection === s.title ? c.amberActive : "transparent", border: activeSection === s.title ? `1px solid ${c.amberBorder}` : "1px solid transparent" }}>
+                        <span className="text-sm font-semibold truncate" style={{ color: activeSection === s.title ? c.amber : c.textSec }}>{s.title}</span>
+                        <motion.div animate={{ rotate: activeSection === s.title ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                          <ChevronRight size={12} style={{ color: activeSection === s.title ? c.amber : c.textMuted }} />
+                        </motion.div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Insights */}
+                <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="p-3 rounded-2xl shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                  <span className="text-[10px] font-black uppercase tracking-widest block mb-2.5 flex items-center gap-1.5" style={{ color: c.amber }}><Sparkles size={11} /> Document Insights</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "Academic Level", value: level },
+                      { label: "References", value: result.references.length },
+                      { label: "Sections", value: 4 },
+                      { label: "Est. Words", value: wordCount }
+                    ].map((insight, i) => (
+                      <motion.div key={insight.label} initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 + i * 0.08 }}
+                        className="p-2 rounded-xl text-center" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}` }}>
+                        <span className="text-[10px] block leading-tight" style={{ color: c.textMuted }}>{insight.label}</span>
+                        <span className="text-xs font-extrabold block truncate mt-0.5" style={{ color: c.text }}>{insight.value}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Actions */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="p-3 rounded-2xl shrink-0 space-y-2" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                  <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.textMuted }}>Actions</span>
+                  <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => { const txt = `# ${topic}\n\n## Introduction\n${result.introduction}\n\n## Main Body\n${result.body}\n\n## Conclusion\n${result.conclusion}\n\n## References\n${result.references.map(r => `- ${r}`).join("\n")}"; navigator.clipboard.writeText(txt); toast.success("Assignment copied to clipboard!"); }}
+                    className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
+                    <span style={{ color: c.amber }} className="shrink-0"><Copy size={13} /></span> Copy Assignment
+                  </motion.button>
+                  <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => toast.success("Assignment exported successfully.")}
+                    className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
+                    <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download PDF
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => { setResult(null); }}
+                    className="w-full py-2 rounded-lg text-sm font-extrabold transition-all flex items-center justify-center gap-1.5" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}>
+                    <RefreshCw size={13} /> New Topic
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+
+              {/* RIGHT PANEL 70% */}
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.15 }} className="flex-1 flex flex-col min-w-0 pl-4">
+                <div className="space-y-3 pb-4">
+                  {sections.map((s, idx) => {
+                    const isOpen = activeSection === s.title;
+                    return (
+                      <motion.div key={s.title} id={`assign-${s.title.replace(/\s+/g, "-")}`} custom={idx} variants={scaleIn} initial="hidden" animate="visible"
+                        className="rounded-2xl overflow-hidden" style={{ background: c.cardBg, border: `1px solid ${isOpen ? c.amberBorder : c.border}` }}>
+                        <motion.button onClick={() => handleScrollToSection(s.title)} whileHover={{ background: isOpen ? c.amberBg : c.bgHover }} whileTap={{ scale: 0.995 }}
+                          className="w-full flex items-center justify-between px-5 py-4 text-left transition-all" style={{ background: isOpen ? c.amberBg : c.surface, borderBottom: isOpen ? `1px solid ${c.divider}` : "none" }}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: isOpen ? `${s.accent}20` : c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                              {s.isRefs ? <Quote size={14} style={{ color: c.amber }} /> : <Layers size={14} style={{ color: c.amber }} />}
+                            </div>
+                            <div>
+                              <h3 className="text-base font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>{s.title}</h3>
+                              {!isOpen && !s.isRefs && <p className="text-xs mt-0.5 line-clamp-1" style={{ color: c.textMuted }}>{s.content.slice(0, 80)}…</p>}
+                              {!isOpen && s.isRefs && <p className="text-xs mt-0.5 line-clamp-1" style={{ color: c.textMuted }}>{result.references.length} reference{result.references.length !== 1 ? "s" : ""}</p>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full hidden sm:block" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}>{String(idx + 1).padStart(2, "0")}</span>
+                            <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.25 }}><ChevronRight size={16} style={{ color: isOpen ? c.amber : c.textMuted }} /></motion.div>
+                          </div>
+                        </motion.button>
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <motion.div key="body" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} style={{ overflow: "hidden" }}>
+                              <div className="p-5">
+                                {s.isRefs ? (
+                                  <ul className="space-y-2">
+                                    {result.references.map((ref, ri) => (
+                                      <li key={ri} className="flex items-start gap-2 text-sm leading-relaxed" style={{ color: c.textSec }}>
+                                        <span className="text-xs font-bold shrink-0 mt-0.5" style={{ color: c.amber }}>[{ri + 1}]</span>
+                                        <span>{ref}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{s.content}</p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
