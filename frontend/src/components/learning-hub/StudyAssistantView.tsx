@@ -259,9 +259,14 @@ export function StudyAssistantView() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-col h-full antialiased"
+      className="flex flex-col antialiased"
       style={{ color: c.text }}
     >
+      {/* Hidden scrollbar style */}
+      <style>{`
+        .sa-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .sa-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
       {/* ── TOP HEADER ── */}
       <div className="flex items-center justify-between pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <div className="flex items-center gap-2.5">
@@ -387,7 +392,7 @@ export function StudyAssistantView() {
       </AnimatePresence>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1">
         <AnimatePresence mode="wait">
 
           {/* ══ EMPTY STATE ══ */}
@@ -570,15 +575,15 @@ export function StudyAssistantView() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex gap-0"
-              style={{ height: "calc(100vh - 210px)", minHeight: "480px", overflow: "hidden" }}
+              style={{ minHeight: "600px" }}
             >
               {/* ── LEFT PANEL 30% ── */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="flex flex-col gap-3 overflow-y-auto pr-3"
-                style={{ width: "30%", minWidth: "200px", height: "100%" }}
+                className="sa-scroll flex flex-col gap-3 overflow-y-auto pr-3"
+                style={{ width: "30%", minWidth: "200px", maxHeight: "80vh", position: "sticky", top: 0 }}
               >
                 {/* File info */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-2xl shrink-0" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
@@ -720,10 +725,9 @@ export function StudyAssistantView() {
                 transition={{ duration: 0.4, delay: 0.15 }}
                 ref={contentRef}
                 className="flex-1 flex flex-col min-w-0 pl-4"
-                style={{ height: "100%", overflowY: "auto" }}
               >
                 {/* Search Bar */}
-                <div className="sticky top-0 z-10 pb-3" style={{ background: c.isDark ? "rgba(10,10,20,0.9)" : "rgba(248,250,252,0.95)", backdropFilter: "blur(10px)" }}>
+                <div className="pb-3">
                   <div className="relative">
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
                     <input
