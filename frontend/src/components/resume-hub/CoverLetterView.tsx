@@ -94,6 +94,48 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   const theme = useTheme();
   const c = colors(theme);
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i = 0) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, delay: i * 0.08, ease: "easeOut" as const }
+    })
+  };
+
+  const scaleIn = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: (i = 0) => ({
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.35, delay: i * 0.08, ease: "easeOut" as const }
+    })
+  };
+
+  const staggerContainer = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } }
+  };
+
+  const iconSpring = {
+    initial: { scale: 0, rotate: -20 },
+    animate: {
+      scale: 1,
+      rotate: 0,
+      transition: { type: "spring" as const, stiffness: 260, damping: 18 }
+    }
+  };
+
+  const modalScaleIn = {
+    initial: { opacity: 0, scale: 0.92 },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      transition: { type: "spring" as const, stiffness: 300, damping: 25 }
+    },
+    exit: { opacity: 0, scale: 0.92, transition: { duration: 0.2 } }
+  };
+
   const [confirm, confirmModal] = useConfirm();
 
   // Screen
@@ -346,8 +388,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
   const renderSelectResume = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
       className="max-w-xl mx-auto space-y-6"
     >
       <h2 className="text-lg font-extrabold text-[var(--text-primary)] text-center" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -359,9 +402,12 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
       {/* Saved Resumes */}
       {resumes.length > 0 && (
-        <div className="space-y-2">
-          {resumes.map(r => (
-            <button
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-2">
+          {resumes.map((r, i) => (
+            <motion.button
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ y: -4, scale: 1.01 }}
               key={r.id}
               onClick={() => { setSelectedResumeId(r.id); setUploadFile(null); }}
               className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
@@ -371,17 +417,17 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 color: c.text,
               }}
             >
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.15)" }}>
+              <motion.div variants={iconSpring} initial="initial" animate="animate" className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.15)" }}>
                 <FileText className="w-4 h-4 text-[#f59e0b]" />
-              </div>
+              </motion.div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold truncate">{r.title}</div>
                 <div className="text-[10px]" style={{ color: c.textMuted }}>{r.template} template</div>
               </div>
               {selectedResumeId === r.id && <Check className="w-4 h-4 text-[#f59e0b]" />}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Divider */}
@@ -392,7 +438,8 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       </div>
 
       {/* Upload */}
-      <div
+      <motion.div
+        whileHover={{ y: -4, scale: 1.01 }}
         onClick={() => fileInputRef.current?.click()}
         className="p-6 rounded-xl text-center cursor-pointer transition-all"
         style={{
@@ -400,11 +447,13 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           border: `1px dashed ${uploadFile ? c.primary : c.border}`,
         }}
       >
-        <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: uploadFile ? c.primary : c.textMuted }} />
+        <motion.span variants={iconSpring} initial="initial" animate="animate">
+          <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: uploadFile ? c.primary : c.textMuted }} />
+        </motion.span>
         <p className="text-xs font-bold" style={{ color: uploadFile ? c.primary : c.textSec }}>
           {uploadFile ? uploadFile.name : "Upload PDF / DOCX"}
         </p>
-      </div>
+      </motion.div>
       <input
         ref={fileInputRef}
         type="file"
@@ -418,8 +467,8 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
       {/* Continue */}
       <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
         disabled={!selectedResumeId && !uploadFile}
         onClick={() => setScreen("job")}
         className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
@@ -439,8 +488,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
 
   const renderJobDetails = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
       className="max-w-xl mx-auto space-y-5"
     >
       <h2 className="text-lg font-extrabold text-[var(--text-primary)] text-center" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -450,9 +500,13 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       {/* Company */}
       <div>
         <label className="block text-[10px] uppercase font-semibold mb-2" style={{ color: c.textSec }}>Company</label>
-        <div className="grid grid-cols-4 gap-2">
-          {COMPANIES.map(cn => (
-            <button
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-4 gap-2">
+          {COMPANIES.map((cn, i) => (
+            <motion.button
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               key={cn}
               type="button"
               onClick={() => { setCompanyName(cn); if (cn !== "Other") setCompanyCustom(""); }}
@@ -467,9 +521,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               }}
             >
               {cn}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
         {companyName === "Other" && (
           <input
             type="text"
@@ -485,9 +539,13 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       {/* Role */}
       <div>
         <label className="block text-[10px] uppercase font-semibold mb-2" style={{ color: c.textSec }}>Job Role</label>
-        <div className="grid grid-cols-2 gap-2">
-          {ROLES.map(r => (
-            <button
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-2">
+          {ROLES.map((r, i) => (
+            <motion.button
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               key={r}
               type="button"
               onClick={() => { setRole(r); setRoleCustom(""); }}
@@ -502,9 +560,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               }}
             >
               {r}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
         <input
           type="text"
           value={roleCustom}
@@ -528,13 +586,15 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           className="w-full bg-transparent border rounded-lg p-2.5 text-xs resize-none focus:outline-none"
           style={{ borderColor: c.border, color: c.text }}
         />
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => jdFileInputRef.current?.click()}
           className="mt-1.5 text-[10px] font-semibold flex items-center gap-1.5"
           style={{ color: c.primary }}
         >
           <Upload className="w-3 h-3" /> Upload PDF instead
-        </button>
+        </motion.button>
         <input
           ref={jdFileInputRef}
           type="file"
@@ -555,9 +615,13 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       {/* Letter Type */}
       <div>
         <label className="block text-[10px] uppercase font-semibold mb-2" style={{ color: c.textSec }}>Cover Letter Type</label>
-        <div className="grid grid-cols-3 gap-2">
-          {LETTER_TYPES.map(lt => (
-            <button
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-3 gap-2">
+          {LETTER_TYPES.map((lt, i) => (
+            <motion.button
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               key={lt}
               type="button"
               onClick={() => setLetterType(lt)}
@@ -572,17 +636,21 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               }}
             >
               {lt}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Tone */}
       <div>
         <label className="block text-[10px] uppercase font-semibold mb-2" style={{ color: c.textSec }}>Tone</label>
-        <div className="grid grid-cols-5 gap-2">
-          {TONES.map(t => (
-            <button
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-5 gap-2">
+          {TONES.map((t, i) => (
+            <motion.button
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               key={t}
               type="button"
               onClick={() => setTone(t)}
@@ -597,16 +665,16 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               }}
             >
               {t}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Navigation */}
       <div className="flex gap-3 pt-2">
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setScreen("select")}
           className="flex-1 py-3 rounded-xl font-bold text-sm"
           style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
@@ -614,8 +682,8 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           <ChevronLeft className="w-4 h-4 inline mr-1" /> Back
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           disabled={!companyName && !companyCustom}
           onClick={startGeneration}
           className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
@@ -646,7 +714,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <Sparkles className="w-8 h-8 text-[#f59e0b]" />
+            <motion.span variants={iconSpring} initial="initial" animate="animate">
+              <Sparkles className="w-8 h-8 text-[#f59e0b]" />
+            </motion.span>
           </motion.div>
         </div>
 
@@ -654,9 +724,11 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           Generating Cover Letter
         </h2>
 
-        <div className="space-y-3">
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
           {GENERATING_STEPS.map((step, i) => (
-            <div
+            <motion.div
+              variants={fadeUp}
+              custom={i}
               key={step}
               className="flex items-center gap-3 p-3 rounded-xl transition-all"
               style={{
@@ -673,9 +745,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 {loadingStep > i ? <Check className="w-3 h-3" /> : i + 1}
               </div>
               <span className="text-sm font-bold">{step}</span>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -689,13 +761,15 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setScreen("select")}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
             style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
+          </motion.button>
           <div>
             <h3 className="text-sm font-extrabold" style={{ color: c.text }}>
               {coverLetter?.companyName} — {coverLetter?.role}
@@ -706,7 +780,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setChatOpen(!chatOpen)}
             className="px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-colors"
             style={{
@@ -716,31 +792,35 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             }}
           >
             <Edit3 className="w-3 h-3" /> AI Chat
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={handleSave}
             className="px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-colors"
             style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
           >
             <Check className="w-3 h-3" /> Save
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={handleCopy}
             className="px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-colors"
             style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
           >
             {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
             {copied ? "Copied" : "Copy"}
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Split Screen: Editor + Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left: Editor */}
-        <div className="space-y-3">
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
           {/* Greeting */}
-          <div>
+          <motion.div variants={fadeUp}>
             <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: c.textSec }}>Greeting</label>
             <div className="flex gap-2">
               <input
@@ -749,18 +829,20 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 className="flex-1 bg-transparent border rounded-lg p-2.5 text-xs focus:outline-none"
                 style={{ borderColor: c.border, color: c.text }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleRegenerateSection("greeting")}
                 className="px-2 rounded-lg text-[10px] font-bold"
                 style={{ background: c.surface, color: c.primary, border: `1px solid ${c.border}` }}
               >
                 <RefreshCw className={`w-3 h-3 ${chatLoading ? "animate-spin" : ""}`} />
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Introduction */}
-          <div>
+          <motion.div variants={fadeUp}>
             <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: c.textSec }}>Introduction</label>
             <div className="flex gap-2">
               <textarea
@@ -770,18 +852,20 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 className="flex-1 bg-transparent border rounded-lg p-2.5 text-xs resize-none focus:outline-none"
                 style={{ borderColor: c.border, color: c.text }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleRegenerateSection("introduction")}
                 className="px-2 rounded-lg text-[10px] font-bold self-start"
                 style={{ background: c.surface, color: c.primary, border: `1px solid ${c.border}` }}
               >
                 <RefreshCw className={`w-3 h-3 ${chatLoading ? "animate-spin" : ""}`} />
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Body */}
-          <div>
+          <motion.div variants={fadeUp}>
             <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: c.textSec }}>Body</label>
             <div className="flex gap-2">
               <textarea
@@ -791,18 +875,20 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 className="flex-1 bg-transparent border rounded-lg p-2.5 text-xs resize-none focus:outline-none"
                 style={{ borderColor: c.border, color: c.text }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleRegenerateSection("body")}
                 className="px-2 rounded-lg text-[10px] font-bold self-start"
                 style={{ background: c.surface, color: c.primary, border: `1px solid ${c.border}` }}
               >
                 <RefreshCw className={`w-3 h-3 ${chatLoading ? "animate-spin" : ""}`} />
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Closing */}
-          <div>
+          <motion.div variants={fadeUp}>
             <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: c.textSec }}>Closing</label>
             <div className="flex gap-2">
               <textarea
@@ -812,20 +898,26 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 className="flex-1 bg-transparent border rounded-lg p-2.5 text-xs resize-none focus:outline-none"
                 style={{ borderColor: c.border, color: c.text }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleRegenerateSection("closing")}
                 className="px-2 rounded-lg text-[10px] font-bold self-start"
                 style={{ background: c.surface, color: c.primary, border: `1px solid ${c.border}` }}
               >
                 <RefreshCw className={`w-3 h-3 ${chatLoading ? "animate-spin" : ""}`} />
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap gap-2 pt-2">
-            {["Make it shorter", "More professional", "Optimize for Company", "Highlight projects", "Rewrite introduction", "Improve closing"].map(action => (
-              <button
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-2 pt-2">
+            {["Make it shorter", "More professional", "Optimize for Company", "Highlight projects", "Rewrite introduction", "Improve closing"].map((action, i) => (
+              <motion.button
+                variants={fadeUp}
+                custom={i}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 key={action}
                 onClick={async () => {
                   if (!coverLetter) return;
@@ -851,15 +943,15 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                 style={{ background: c.surface, color: c.textSec, border: `1px solid ${c.border}` }}
               >
                 {action}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <motion.div variants={fadeUp} className="flex gap-3 pt-2">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={handleGenerateAgain}
               className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
               style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
@@ -867,24 +959,27 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               <RefreshCw className="w-3 h-3" /> Generate Again
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => setScreen("select")}
               className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
             >
               <Download className="w-3 h-3" /> Export
             </motion.button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Right: Live Preview */}
-        <div>
+        <motion.div variants={scaleIn} initial="hidden" animate="visible">
           <div className="flex items-center gap-2 mb-3">
-            <Eye className="w-4 h-4" style={{ color: c.primary }} />
+            <motion.span variants={iconSpring} initial="initial" animate="animate">
+              <Eye className="w-4 h-4" style={{ color: c.primary }} />
+            </motion.span>
             <span className="text-xs font-bold uppercase" style={{ color: c.textSec }}>Live Preview</span>
           </div>
-          <div
+          <motion.div
+            variants={scaleIn}
             className="rounded-xl p-5 min-h-[400px] whitespace-pre-wrap text-sm leading-relaxed"
             style={{
               background: theme === "dark" ? "#0a0e14" : "#ffffff",
@@ -894,17 +989,18 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             }}
           >
             {fullLetterText || "Your cover letter will appear here..."}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* AI Chat Panel (collapsible) */}
       <AnimatePresence>
         {chatOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            variants={modalScaleIn}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             className="overflow-hidden"
           >
             <div className="rounded-xl p-4" style={{ background: theme === "dark" ? "#0a0e14" : "#f8fafc", border: `1px solid ${c.border}` }}>
@@ -917,7 +1013,9 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                   className="flex-1 bg-transparent border rounded-lg p-2.5 text-xs focus:outline-none"
                   style={{ borderColor: c.border, color: c.text }}
                 />
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={handleChatSend}
                   disabled={chatLoading || !chatMessage.trim()}
                   className="px-4 rounded-lg font-bold text-xs flex items-center gap-1.5"
@@ -927,20 +1025,24 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                   }}
                 >
                   <Send className="w-3 h-3" /> Send
-                </button>
+                </motion.button>
               </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {["Make it shorter", "More professional", "Optimize for Google", "Highlight projects", "Mention leadership", "Rewrite introduction"].map(hint => (
-                  <button
+              <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="mt-2 flex flex-wrap gap-1.5">
+                {["Make it shorter", "More professional", "Optimize for Google", "Highlight projects", "Mention leadership", "Rewrite introduction"].map((hint, i) => (
+                  <motion.button
+                    variants={fadeUp}
+                    custom={i}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     key={hint}
                     onClick={() => { setChatMessage(hint); }}
                     className="px-2 py-1 rounded text-[10px] font-semibold transition-colors"
                     style={{ background: c.surface, color: c.textMuted, border: `1px solid ${c.border}` }}
                   >
                     {hint}
-                  </button>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -953,19 +1055,26 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   // =========================================================================
 
   const renderHistory = () => (
-    <div className="space-y-4">
+    <motion.div variants={fadeUp} className="space-y-4">
       <h2 className="text-base font-bold flex items-center gap-2" style={{ color: c.text }}>
-        <Zap className="w-5 h-5 text-[#f59e0b]" /> History
+        <motion.span variants={iconSpring} initial="initial" animate="animate">
+          <Zap className="w-5 h-5 text-[#f59e0b]" />
+        </motion.span> History
       </h2>
-      <div className="rounded-2xl p-4 space-y-3 max-h-[500px] overflow-y-auto" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="rounded-2xl p-4 space-y-3 max-h-[500px] overflow-y-auto" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
         {history.length === 0 ? (
-          <div className="text-center py-12" style={{ color: c.textMuted }}>
-            <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+          <motion.div variants={fadeUp} className="text-center py-12" style={{ color: c.textMuted }}>
+            <motion.span variants={iconSpring} initial="initial" animate="animate">
+              <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+            </motion.span>
             <span className="text-xs font-semibold">No letters yet.</span>
-          </div>
+          </motion.div>
         ) : (
-          history.map(h => (
-            <div
+          history.map((h, i) => (
+            <motion.div
+              variants={fadeUp}
+              custom={i}
+              whileHover={{ y: -4, scale: 1.01 }}
               key={h.id}
               onClick={() => openHistoryItem(h)}
               className="p-3 rounded-xl flex items-center justify-between cursor-pointer transition-colors group"
@@ -985,18 +1094,20 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
                   {h.tone}
                 </div>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={(e) => handleDelete(h.id, e)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                 style={{ color: c.textMuted }}
               >
                 <Trash2 className="w-4 h-4 hover:text-red-500" />
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           ))
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   // =========================================================================
@@ -1007,13 +1118,15 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setView("resume-hub")}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
           style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
         >
           <ArrowLeft className="w-4 h-4" />
-        </button>
+        </motion.button>
         <div>
           <h1 className="text-xl font-extrabold" style={{ fontFamily: "'Outfit', sans-serif", color: c.text }}>
             Cover Letter Generator
@@ -1027,12 +1140,12 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Main Content */}
         <div className="lg:col-span-7">
-          <div className="rounded-2xl p-6" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
+          <motion.div variants={scaleIn} initial="hidden" animate="visible" className="rounded-2xl p-6" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
             {screen === "select" && renderSelectResume()}
             {screen === "job" && renderJobDetails()}
             {screen === "generating" && renderGenerating()}
             {screen === "editor" && renderEditor()}
-          </div>
+          </motion.div>
         </div>
 
         {/* Right: History */}

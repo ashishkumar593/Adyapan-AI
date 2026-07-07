@@ -126,6 +126,48 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   const theme = useTheme();
   const c = t(theme);
 
+  // ─── Animation Variants ──────────────────────────────────────────────────────
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (custom: number = 0) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, delay: custom * 0.08, ease: "easeOut" },
+    }),
+  };
+
+  const scaleIn = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: (custom: number = 0) => ({
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.3, delay: custom * 0.08, ease: "easeOut" },
+    }),
+  };
+
+  const staggerContainer = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+    },
+  };
+
+  const cardHover = { y: -4, scale: 1.01 };
+
+  const buttonHover = { scale: 1.04 };
+
+  const buttonTap = { scale: 0.96 };
+
+  const springIcon = {
+    hidden: { scale: 0, rotate: -20 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: { type: "spring", stiffness: 200, damping: 12 },
+    },
+  };
+
   // Screen state: "home" | "jd" | "loading" | "dashboard" | "suggestions" | "final"
   const [screen, setScreen] = useState("home");
   const [targetRole, setTargetRole] = useState("Software Engineer");
@@ -321,7 +363,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
       {/* Top Navigation */}
       <div className="flex items-center gap-3 mb-6">
         <motion.button
-          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          whileHover={buttonHover} whileTap={buttonTap}
           onClick={() => screen === "home" ? setView("resume-hub") : setScreen("home")}
           className="flex items-center justify-center w-8 h-8 rounded-lg"
           style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
@@ -386,7 +428,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   {resumes.map(r => (
                     <motion.button
                       key={r.id}
-                      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                      whileHover={cardHover} whileTap={{ scale: 0.99 }}
                       onClick={() => { setSelectedResumeId(r.id); setFile(null); }}
                       className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
                       style={{
@@ -429,13 +471,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
                 {file ? (
                   <div className="space-y-2">
-                    <FileText size={32} className="mx-auto" style={{ color: c.primary }} />
+                    <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.primary }} /></motion.span>
                     <p className="text-sm font-bold" style={{ color: c.text }}>{file.name}</p>
                     <p className="text-xs" style={{ color: c.textMuted }}>
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                     <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      whileHover={buttonHover} whileTap={buttonTap}
                       onClick={e => { e.stopPropagation(); setFile(null); setSelectedResumeId(""); }}
                       className="text-xs font-bold mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
                       style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
@@ -445,7 +487,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Upload size={40} className="mx-auto" style={{ color: c.textMuted }} />
+                    <motion.span variants={springIcon} initial="hidden" animate="visible"><Upload size={40} className="mx-auto" style={{ color: c.textMuted }} /></motion.span>
                     <p className="text-sm font-bold" style={{ color: c.text }}>Drag & drop your resume here</p>
                     <p className="text-xs" style={{ color: c.textMuted }}>Supports PDF, DOCX up to 5MB</p>
                   </div>
@@ -455,7 +497,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
 
             {/* Proceed */}
             <motion.button
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              whileHover={buttonHover} whileTap={buttonTap}
               disabled={!file && !selectedResumeId}
               onClick={() => setScreen("jd")}
               className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
@@ -479,14 +521,14 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             className="max-w-2xl mx-auto space-y-6"
           >
             <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
-              <Target size={40} className="mx-auto mb-4" style={{ color: c.primary }} />
+              <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.primary }} /></motion.span>
               <h2 className="text-lg font-bold mb-2" style={{ color: c.text }}>Compare with Job Description?</h2>
               <p className="text-sm mb-6" style={{ color: c.textSec }}>
                 Comparing with a job description gives you a targeted match score and identifies missing keywords.
               </p>
               <div className="flex gap-3 justify-center">
                 <motion.button
-                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  whileHover={buttonHover} whileTap={buttonTap}
                   onClick={() => { setIncludeJD("yes"); }}
                   className="px-6 py-2 rounded-lg font-bold text-xs"
                   style={{
@@ -498,7 +540,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   Yes
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  whileHover={buttonHover} whileTap={buttonTap}
                   onClick={() => { setIncludeJD("skip"); }}
                   className="px-6 py-2 rounded-lg font-bold text-xs"
                   style={{
@@ -568,7 +610,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             {/* Actions */}
             <div className="flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setScreen("home")}
                 className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
@@ -576,7 +618,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 Back
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 disabled={includeJD === null}
                 onClick={startAnalysis}
                 className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
@@ -586,7 +628,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   border: includeJD === null ? `1px solid ${c.border}` : "none",
                 }}
               >
-                <Zap size={16} /> Analyze Resume
+                <motion.span variants={springIcon} initial="hidden" animate="visible"><Zap size={16} /></motion.span> Analyze Resume
               </motion.button>
             </div>
           </motion.div>
@@ -658,7 +700,10 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             {/* Overall Score + Actions */}
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Score Gauge */}
-              <div
+              <motion.div
+                variants={scaleIn}
+                initial="hidden"
+                animate="visible"
                 className="flex-shrink-0 p-6 rounded-2xl flex flex-col items-center justify-center text-center"
                 style={{ background: c.cardBg, border: `1px solid ${c.border}`, minWidth: 220 }}
               >
@@ -686,7 +731,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 >
                   {scoreLabel(analysis.score)}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Insights Grid */}
               <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -700,14 +745,16 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 ].map((item, i) => (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={cardHover}
                     className="p-3.5 rounded-xl"
                     style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span style={{ color: item.color }}>{item.icon}</span>
+                      <motion.span variants={springIcon} initial="hidden" animate="visible" style={{ color: item.color }}>{item.icon}</motion.span>
                       <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textMuted }}>
                         {item.label}
                       </span>
@@ -720,7 +767,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
 
             {/* Resume vs JD Match */}
             {includeJD === "yes" && analysis.keywordAnalysis && (
-              <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              <motion.div
+                variants={scaleIn}
+                initial="hidden"
+                animate="visible"
+                className="p-5 rounded-2xl"
+                style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+              >
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
                   <Target size={16} style={{ color: c.primary }} /> Resume vs Job Description
                 </h3>
@@ -760,7 +813,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Section Analysis Cards */}
@@ -773,15 +826,17 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               ].map((section, i) => (
                 <motion.div
                   key={section.key}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={i}
+                  whileHover={cardHover}
                   className="p-4 rounded-xl"
                   style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span style={{ color: c.primary }}>{section.icon}</span>
+                      <motion.span variants={springIcon} initial="hidden" animate="visible" style={{ color: c.primary }}>{section.icon}</motion.span>
                       <span className="text-xs font-bold" style={{ color: c.text }}>{section.label}</span>
                     </div>
                     <span className="text-sm font-extrabold" style={{ color: scoreColor(section.data.score * 10) }}>
@@ -799,8 +854,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             </div>
 
             {/* Keyword Analysis */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <CheckCircle size={14} style={{ color: c.green }} /> Found Keywords
                 </h3>
@@ -813,8 +873,8 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     </span>
                   ))}
                 </div>
-              </div>
-              <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+              </motion.div>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <XCircle size={14} style={{ color: c.red }} /> Missing Keywords
                 </h3>
@@ -829,7 +889,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 </div>
                 {analysis.keywordAnalysis.missing.length > 0 && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    whileHover={buttonHover} whileTap={buttonTap}
                     onClick={() => setScreen("suggestions")}
                     className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold"
                     style={{ background: "rgba(245,158,11,0.1)", color: c.primary, border: "1px solid rgba(245,158,11,0.2)" }}
@@ -837,15 +897,20 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     <Sparkles size={12} /> Add Missing Keywords
                   </motion.button>
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Formatting Check */}
-            <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
               <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                 <FileCheck2 size={14} style={{ color: c.primary }} /> Resume Formatting
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-2 md:grid-cols-5 gap-2"
+              >
                 {[
                   { label: "One Page", value: analysis.formattingCheck.onePage },
                   { label: "Fonts Consistent", value: analysis.formattingCheck.fontsConsistent },
@@ -853,22 +918,27 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   { label: "Headings Correct", value: analysis.formattingCheck.headingsCorrect },
                   { label: "Contact Present", value: analysis.formattingCheck.contactPresent },
                 ].map(item => (
-                  <div key={item.label} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: c.surface }}>
+                  <motion.div key={item.label} variants={fadeUp} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: c.surface }}>
                     {item.value ? (
                       <CheckCircle size={14} style={{ color: c.green }} />
                     ) : (
                       <XCircle size={14} style={{ color: c.red }} />
                     )}
                     <span className="text-[10px] font-semibold" style={{ color: c.text }}>{item.label}</span>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Strength Bars */}
-            <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
               <h3 className="text-xs font-bold mb-4" style={{ color: c.text }}>Resume Strength</h3>
-              <div className="space-y-3">
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="space-y-3"
+              >
                 {[
                   { label: "Summary", value: analysis.strengthBars.summary, color: "#8b5cf6" },
                   { label: "Skills", value: analysis.strengthBars.skills, color: "#3b82f6" },
@@ -876,7 +946,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   { label: "Projects", value: analysis.strengthBars.projects, color: "#10b981" },
                   { label: "Education", value: analysis.strengthBars.education, color: "#ec4899" },
                 ].map(bar => (
-                  <div key={bar.label}>
+                  <motion.div key={bar.label} variants={fadeUp}>
                     <div className="flex justify-between text-[10px] font-semibold mb-1">
                       <span style={{ color: c.textSec }}>{bar.label}</span>
                       <span style={{ color: bar.color }}>{bar.value}%</span>
@@ -890,43 +960,58 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                         style={{ background: bar.color }}
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Strengths & Recommendations */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <CheckCircle size={14} style={{ color: c.green }} /> Strengths
                 </h3>
-                <ul className="space-y-1.5">
+                <motion.ul
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-1.5"
+                >
                   {analysis.strengths.map((s, i) => (
-                    <li key={i} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
+                    <motion.li key={i} variants={fadeUp} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
                       <span style={{ color: c.green }}>✓</span> {s}
-                    </li>
+                    </motion.li>
                   ))}
-                </ul>
-              </div>
-              <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+                </motion.ul>
+              </motion.div>
+              <motion.div variants={scaleIn} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
                   <Star size={14} style={{ color: c.primary }} /> Recommendations
                 </h3>
-                <ul className="space-y-1.5">
+                <motion.ul
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-1.5"
+                >
                   {analysis.recommendations.map((r, i) => (
-                    <li key={i} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
+                    <motion.li key={i} variants={fadeUp} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
                       <span style={{ color: c.primary }}>✦</span> {r}
-                    </li>
+                    </motion.li>
                   ))}
-                </ul>
-              </div>
-            </div>
+                </motion.ul>
+              </motion.div>
+            </motion.div>
 
             {/* Navigation */}
             <div className="flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setView("resume-hub")}
                 className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
@@ -934,7 +1019,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 Back to Resume Hub
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setScreen("suggestions")}
                 className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
@@ -954,10 +1039,16 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             className="space-y-6"
           >
             {/* Score Update Banner */}
-            <div className="p-5 rounded-2xl flex items-center gap-4" style={{
-              background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(16,185,129,0.1))",
-              border: "1px solid rgba(245,158,11,0.2)",
-            }}>
+            <motion.div
+              variants={scaleIn}
+              initial="hidden"
+              animate="visible"
+              className="p-5 rounded-2xl flex items-center gap-4"
+              style={{
+                background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(16,185,129,0.1))",
+                border: "1px solid rgba(245,158,11,0.2)",
+              }}
+            >
               <div className="relative w-16 h-16 flex-shrink-0">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="32" cy="32" r="27" stroke={c.border} strokeWidth="5" fill="transparent" />
@@ -978,7 +1069,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   Apply improvements to boost your ATS score.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Suggestion Cards */}
             <div className="space-y-3">
@@ -987,9 +1078,11 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 return (
                   <motion.div
                     key={sugg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={cardHover}
                     className="p-4 rounded-xl"
                     style={{
                       background: applied ? "rgba(16,185,129,0.05)" : c.cardBg,
@@ -1015,7 +1108,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                         {applied ? (
                           <>
                             <motion.button
-                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              whileHover={buttonHover} whileTap={buttonTap}
                               onClick={() => handleUndoSuggestion(sugg.id)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
                               style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
@@ -1031,14 +1124,14 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                         ) : (
                           <>
                             <motion.button
-                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              whileHover={buttonHover} whileTap={buttonTap}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
                               style={{ background: c.surface, color: c.textSec, border: `1px solid ${c.border}` }}
                             >
                               <Eye size={10} /> Preview
                             </motion.button>
                             <motion.button
-                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              whileHover={buttonHover} whileTap={buttonTap}
                               onClick={() => handleApplySuggestion(sugg)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
                               style={{ background: c.primary, color: "#000" }}
@@ -1057,7 +1150,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             {/* Navigation */}
             <div className="flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setScreen("dashboard")}
                 className="flex-1 py-2 rounded-lg font-bold text-xs"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
@@ -1065,7 +1158,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 Back to Dashboard
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setScreen("final")}
                 className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
@@ -1102,7 +1195,13 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
             </div>
 
             {/* Updated Score */}
-            <div className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
+            <motion.div
+              variants={scaleIn}
+              initial="hidden"
+              animate="visible"
+              className="p-6 rounded-2xl"
+              style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+            >
               <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textMuted }}>Updated ATS Score</div>
               <div className="flex items-center justify-center gap-3">
                 <motion.span
@@ -1131,43 +1230,52 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                   +{updatedScore - (analysis?.score || 0)} points improved
                 </motion.div>
               )}
-            </div>
+            </motion.div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-2 gap-3"
+            >
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                variants={fadeUp}
+                whileHover={buttonHover} whileTap={buttonTap}
                 className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Save size={16} /> Save Resume
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                variants={fadeUp}
+                whileHover={buttonHover} whileTap={buttonTap}
                 className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Download size={16} /> Download PDF
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                variants={fadeUp}
+                whileHover={buttonHover} whileTap={buttonTap}
                 className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
               >
                 <Download size={16} /> Download DOCX
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                variants={fadeUp}
+                whileHover={buttonHover} whileTap={buttonTap}
                 onClick={() => setView("resume-hub")}
                 className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
                 style={{ background: c.primary, color: "#000" }}
               >
                 <FileText size={16} /> Open Resume Builder
               </motion.button>
-            </div>
+            </motion.div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              whileHover={buttonHover} whileTap={buttonTap}
               onClick={() => { setScreen("home"); setAnalysis(null); setFile(null); setSelectedResumeId(""); setSuggestions([]); setAppliedSuggestions(new Set()); }}
               className="inline-flex items-center gap-2 text-sm font-bold"
               style={{ color: c.primary }}
@@ -1182,7 +1290,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
       {(screen === "dashboard" || screen === "suggestions") && (
         <>
           <motion.button
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            whileHover={buttonHover} whileTap={buttonTap}
             onClick={() => setChatOpen(!chatOpen)}
             className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-50"
             style={{
@@ -1214,7 +1322,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                 {/* Chat Header */}
                 <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: c.border }}>
                   <div className="flex items-center gap-2">
-                    <Sparkles size={14} style={{ color: c.primary }} />
+                    <motion.span variants={springIcon} initial="hidden" animate="visible"><Sparkles size={14} style={{ color: c.primary }} /></motion.span>
                     <span className="text-sm font-bold" style={{ color: c.text }}>AI ATS Assistant</span>
                   </div>
                   <motion.button
@@ -1235,9 +1343,10 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                       {["Improve ATS score", "Optimize for Google", "Rewrite Summary", "Add Missing Keywords", "Reduce Resume Length"].map((suggestion, i) => (
                         <motion.button
                           key={suggestion}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.1 }}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={i}
                           whileHover={{ scale: 1.02 }}
                           onClick={() => { setChatInput(suggestion); }}
                           className="block w-full text-left p-2 rounded-lg text-[11px] font-medium transition-all"
@@ -1247,7 +1356,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                             border: "1px solid rgba(245,158,11,0.15)",
                           }}
                         >
-                          <Sparkles size={10} className="inline mr-1.5" />
+                          <motion.span variants={springIcon} initial="hidden" animate="visible"><Sparkles size={10} className="inline mr-1.5" /></motion.span>
                           {suggestion}
                         </motion.button>
                       ))}
@@ -1293,7 +1402,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
                     }}
                   />
                   <motion.button
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    whileHover={buttonHover} whileTap={buttonTap}
                     onClick={handleSendChat}
                     disabled={chatLoading || !chatInput.trim()}
                     className="p-2.5 rounded-xl flex items-center justify-center"

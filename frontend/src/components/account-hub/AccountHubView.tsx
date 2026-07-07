@@ -11,6 +11,16 @@ import {
   Users, GraduationCap, Calendar, Download
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface Document {
   id: string;
   title: string;
@@ -125,7 +135,8 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
   };
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+      <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-1 flex flex-col gap-6">
 
         {/* ==================== 1. CONTEXT-SPECIFIC DASHBOARD CARDS ==================== */}
@@ -136,15 +147,15 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
             { label: "Followers", val: "880", icon: <Users className="text-emerald-500" /> },
             { label: "Community Rank", val: "#14", icon: <Award className="text-purple-500" /> }
           ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between animate-in fade-in" style={{ background: c.cardBg, borderColor: c.border }}>
+            <motion.div key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} whileHover={{ y: -4, scale: 1.01 }} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
                 <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
               </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
+              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
                 {card.icon}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
 
           {tab === "settings" && [
@@ -153,15 +164,15 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
             { label: "Security Status", val: "Strong", icon: <Lock className="text-amber-500" /> },
             { label: "Active Devices", val: "2 Devices", icon: <Clock className="text-purple-500" /> }
           ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between animate-in fade-in" style={{ background: c.cardBg, borderColor: c.border }}>
+            <motion.div key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} whileHover={{ y: -4, scale: 1.01 }} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
                 <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
               </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
+              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
                 {card.icon}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
 
           {tab === "learning" && [
@@ -170,15 +181,15 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
             { label: "Weekly Progress", val: "84%", icon: <TrendingUp className="text-cyan-500" /> },
             { label: "Current Streak", val: "7 Days", icon: <Award className="text-purple-500" /> }
           ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between animate-in fade-in" style={{ background: c.cardBg, borderColor: c.border }}>
+            <motion.div key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} whileHover={{ y: -4, scale: 1.01 }} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
                 <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
               </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
+              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
                 {card.icon}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
 
           {tab === "billing" && [
@@ -187,15 +198,15 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
             { label: "AI Credits Left", val: "36 / 100", icon: <Award className="text-emerald-500" /> },
             { label: "Recent Invoice", val: "#INV-928", icon: <FileText className="text-purple-500" /> }
           ].map((card, idx) => (
-            <div key={idx} className="p-4 border rounded-xl flex items-center justify-between animate-in fade-in" style={{ background: c.cardBg, borderColor: c.border }}>
+            <motion.div key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} whileHover={{ y: -4, scale: 1.01 }} className="p-4 border rounded-xl flex items-center justify-between" style={{ background: c.cardBg, borderColor: c.border }}>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{card.label}</span>
                 <span className="text-xl font-extrabold block" style={{ fontFamily: "'Outfit', sans-serif" }}>{card.val}</span>
               </div>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
+              <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
                 {card.icon}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
 
@@ -210,12 +221,12 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
               {tab === "billing" && "Billing & Plans"}
             </h2>
           </div>
-          <button
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
             onClick={() => setAssistantOpen(!assistantOpen)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Sparkles size={12} className="animate-pulse" /></motion.div> AI Assistant
+          </motion.button>
         </div>
 
         {/* ==================== 3. CONTENT AREA ==================== */}
@@ -232,7 +243,7 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                 className="space-y-6"
               >
                 {/* Profile Overview */}
-                <div className="p-6 border rounded-2xl flex flex-col sm:flex-row items-center gap-6" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -3, scale: 1.01 }} className="p-6 border rounded-2xl flex flex-col sm:flex-row items-center gap-6" style={{ background: c.cardBg, borderColor: c.border }}>
                   <div className="w-20 h-20 rounded-full border-2 border-amber-500 bg-amber-500/10 flex items-center justify-center font-black text-2xl text-amber-500 shrink-0">
                     AK
                   </div>
@@ -241,34 +252,34 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                     <span className="text-xs font-bold block" style={{ color: c.textSec }}>@ashishkumar</span>
                     <p className="text-xs leading-relaxed max-w-xl" style={{ color: c.textMuted }}>{bio}</p>
                   </div>
-                </div>
+                  </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Stats list */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Community Statistics</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
-                      <div className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
+                      <motion.div whileHover={{ y: -2, scale: 1.005 }} className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="text-[10px] block" style={{ color: c.textMuted }}>Profile Views</span>
                         <span className="text-sm font-black">{124}</span>
-                      </div>
-                      <div className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div whileHover={{ y: -2, scale: 1.005 }} className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="text-[10px] block" style={{ color: c.textMuted }}>Followers</span>
                         <span className="text-sm font-black">{880}</span>
-                      </div>
-                      <div className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div whileHover={{ y: -2, scale: 1.005 }} className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="text-[10px] block" style={{ color: c.textMuted }}>Following</span>
                         <span className="text-sm font-black">{190}</span>
-                      </div>
-                      <div className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div whileHover={{ y: -2, scale: 1.005 }} className="p-3 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="text-[10px] block" style={{ color: c.textMuted }}>Connections</span>
                         <span className="text-sm font-black">{320}</span>
-                      </div>
+                      </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Skills Section */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Skills Portfolio</h4>
                     <div className="space-y-3">
                       <div>
@@ -288,45 +299,45 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Projects Section */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Published Projects</h4>
                     <div className="space-y-3 text-xs">
-                      <div className="p-2 border rounded-xl flex items-center justify-between" style={{ borderColor: c.border }}>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -2, scale: 1.005 }} className="p-2 border rounded-xl flex items-center justify-between" style={{ borderColor: c.border }}>
                         <div>
                           <span className="font-extrabold block">Adyapan AI - Education Platform</span>
                           <span className="text-[9px]" style={{ color: c.textMuted }}>github.com/ashish/adyapan</span>
                         </div>
-                        <Globe size={14} className="text-cyan-500" />
-                      </div>
-                      <div className="p-2 border rounded-xl flex items-center justify-between" style={{ borderColor: c.border }}>
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Globe size={14} className="text-cyan-500" /></motion.div>
+                      </motion.div>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} whileHover={{ y: -2, scale: 1.005 }} className="p-2 border rounded-xl flex items-center justify-between" style={{ borderColor: c.border }}>
                         <div>
                           <span className="font-extrabold block">LLM Query Optimizer</span>
                           <span className="text-[9px]" style={{ color: c.textMuted }}>github.com/ashish/llm-opt</span>
                         </div>
-                        <Globe size={14} className="text-cyan-500" />
-                      </div>
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Globe size={14} className="text-cyan-500" /></motion.div>
+                      </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Actions row */}
                 <div className="flex gap-2 justify-end">
-                  <button
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                     onClick={() => alert("📤 Copied profile link to clipboard.")}
                     className="py-2 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
                     style={{ borderColor: c.border }}
                   >
                     Share Profile
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                     onClick={() => alert("💬 Direct messaging is simulated.")}
                     className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                   >
                     Send Message
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -342,7 +353,7 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Personal details */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Personal Information</h4>
                     <div className="space-y-3">
                       <div className="space-y-1">
@@ -373,24 +384,24 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         />
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Connected Accounts & Security */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Connected Accounts</h4>
                     <div className="space-y-3 text-xs">
-                      <div className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -2, scale: 1.005 }} className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="font-semibold">Google Account</span>
                         <span className="text-emerald-500 font-bold">Connected</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} whileHover={{ y: -2, scale: 1.005 }} className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="font-semibold">GitHub OAuth</span>
                         <span className="text-emerald-500 font-bold">Connected</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} whileHover={{ y: -2, scale: 1.005 }} className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
                         <span className="font-semibold">LinkedIn Profile</span>
                         <span className="text-gray-400 hover:text-white cursor-pointer font-bold">Connect</span>
-                      </div>
+                      </motion.div>
                     </div>
 
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 pt-2">Security</h4>
@@ -400,19 +411,19 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                           <span className="font-semibold block">Two-Factor Authentication</span>
                           <span className="text-[10px] text-gray-400">Secure account logins with SMS/Email checks.</span>
                         </div>
-                        <button
+                        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                           onClick={() => setTwoFactor(!twoFactor)}
                           className={`w-10 h-6 rounded-full relative transition-colors ${twoFactor ? "bg-amber-500" : "bg-white/10"}`}
                         >
                           <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${twoFactor ? "right-1" : "left-1"}`} />
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Privacy settings */}
-                <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Privacy Visibility</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex justify-between items-center">
@@ -420,12 +431,12 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         <span className="font-semibold block">Public Community Profile</span>
                         <span className="text-[10px] text-gray-400">Allow followers to view achievements and feeds.</span>
                       </div>
-                      <button
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                         onClick={() => setPrivacyProfile(!privacyProfile)}
                         className={`w-10 h-6 rounded-full relative transition-colors ${privacyProfile ? "bg-amber-500" : "bg-white/10"}`}
                       >
                         <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${privacyProfile ? "right-1" : "left-1"}`} />
-                      </button>
+                      </motion.button>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -433,23 +444,23 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         <span className="font-semibold block">Resume Visibility</span>
                         <span className="text-[10px] text-gray-400">Share resume documents with partner recruiters.</span>
                       </div>
-                      <button
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                         onClick={() => setPrivacyResume(!privacyResume)}
                         className={`w-10 h-6 rounded-full relative transition-colors ${privacyResume ? "bg-amber-500" : "bg-white/10"}`}
                       >
                         <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${privacyResume ? "right-1" : "left-1"}`} />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 <div className="flex justify-end">
-                  <button
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                     onClick={() => alert("✅ Account preferences updated successfully.")}
                     className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                   >
                     Save Settings
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -464,7 +475,7 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                 className="space-y-6"
               >
                 {/* Stats overview */}
-                <div className="p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-8 justify-around bg-white/[0.01]" style={{ borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -3, scale: 1.01 }} className="p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-8 justify-around bg-white/[0.01]" style={{ borderColor: c.border }}>
                   <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="56" cy="56" r="46" stroke="var(--border-color)" strokeWidth="8" fill="transparent" style={{ stroke: c.border }} />
@@ -489,11 +500,11 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                       You spent **42 hours** studying core programming structures and solved **15 coding challenges** this month. Follow your study roadmap.
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Topic completeness */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Subject Mastery</h4>
                     {[
                       { label: "Data Structures", val: 80 },
@@ -510,28 +521,28 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
 
                   {/* Achievements */}
-                  <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Active Achievements</h4>
                     <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="p-2.5 border rounded-xl flex items-center gap-2" style={{ borderColor: c.border }}>
-                        <Award size={16} className="text-amber-500 shrink-0" />
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -2, scale: 1.005 }} className="p-2.5 border rounded-xl flex items-center gap-2" style={{ borderColor: c.border }}>
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Award size={16} className="text-amber-500 shrink-0" /></motion.div>
                         <div>
                           <span className="font-bold block">7 Days Streak</span>
                           <span className="text-[9px] text-gray-400">Daily learning</span>
                         </div>
-                      </div>
-                      <div className="p-2.5 border rounded-xl flex items-center gap-2" style={{ borderColor: c.border }}>
-                        <Award size={16} className="text-cyan-500 shrink-0" />
+                      </motion.div>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} whileHover={{ y: -2, scale: 1.005 }} className="p-2.5 border rounded-xl flex items-center gap-2" style={{ borderColor: c.border }}>
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Award size={16} className="text-cyan-500 shrink-0" /></motion.div>
                         <div>
                           <span className="font-bold block">DSA Conqueror</span>
                           <span className="text-[9px] text-gray-400">15 problems solved</span>
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -548,7 +559,7 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                 {/* Billing options grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Current plan */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Plan details</h4>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between border-b pb-2" style={{ borderColor: c.border }}>
@@ -568,10 +579,10 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         <span className="font-bold text-emerald-500">Unlimited AI Generations</span>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Coupon & Payment */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Apply Offers / Coupons</h4>
                     <form onSubmit={handleApplyCoupon} className="flex gap-2">
                       <input
@@ -581,47 +592,60 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                         className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                         style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
                       />
-                      <button
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                         type="submit"
                         className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                       >
                         Apply
-                      </button>
+                      </motion.button>
                     </form>
-                    {billingOfferMsg && <p className="text-[10px] font-semibold" style={{ color: billingOfferMsg.startsWith("❌") ? c.red : c.green }}>{billingOfferMsg}</p>}
+                    <AnimatePresence>
+                      {billingOfferMsg && (
+                        <motion.p
+                          key="billing-msg"
+                          initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.92, y: -10 }}
+                          className="text-[10px] font-semibold"
+                          style={{ color: billingOfferMsg.startsWith("❌") ? c.red : c.green }}
+                        >
+                          {billingOfferMsg}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
 
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 pt-2">Saved Payment Method</h4>
-                    <div className="p-2 border rounded-xl flex items-center justify-between text-xs" style={{ borderColor: c.border }}>
+                    <motion.div whileHover={{ y: -2, scale: 1.005 }} className="p-2 border rounded-xl flex items-center justify-between text-xs" style={{ borderColor: c.border }}>
                       <span className="font-semibold">Visa Ending in •••• 4242</span>
                       <span className="text-[10px] text-gray-400">Default card</span>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                 </div>
 
                 {/* Billing Invoice history */}
-                <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500">Invoice History</h4>
                   <div className="space-y-2 text-xs leading-relaxed">
                     {[
                       { id: "INV-928", date: "July 1, 2026", amt: "$15.00", status: "Paid" },
                       { id: "INV-815", date: "June 1, 2026", amt: "$15.00", status: "Paid" }
-                    ].map(inv => (
-                      <div key={inv.id} className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
+                    ].map((inv, idx) => (
+                      <motion.div key={inv.id} variants={fadeUp} initial="hidden" animate="visible" custom={idx} whileHover={{ y: -2, scale: 1.005 }} className="flex justify-between items-center p-2 border rounded-xl" style={{ borderColor: c.border }}>
                         <div>
                           <span className="font-bold block">{inv.id} · {inv.date}</span>
                           <span className="text-[9px] text-emerald-500">{inv.status}</span>
                         </div>
-                        <button
+                        <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                           onClick={() => alert(`📥 Downloading PDF Invoice ${inv.id}`)}
                           className="py-1 px-2.5 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[9px] font-bold flex items-center gap-1 transition-colors"
                           style={{ borderColor: c.border, color: c.textSec }}
                         >
-                          <Download size={10} /> Download
-                        </button>
-                      </div>
+                          <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Download size={10} /></motion.div> Download
+                        </motion.button>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
@@ -642,15 +666,15 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Sparkles size={14} className="text-amber-500" /></motion.div>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Account Assistant</span>
               </div>
-              <button
+              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 onClick={() => setAssistantOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
-                <XCircle size={14} />
-              </button>
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><XCircle size={14} /></motion.div>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -658,7 +682,13 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -669,16 +699,23 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
-                <div className="flex justify-start">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: -10 }}
+                  className="flex justify-start"
+                >
                   <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
-                    <Clock size={12} className="text-amber-500 animate-spin" />
+                    <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                      <Clock size={12} className="text-amber-500 animate-spin" />
+                    </motion.div>
                     <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
                   </div>
-                </div>
+                </motion.div>
               )}
               <div ref={chatEndRef} />
             </div>
@@ -690,15 +727,21 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                 "Show my learning progress",
                 "How many credits do I have left?",
                 "Suggest weak profile topics"
-              ].map(s => (
-                <button
+              ].map((s, idx) => (
+                <motion.button
                   key={s}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={idx}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -714,18 +757,19 @@ export function AccountHubView({ setView, activeModule = "profile", theme = "dar
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
-                <Send size={12} />
-              </button>
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}><Send size={12} /></motion.div>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
     </div>
+    </motion.div>
   );
 }

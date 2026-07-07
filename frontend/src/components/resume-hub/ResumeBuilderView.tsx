@@ -29,6 +29,31 @@ const containerVariants = {
   exit: { opacity: 0, y: -20 },
 };
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.06, duration: 0.3, ease: "easeOut" },
+  }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.85 },
+  visible: (i = 0) => ({
+    opacity: 1, scale: 1,
+    transition: { delay: i * 0.06, type: "spring", stiffness: 200, damping: 15 },
+  }),
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
+const cardHover = { y: -4, scale: 1.01 };
+const btnHover = { scale: 1.04 };
+const btnTap = { scale: 0.96 };
+
 export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }: ResumeBuilderViewProps) {
   const isDark = theme === "dark";
   const t = {
@@ -365,37 +390,37 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
             {/* ========== SCREEN 1 — Welcome / Resume Setup ========== */}
             {screen === 1 && (
               <div className="h-full flex items-center justify-center p-8">
-                <div className="w-full max-w-lg space-y-8">
+                <motion.div className="w-full max-w-lg space-y-8" variants={staggerContainer} initial="hidden" animate="visible">
                   <div className="text-center space-y-2">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+                    <motion.div variants={scaleIn} initial="hidden" animate="visible" className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
                       <FileText size={28} className="text-amber-500" />
-                    </div>
+                    </motion.div>
                     <h2 className="text-2xl font-extrabold text-white">Resume Builder</h2>
                     <p className="text-sm text-white/50">Create an AI-powered ATS-optimized resume</p>
                   </div>
 
-                  <div className="space-y-4 bg-white/[0.03] border border-white/5 rounded-2xl p-6">
-                    {[
-                      { label: "Target Company", value: setup.company, onChange: (v: string) => setSetup({ ...setup, company: v }), options: COMPANIES },
-                      { label: "Target Profession", value: setup.profession, onChange: (v: string) => setSetup({ ...setup, profession: v }), options: PROFESSIONS },
-                      { label: "Career Level", value: setup.careerLevel, onChange: (v: string) => setSetup({ ...setup, careerLevel: v }), options: CAREER_LEVELS },
-                      { label: "Resume Style", value: setup.resumeStyle, onChange: (v: string) => setSetup({ ...setup, resumeStyle: v }), options: RESUME_STYLES },
-                    ].map((field) => (
-                      <div key={field.label} className="space-y-1.5">
-                        <label className="text-[11px] font-semibold text-white/60 uppercase tracking-wider">{field.label}</label>
-                        <select
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
-                        >
-                          {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
+                    <motion.div variants={staggerContainer} initial="hidden" animate="visible" whileHover={cardHover} className="space-y-4 bg-white/[0.03] border border-white/5 rounded-2xl p-6">
+                      {[
+                        { label: "Target Company", value: setup.company, onChange: (v: string) => setSetup({ ...setup, company: v }), options: COMPANIES },
+                        { label: "Target Profession", value: setup.profession, onChange: (v: string) => setSetup({ ...setup, profession: v }), options: PROFESSIONS },
+                        { label: "Career Level", value: setup.careerLevel, onChange: (v: string) => setSetup({ ...setup, careerLevel: v }), options: CAREER_LEVELS },
+                        { label: "Resume Style", value: setup.resumeStyle, onChange: (v: string) => setSetup({ ...setup, resumeStyle: v }), options: RESUME_STYLES },
+                      ].map((field, i) => (
+                        <motion.div key={field.label} variants={fadeUp} custom={i} initial="hidden" animate="visible" className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-white/60 uppercase tracking-wider">{field.label}</label>
+                          <select
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                          >
+                            {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </motion.div>
+                      ))}
+                    </motion.div>
 
                   <motion.button
-                    whileHover={{ scale: canContinue(1) ? 1.02 : 1 }} whileTap={{ scale: canContinue(1) ? 0.98 : 1 }}
+                    whileHover={canContinue(1) ? btnHover : {}} whileTap={canContinue(1) ? btnTap : {}}
                     onClick={() => canContinue(1) && setScreen(2)}
                     disabled={!canContinue(1)}
                     className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
@@ -405,16 +430,16 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       cursor: canContinue(1) ? "pointer" : "not-allowed",
                     }}
                   >Continue <ChevronRight size={16} /></motion.button>
-                </div>
+                </motion.div>
               </div>
             )}
 
             {/* ========== SCREEN 2 — Resume Information ========== */}
             {screen === 2 && (
               <div className="h-full flex flex-col">
-                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">
+                <motion.div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar" variants={staggerContainer} initial="hidden" animate="visible">
                   {/* Personal Info */}
-                  <Section title="Personal Info">
+                  <Section title="Personal Info" custom={0}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <input placeholder="Full Name" value={personalInfo.fullName} onChange={e => setPersonalInfo({ ...personalInfo, fullName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
                       <input placeholder="Email" value={personalInfo.email} onChange={e => setPersonalInfo({ ...personalInfo, email: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
@@ -427,9 +452,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </Section>
 
                   {/* Education */}
-                  <Section title="Education" onAdd={addEdu}>
+                  <Section title="Education" onAdd={addEdu} custom={1}>
                     {education.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                      <motion.div variants={fadeUp} custom={idx} initial="hidden" animate="visible" whileHover={cardHover} key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
                         <button onClick={() => removeEdu(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
                         <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                         <div className="grid grid-cols-2 gap-2">
@@ -441,14 +466,14 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                           <input placeholder="End Date" value={item.endDate} onChange={e => updateEdu(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                           <input placeholder="CGPA/Grade" value={item.grade} onChange={e => updateEdu(idx, "grade", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </Section>
 
                   {/* Experience */}
-                  <Section title="Experience" onAdd={addExp}>
+                  <Section title="Experience" onAdd={addExp} custom={2}>
                     {experience.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
+                      <motion.div variants={fadeUp} custom={idx} initial="hidden" animate="visible" whileHover={cardHover} key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
                         <div className="flex justify-between items-center pr-6">
                           <button onClick={() => handleAIExperience(idx)} disabled={generatingAI} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold rounded border border-amber-500/20">
                             <Sparkles size={10} /> AI Improve
@@ -462,12 +487,12 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                           <input placeholder="End Date" value={item.endDate} onChange={e => updateExp(idx, "endDate", e.target.value)} className="bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white" />
                         </div>
                         <textarea placeholder="Description (responsibilities, achievements)..." value={item.description} onChange={e => updateExp(idx, "description", e.target.value)} className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2 text-[11px] text-white resize-none" />
-                      </div>
+                      </motion.div>
                     ))}
                   </Section>
 
                   {/* Projects */}
-                  <Section title="Projects" onAdd={addProj}>
+                  <Section title="Projects" onAdd={addProj} custom={3}>
                     {projects.map((item, idx) => (
                       <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
                         <div className="flex justify-between items-center pr-6">
@@ -484,7 +509,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </Section>
 
                   {/* Skills */}
-                  <Section title="Skills">
+                  <Section title="Skills" custom={4}>
                     <div className="flex gap-2">
                       <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addSkill()} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white" />
                       <button onClick={addSkill} className="px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-400 transition-colors">Add</button>
@@ -499,7 +524,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </Section>
 
                   {/* Certifications */}
-                  <Section title="Certifications" onAdd={addCert}>
+                  <Section title="Certifications" onAdd={addCert} custom={5}>
                     {certifications.map((item, idx) => (
                       <div key={idx} className="p-3 bg-black/20 border border-white/5 rounded-xl space-y-2 relative">
                         <button onClick={() => removeCert(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-300"><Trash2 size={13} /></button>
@@ -511,7 +536,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </Section>
 
                   {/* Achievements */}
-                  <Section title="Achievements" onAdd={addAchievement}>
+                  <Section title="Achievements" onAdd={addAchievement} custom={6}>
                     {achievements.map((ach, idx) => (
                       <div key={idx} className="flex gap-2 items-center">
                         <input placeholder="e.g. Secured 1st place in National Hackathon 2025" value={ach} onChange={e => updateAchievement(idx, e.target.value)} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
@@ -521,7 +546,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </Section>
 
                   {/* Languages */}
-                  <Section title="Languages" onAdd={addLanguage}>
+                  <Section title="Languages" onAdd={addLanguage} custom={7}>
                     {languages.map((lang, idx) => (
                       <div key={idx} className="flex gap-2 items-center">
                         <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)} className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
@@ -529,7 +554,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </div>
                     ))}
                   </Section>
-                </div>
+                </motion.div>
 
                 {/* Navigation */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
@@ -813,10 +838,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 }
 
 // --- Section Wrapper ---
-function Section({ title, children, onAdd }: { title: string; children: React.ReactNode; onAdd?: () => void }) {
+function Section({ title, children, onAdd, custom: customDelay = 0 }: { title: string; children: React.ReactNode; onAdd?: () => void; custom?: number }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
+    <motion.div variants={fadeUp} custom={customDelay} initial="hidden" animate="visible" className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between p-3 cursor-pointer select-none" onClick={() => setOpen(!open)}>
         <h3 className="text-xs font-bold text-white uppercase tracking-wider">{title}</h3>
         <div className="flex items-center gap-2">
@@ -827,7 +852,7 @@ function Section({ title, children, onAdd }: { title: string; children: React.Re
       <AnimatePresence>
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }} className="overflow-hidden">
-            <div className="p-3 pt-0 space-y-3">{children}</div>
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="p-3 pt-0 space-y-3">{children}</motion.div>
           </motion.div>
         )}
       </AnimatePresence>

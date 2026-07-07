@@ -9,6 +9,16 @@ import {
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface Internship {
   id: string;
   role: string;
@@ -404,7 +414,8 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
   const savedAppsCount = savedInternships.length;
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+      <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-1 flex flex-col gap-4">
         
         {/* Compact Module Header */}
@@ -417,12 +428,16 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
               {tab === "tracker" && "Application Tracker"}
             </h2>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setAssistantOpen(!assistantOpen)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
+            <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex">
+              <Sparkles size={12} />
+            </motion.span> AI Assistant
+          </motion.button>
         </div>
 
         {/* ==================== 3. CONTENT AREA ==================== */}
@@ -439,12 +454,12 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 className="space-y-6 flex flex-col h-full"
               >
                 {/* Search & Advanced Filters */}
-                <div className="p-4 rounded-xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -2, scale: 1.005 }} className="p-4 rounded-xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                   <div className="flex gap-3">
                     <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }}>
+                      <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }}>
                         <Search size={14} />
-                      </span>
+                      </motion.span>
                       <input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -457,7 +472,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
 
                   {/* Filters Row */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Location</label>
                       <select
                         value={locFilter}
@@ -470,9 +485,9 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                         <option value="Hyderabad">Hyderabad</option>
                         <option value="US">United States (US)</option>
                       </select>
-                    </div>
+                    </motion.div>
 
-                    <div className="space-y-1">
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Work Mode</label>
                       <select
                         value={modeFilter}
@@ -485,9 +500,9 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                         <option value="Hybrid">Hybrid</option>
                         <option value="On-site">On-site</option>
                       </select>
-                    </div>
+                    </motion.div>
 
-                    <div className="space-y-1">
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Duration</label>
                       <select
                         value={durationFilter}
@@ -499,23 +514,28 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                         <option value="3 Months">3 Months</option>
                         <option value="6 Months">6 Months</option>
                       </select>
-                    </div>
+                    </motion.div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Listings */}
                 {filteredInternships.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
+                  <motion.div initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.35 }} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
                     <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No internships match your current search criteria.</span>
-                  </div>
+                  </motion.div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredInternships.map(item => {
+                    {filteredInternships.map((item, i) => {
                       const isSaved = savedInternships.includes(item.id);
                       return (
-                        <div
+                        <motion.div
                           key={item.id}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={i}
+                          whileHover={{ y: -4, scale: 1.01 }}
                           onClick={() => setSelectedInternship(item)}
                           className="p-5 border rounded-xl hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group"
                           style={{ background: c.cardBg, borderColor: c.border }}
@@ -534,12 +554,16 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                                   <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{item.company}</span>
                                 </div>
                               </div>
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
                                 onClick={(e) => handleToggleSave(item.id, e)}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 group-hover:bg-white/10"
                               >
-                                <Heart size={14} className={isSaved ? "text-red-500 fill-current" : "text-gray-400"} />
-                              </button>
+                                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex">
+                                  <Heart size={14} className={isSaved ? "text-red-500 fill-current" : "text-gray-400"} />
+                                </motion.span>
+                              </motion.button>
                             </div>
 
                             {/* Job Specs */}
@@ -565,7 +589,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                               </span>
                             )}
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -583,20 +607,27 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 className="space-y-6"
               >
                 {/* Header Info */}
-                <div className="p-5 border rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10 space-y-2">
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} whileHover={{ y: -2, scale: 1.005 }} className="p-5 border rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10 space-y-2">
                   <h3 className="text-base font-extrabold flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                    <Sparkles size={16} className="text-amber-500 animate-pulse" /> Profile Match Engine
+                    <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex">
+                      <Sparkles size={16} className="text-amber-500" />
+                    </motion.span> Profile Match Engine
                   </h3>
                   <p className="text-xs leading-relaxed max-w-2xl" style={{ color: c.textSec }}>
                     Our placement engine compares your current profile achievements, resume tags, and completed DSA scores against corporate hiring criteria. Focus on matching roles and review missing skills study guides.
                   </p>
-                </div>
+                </motion.div>
 
                 {/* Recommendations Loop */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {MOCK_INTERNSHIPS.map(item => (
-                    <div
+                  {MOCK_INTERNSHIPS.map((item, i) => (
+                    <motion.div
                       key={item.id}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={i}
+                      whileHover={{ y: -4, scale: 1.01 }}
                       className="p-5 border rounded-2xl flex flex-col justify-between"
                       style={{ background: c.cardBg, borderColor: c.border }}
                     >
@@ -621,10 +652,10 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                           <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.text }}>Why this matches:</div>
                           <ul className="space-y-1">
                             {item.matchReasons.map((r, idx) => (
-                              <li key={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
+                              <motion.li key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
                                 <CheckCircle2 size={12} className="text-emerald-500 shrink-0 mt-0.5" />
                                 <span>{r}</span>
-                              </li>
+                              </motion.li>
                             ))}
                           </ul>
                         </div>
@@ -643,10 +674,10 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                             <div className="text-[10px] font-bold uppercase tracking-wider block pt-1.5" style={{ color: c.text }}>Recommended Learning Path:</div>
                             <ul className="space-y-1">
                               {item.learningPath.map((path, idx) => (
-                                <li key={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
+                                <motion.li key={idx} variants={fadeUp} initial="hidden" animate="visible" custom={idx} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: c.textSec }}>
                                   <Info size={12} className="text-cyan-500 shrink-0 mt-0.5" />
                                   <span>{path}</span>
-                                </li>
+                                </motion.li>
                               ))}
                             </ul>
                           </div>
@@ -655,21 +686,25 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
 
                       {/* AI Assistant Actions */}
                       <div className="mt-6 flex flex-wrap gap-2">
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
                           onClick={() => setView("resume-hub")}
                           className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-bold flex items-center gap-1.5"
                           style={{ borderColor: c.border, color: c.text }}
                         >
                           <FileText size={12} /> Improve Resume
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
                           onClick={() => setView("interview-hub")}
                           className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 transition-colors text-[10px] font-bold flex items-center gap-1.5"
                         >
                           <UserCheck size={12} /> Prepare Interview
-                        </button>
+                        </motion.button>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -685,7 +720,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 className="space-y-6 flex flex-col h-full"
               >
                 {/* Tracker stats summary bar */}
-                <div className="p-4 rounded-xl border flex flex-wrap gap-6 justify-between items-center" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-4 rounded-xl border flex flex-wrap gap-6 justify-between items-center" style={{ background: c.cardBg, borderColor: c.border }}>
                   <div className="flex gap-6">
                     <div className="space-y-0.5">
                       <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: c.textMuted }}>Total Tracked</span>
@@ -700,21 +735,29 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                       <span className="text-base font-black block text-emerald-500">{offersApps}</span>
                     </div>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setShowAddForm(true)}
                     className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5 shrink-0"
                   >
-                    <PlusCircle size={14} /> Add Application
-                  </button>
-                </div>
+                    <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex">
+                      <PlusCircle size={14} />
+                    </motion.span> Add Application
+                  </motion.button>
+                </motion.div>
 
                 {/* Drag-and-drop / Arrow Kanban Grid */}
                 <div className="flex-1 overflow-x-auto flex gap-4 pb-4 select-none custom-scrollbar min-h-[400px]">
-                  {TRACKER_STATUSES.map(columnStatus => {
+                  {TRACKER_STATUSES.map((columnStatus, ci) => {
                     const colApps = applications.filter(a => a.status === columnStatus);
                     return (
-                      <div
+                      <motion.div
                         key={columnStatus}
+                        variants={scaleIn}
+                        initial="hidden"
+                        animate="visible"
+                        custom={ci}
                         className="w-72 border rounded-xl flex flex-col shrink-0 overflow-hidden"
                         style={{ background: c.cardBg, borderColor: c.border }}
                       >
@@ -733,9 +776,14 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                               No cards in this phase.
                             </div>
                           ) : (
-                            colApps.map(app => (
-                              <div
+                            colApps.map((app, ai) => (
+                              <motion.div
                                 key={app.id}
+                                variants={fadeUp}
+                                initial="hidden"
+                                animate="visible"
+                                custom={ai}
+                                whileHover={{ y: -3, scale: 1.01 }}
                                 className="p-3 border rounded-lg space-y-2 bg-white/5 hover:border-amber-500/30 transition-all flex flex-col justify-between"
                                 style={{ borderColor: c.border }}
                               >
@@ -751,36 +799,42 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                                 )}
 
                                 <div className="flex justify-between items-center pt-2">
-                                  <button
+                                  <motion.button
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
                                     onClick={() => handleDeleteApp(app.id)}
                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                   >
                                     <Trash2 size={12} />
-                                  </button>
+                                  </motion.button>
 
                                   {/* Direct arrows to move card */}
                                   <div className="flex gap-1">
-                                    <button
+                                    <motion.button
+                                      whileHover={{ scale: 1.04 }}
+                                      whileTap={{ scale: 0.96 }}
                                       onClick={() => handleMoveApp(app.id, "left")}
                                       className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white"
                                       title="Move Left"
                                     >
                                       <ChevronRight size={12} className="transform rotate-180" />
-                                    </button>
-                                    <button
+                                    </motion.button>
+                                    <motion.button
+                                      whileHover={{ scale: 1.04 }}
+                                      whileTap={{ scale: 0.96 }}
                                       onClick={() => handleMoveApp(app.id, "right")}
                                       className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white"
                                       title="Move Right"
                                     >
                                       <ChevronRight size={12} />
-                                    </button>
+                                    </motion.button>
                                   </div>
                                 </div>
-                              </div>
+                              </motion.div>
                             ))
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -874,14 +928,18 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2 justify-end">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => handleToggleSave(selectedInternship.id)}
                   className="py-2 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
                   style={{ borderColor: c.border }}
                 >
                   {savedInternships.includes(selectedInternship.id) ? "Saved" : "Save Internship"}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => {
                     const alreadyApplied = applications.some(a => a.company === selectedInternship.company && a.role === selectedInternship.role);
                     if (!alreadyApplied) {
@@ -901,7 +959,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                   className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                 >
                   Apply Now
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -988,20 +1046,24 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
               </div>
 
               <div className="flex gap-2 justify-end pt-2">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   type="button"
                   onClick={() => setShowAddForm(false)}
                   className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
                   style={{ borderColor: c.border }}
                 >
                   Cancel
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   type="submit"
                   className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                 >
                   Track Application
-                </button>
+                </motion.button>
               </div>
             </motion.form>
           </motion.div>
@@ -1024,12 +1086,14 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 <Sparkles size={14} className="text-amber-500" />
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Placement Assistant</span>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setAssistantOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
                 <XCircle size={14} />
-              </button>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -1037,7 +1101,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div key={idx} initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.3 }} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -1048,7 +1112,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
@@ -1069,15 +1133,21 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 "Recommend ML internships",
                 "Show remote internships",
                 "Help improve my resume"
-              ].map(s => (
-                <button
+              ].map((s, si) => (
+                <motion.button
                   key={s}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={si}
+                  whileHover={{ y: -2, scale: 1.005 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -1093,18 +1163,21 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
                 <Send size={12} />
-              </button>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </motion.div>
   );
 }

@@ -9,6 +9,16 @@ import {
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface Job {
   id: string;
   role: string;
@@ -351,7 +361,8 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
   });
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+      <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-1 flex flex-col gap-4">
 
         {/* Compact Module Header */}
@@ -365,12 +376,16 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
               {tab === "challenges" && "Hiring Challenges"}
             </h2>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setAssistantOpen(!assistantOpen)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+              <Sparkles size={12} className="animate-pulse" />
+            </motion.div> AI Assistant
+          </motion.button>
         </div>
 
         {/* ==================== 3. CONTENT AREA ==================== */}
@@ -387,11 +402,13 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 className="space-y-6 flex flex-col h-full"
               >
                 {/* Search & Advanced Filters */}
-                <div className="p-4 rounded-xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-4 rounded-xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                   <div className="flex gap-3">
                     <div className="flex-1 relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }}>
-                        <Search size={14} />
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                          <Search size={14} />
+                        </motion.div>
                       </span>
                       <input
                         value={searchQuery}
@@ -450,20 +467,25 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                       </select>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Job Cards */}
                 {filteredJobs.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="text-center py-12 border border-dashed rounded-xl" style={{ borderColor: c.border }}>
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
                     <span className="text-xs font-semibold" style={{ color: c.textMuted }}>No jobs match your search parameters.</span>
-                  </div>
+                  </motion.div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredJobs.map(job => {
+                    {filteredJobs.map((job, i) => {
                       const isSaved = savedJobs.includes(job.id);
                       return (
-                        <div
+                        <motion.div
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={i}
+                          whileHover={{ y: -4, scale: 1.01 }}
                           key={job.id}
                           onClick={() => setSelectedJob(job)}
                           className="p-5 border rounded-xl hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between group"
@@ -483,12 +505,14 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                                   <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{job.company}</span>
                                 </div>
                               </div>
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
                                 onClick={(e) => handleToggleSaveJob(job.id, e)}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 group-hover:bg-white/10"
                               >
                                 <Heart size={14} className={isSaved ? "text-red-500 fill-current" : "text-gray-400"} />
-                              </button>
+                              </motion.button>
                             </div>
 
                             <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] font-semibold" style={{ color: c.textSec }}>
@@ -502,12 +526,17 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
 
                           <div className="mt-4 flex flex-wrap gap-1.5">
                             {job.skills.slice(0, 3).map(s => (
-                              <span key={s} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border border-white/10" style={{ borderColor: c.border, color: c.textSec }}>
+                              <motion.span
+                                key={s}
+                                whileHover={{ y: -2, scale: 1.005 }}
+                                className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border border-white/10"
+                                style={{ borderColor: c.border, color: c.textSec }}
+                              >
                                 {s}
-                              </span>
+                              </motion.span>
                             ))}
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -525,9 +554,11 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 className="space-y-6"
               >
                 {/* Input paste field */}
-                <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
                   <h3 className="text-base font-extrabold flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                    <ArrowRightLeft size={16} className="text-amber-500" /> Resume vs Job Description Matcher
+                    <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                      <ArrowRightLeft size={16} className="text-amber-500" />
+                    </motion.div> Resume vs Job Description Matcher
                   </h3>
                   <textarea
                     value={jdText}
@@ -536,7 +567,9 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                     className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-3 text-xs resize-none h-32"
                     style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
                   />
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={handleRunJdAnalyzer}
                     disabled={!jdText.trim() || analyzing}
                     className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5 disabled:opacity-50"
@@ -547,27 +580,29 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3.5 h-3.5" /> Run Compatibility Analyzer
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </motion.div> Run Compatibility Analyzer
                       </>
                     )}
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
 
                 {/* Match Report Results */}
                 {matchReport && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                     className="space-y-6"
                   >
                     {/* Score Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="p-5 border rounded-2xl text-center space-y-3 flex flex-col items-center justify-center" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl text-center space-y-3 flex flex-col items-center justify-center" style={{ background: c.cardBg, borderColor: c.border }}>
                         <div className="text-3xl font-extrabold text-amber-500">{matchReport.overallScore}%</div>
                         <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Overall Compatibility</div>
-                      </div>
-
-                      <div className="p-5 border rounded-2xl md:col-span-2 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                      </motion.div>
+                      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl md:col-span-2 space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-2">Metrics Analysis</h4>
                         <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
                           <div>
@@ -587,79 +622,91 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                             <span className="text-sm font-extrabold" style={{ color: c.text }}>{matchReport.atsCompatibility}%</span>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
 
-                    {/* Keywords Analysis */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-500">
-                          <CheckCircle2 size={14} /> Keywords Found
-                        </h4>
-                        <div className="flex flex-wrap gap-1.5">
-                          {matchReport.keywordsFound.map((k: string) => (
-                            <span key={k} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{k}</span>
-                          ))}
-                        </div>
+                  {/* Keywords Analysis */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-500">
+                        <CheckCircle2 size={14} /> Keywords Found
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchReport.keywordsFound.map((k: string) => (
+                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{k}</motion.span>
+                        ))}
                       </div>
+                    </motion.div>
 
-                      <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-red-500">
-                          <XCircle size={14} /> Missing Keywords
-                        </h4>
-                        <div className="flex flex-wrap gap-1.5">
-                          {matchReport.keywordsMissing.map((k: string) => (
-                            <span key={k} className="px-2 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">{k}</span>
-                          ))}
-                        </div>
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-red-500">
+                        <XCircle size={14} /> Missing Keywords
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchReport.keywordsMissing.map((k: string) => (
+                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">{k}</motion.span>
+                        ))}
                       </div>
+                    </motion.div>
 
-                      <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-cyan-500">
-                          <Info size={14} /> Suggested Terms
-                        </h4>
-                        <div className="flex flex-wrap gap-1.5">
-                          {matchReport.keywordsSuggested.map((k: string) => (
-                            <span key={k} className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">{k}</span>
-                          ))}
-                        </div>
+                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-cyan-500">
+                        <Info size={14} /> Suggested Terms
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchReport.keywordsSuggested.map((k: string) => (
+                          <motion.span key={k} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">{k}</motion.span>
+                        ))}
                       </div>
-                    </div>
+                    </motion.div>
+                  </div>
 
                     {/* AI Optimization Suggestions */}
-                    <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
-                        <Sparkles size={14} /> Actionable Resume Edits
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
+                      <Sparkles size={14} /> Actionable Resume Edits
                       </h4>
                       <ul className="space-y-2">
                         {matchReport.suggestions.map((s: string, idx: number) => (
-                          <li key={idx} className="text-xs leading-relaxed flex items-start gap-2" style={{ color: c.textSec }}>
+                          <motion.li
+                            key={idx}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={idx}
+                            className="text-xs leading-relaxed flex items-start gap-2"
+                            style={{ color: c.textSec }}
+                          >
                             <span className="text-amber-500">•</span>
                             <span>{s}</span>
-                          </li>
+                          </motion.li>
                         ))}
                       </ul>
                       <div className="pt-4 flex gap-2">
-                        <button
-                          onClick={() => setView("resume-hub")}
-                          className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
-                          style={{ borderColor: c.border, color: c.text }}
-                        >
-                          Optimize Resume
-                        </button>
-                        <button
-                          onClick={() => setView("cover-letter")}
-                          className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
-                        >
-                          Draft Cover Letter
-                        </button>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setView("resume-hub")}
+                      className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
+                      style={{ borderColor: c.border, color: c.text }}
+                    >
+                      Optimize Resume
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setView("cover-letter")}
+                      className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
+                    >
+                      Draft Cover Letter
+                    </motion.button>
                       </div>
-                    </div>
-
                   </motion.div>
-                )}
-              </motion.div>
-            )}
+
+                </motion.div>
+              )}
+            </motion.div>
+          )}
 
             {/* TAB C: JOB REFERRALS */}
             {tab === "referrals" && (
@@ -671,23 +718,32 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 className="space-y-6"
               >
                 {/* Referrals list */}
-                <div className="p-4 border rounded-xl flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="p-4 border rounded-xl flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
                   <div className="space-y-0.5">
                     <span className="text-[10px] uppercase tracking-wider font-bold block" style={{ color: c.textMuted }}>Total Requests</span>
                     <span className="text-base font-black" style={{ color: c.text }}>{referrals.length}</span>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setShowReferralModal(true)}
                     className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5"
                   >
-                    <PlusCircle size={14} /> Request Referral
-                  </button>
-                </div>
+                  <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                    <PlusCircle size={14} />
+                  </motion.div> Request Referral
+                </motion.button>
+                </motion.div>
 
                 {/* Referral tracker grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {referrals.map(ref => (
-                    <div
+                  {referrals.map((ref, i) => (
+                    <motion.div
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={i}
+                      whileHover={{ y: -4, scale: 1.01 }}
                       key={ref.id}
                       className="p-5 border rounded-2xl space-y-4"
                       style={{ background: c.cardBg, borderColor: c.border }}
@@ -697,9 +753,9 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                           <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ref.role}</h4>
                           <span className="text-[10px] font-bold" style={{ color: c.textSec }}>{ref.company}</span>
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           {ref.status}
-                        </span>
+                        </motion.span>
                       </div>
 
                       {ref.outreachMsg && (
@@ -718,7 +774,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                           <span className="text-[8px]" style={{ color: c.textMuted }}>*Click inside textarea to select and copy all.</span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -735,25 +791,30 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
               >
                 {/* Available Contests */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {MOCK_CHALLENGES.map(ch => (
-                    <div
+                  {MOCK_CHALLENGES.map((ch, i) => (
+                    <motion.div
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={i}
+                      whileHover={{ y: -4, scale: 1.01 }}
                       key={ch.id}
                       className="p-5 border rounded-2xl flex flex-col justify-between"
                       style={{ background: c.cardBg, borderColor: c.border }}
                     >
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
+                          <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border text-gray-400" style={{ borderColor: c.border }}>
                             {ch.category}
-                          </span>
+                          </motion.span>
                           {ch.completed ? (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                               Rank #{ch.rank}
-                            </span>
+                            </motion.span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <motion.span whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                               Active
-                            </span>
+                            </motion.span>
                           )}
                         </div>
                         <h4 className="font-extrabold text-sm" style={{ color: c.text }}>{ch.title}</h4>
@@ -769,17 +830,21 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                             <Check size={12} /> Challenge Solved ({ch.score}%)
                           </span>
                         ) : (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.96 }}
                             onClick={() => {
                               alert("🚀 Starting Challenge environment. All inputs and compilers are initialized.");
                             }}
                             className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
                           >
-                            <Play size={10} className="fill-current" /> Participate Now
-                          </button>
+                            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                              <Play size={10} className="fill-current" />
+                            </motion.div> Participate Now
+                          </motion.button>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -855,9 +920,9 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                   <h4 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: c.text }}>Required Skills</h4>
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {selectedJob.skills.map(s => (
-                      <span key={s} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border" style={{ borderColor: c.border, color: c.textSec }}>
+                      <motion.span key={s} whileHover={{ y: -2, scale: 1.005 }} className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/5 border" style={{ borderColor: c.border, color: c.textSec }}>
                         {s}
-                      </span>
+                      </motion.span>
                     ))}
                   </div>
                 </div>
@@ -865,14 +930,18 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2 justify-end">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => handleToggleSaveJob(selectedJob.id)}
                   className="py-2 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
                   style={{ borderColor: c.border, color: c.text }}
                 >
                   {savedJobs.includes(selectedJob.id) ? "Saved" : "Save Job"}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => {
                     setAppliedCount(prev => prev + 1);
                     alert("🚀 Applied successfully! Card added to your application tracker.");
@@ -881,7 +950,7 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                   className="py-2 px-4 rounded-lg bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                 >
                   Apply Now
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -945,20 +1014,24 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
               </div>
 
               <div className="flex gap-2 justify-end pt-2">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   type="button"
                   onClick={() => setShowReferralModal(false)}
                   className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold transition-colors"
                   style={{ borderColor: c.border }}
                 >
                   Cancel
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   type="submit"
                   className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
                 >
                   Request Referral
-                </button>
+                </motion.button>
               </div>
             </motion.form>
           </motion.div>
@@ -978,15 +1051,19 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                  <Sparkles size={14} className="text-amber-500" />
+                </motion.div>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Career Assistant</span>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setAssistantOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
                 <XCircle size={14} />
-              </button>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -994,7 +1071,14 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={idx}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -1005,16 +1089,21 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
-                <div className="flex justify-start">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="flex justify-start"
+                >
                   <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
                     <Clock size={12} className="text-amber-500 animate-spin" />
                     <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
                   </div>
-                </div>
+                </motion.div>
               )}
               <div ref={chatEndRef} />
             </div>
@@ -1026,15 +1115,21 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 "Find remote software engineering jobs",
                 "Compare my resume to SDE description",
                 "Help me request a referral"
-              ].map(s => (
-                <button
+              ].map((s, i) => (
+                <motion.button
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={i}
+                  whileHover={{ y: -2, scale: 1.005 }}
+                  whileTap={{ scale: 0.96 }}
                   key={s}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -1050,18 +1145,23 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
-                <Send size={12} />
-              </button>
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                  <Send size={12} />
+                </motion.div>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </motion.div>
   );
 }

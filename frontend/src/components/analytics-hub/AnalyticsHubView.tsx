@@ -10,6 +10,16 @@ import {
   TrendingUp, Award as BadgeIcon, BookOpen, GraduationCap, Users, Layout, LineChart as ChartIcon
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface PerformanceLog {
   id: string;
   role: string;
@@ -115,7 +125,13 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
   };
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="relative flex flex-col h-full min-h-[calc(100vh-120px)]"
+      style={{ color: c.text }}
+    >
       <div className="flex-1 flex flex-col gap-4">
 
         {/* Compact Module Header */}
@@ -129,12 +145,20 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
               {tab === "skills" && "Skill Growth"}
             </h2>
           </div>
-          <button
+          <motion.button
             onClick={() => setAssistantOpen(!assistantOpen)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
+            <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 280, damping: 18 }}
+            >
+              <Sparkles size={12} className="animate-pulse" />
+            </motion.div> AI Assistant
+          </motion.button>
         </div>
 
         {/* ==================== 3. CONTENT AREA ==================== */}
@@ -158,10 +182,19 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                     { label: "Study Hours", val: "42 hrs" },
                     { label: "Daily Learning Streak", val: "7 Days" }
                   ].map((s, idx) => (
-                    <div key={idx} className="p-4 border rounded-xl text-center space-y-1 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                    <motion.div
+                      key={idx}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={idx}
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-4 border rounded-xl text-center space-y-1 bg-white/[0.01]"
+                      style={{ borderColor: c.border }}
+                    >
                       <span className="text-[9px] uppercase tracking-wider font-bold block" style={{ color: c.textMuted }}>{s.label}</span>
                       <span className="text-base font-black" style={{ color: c.text }}>{s.val}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
@@ -189,7 +222,15 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                   </div>
 
                   {/* Hourly activity mock graph */}
-                  <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01] flex flex-col justify-between" style={{ borderColor: c.border }}>
+                  <motion.div
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={1}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    className="p-5 border rounded-2xl space-y-4 bg-white/[0.01] flex flex-col justify-between"
+                    style={{ borderColor: c.border }}
+                  >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Weekly Activity Trend</h4>
                     <div className="flex items-end justify-between h-28 pt-2">
                       {[
@@ -203,15 +244,23 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                       ].map((item, idx) => {
                         const htPercent = (item.hrs / 5) * 100;
                         return (
-                          <div key={idx} className="flex flex-col items-center gap-1.5 flex-1">
+                          <motion.div
+                            key={idx}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={idx}
+                            whileHover={{ y: -2, scale: 1.005 }}
+                            className="flex flex-col items-center gap-1.5 flex-1"
+                          >
                             <span className="text-[9px] font-bold" style={{ color: c.textMuted }}>{item.hrs}h</span>
                             <div className="w-6 rounded bg-amber-500/25 border border-amber-500/30 hover:bg-amber-500 transition-all cursor-pointer" style={{ height: `${htPercent}%` }} />
                             <span className="text-[9px] font-bold" style={{ color: c.textSec }}>{item.day}</span>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -233,15 +282,30 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                     { label: "Communication Flow", val: "88%" },
                     { label: "Technical Core", val: "80%" }
                   ].map((s, idx) => (
-                    <div key={idx} className="p-4 border rounded-xl text-center space-y-1 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                    <motion.div
+                      key={idx}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={idx}
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-4 border rounded-xl text-center space-y-1 bg-white/[0.01]"
+                      style={{ borderColor: c.border }}
+                    >
                       <span className="text-[9px] uppercase tracking-wider font-bold block" style={{ color: c.textMuted }}>{s.label}</span>
                       <span className="text-base font-black" style={{ color: c.text }}>{s.val}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
                 {/* History Table */}
-                <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                <motion.div
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={0}
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
                   <h4 className="text-xs font-bold uppercase tracking-wider">Interview Log History</h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
@@ -255,27 +319,36 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         </tr>
                       </thead>
                       <tbody className="divide-y" style={{ borderColor: c.border }}>
-                        {MOCK_INTERVIEW_LOGS.map(log => (
-                          <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                        {MOCK_INTERVIEW_LOGS.map((log, i) => (
+                          <motion.tr
+                            key={log.id}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={i}
+                            className="hover:bg-white/5 transition-colors"
+                          >
                             <td className="py-2.5 font-bold">{log.role}</td>
                             <td className="py-2.5" style={{ color: c.textSec }}>{log.type}</td>
                             <td className="py-2.5" style={{ color: c.textSec }}>{log.date}</td>
                             <td className="py-2.5 font-black text-amber-500">{log.score}%</td>
                             <td className="py-2.5 text-right">
-                              <button
+                              <motion.button
                                 onClick={() => setSelectedLog(log)}
                                 className="py-1 px-2.5 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold transition-all"
                                 style={{ borderColor: c.border }}
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
                               >
                                 View Feedback
-                              </button>
+                              </motion.button>
                             </td>
-                          </tr>
+                          </motion.tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
@@ -291,15 +364,30 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 {/* Scoring metrics */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Detailed Scores */}
-                  <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                  <motion.div
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={0}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]"
+                    style={{ borderColor: c.border }}
+                  >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Resume Quality Metrics</h4>
                     {[
                       { label: "Professional Summary Quality", score: 95, color: "#10b981" },
                       { label: "Project Descriptions Weight", score: 85, color: "#06b6d4" },
                       { label: "Core Skills Coverage", score: 90, color: "#8b5cf6" },
                       { label: "Education & Details alignment", score: 95, color: "#ec4899" }
-                    ].map(m => (
-                      <div key={m.label} className="space-y-1.5">
+                    ].map((m, i) => (
+                      <motion.div
+                        key={m.label}
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                        className="space-y-1.5"
+                      >
                         <div className="flex justify-between text-[11px] font-bold" style={{ color: c.textSec }}>
                           <span>{m.label}</span>
                           <span>{m.score}%</span>
@@ -307,15 +395,29 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         <div className="h-2 w-full rounded-full bg-white/5 border overflow-hidden" style={{ borderColor: c.border }}>
                           <div className="h-full rounded-full" style={{ width: `${m.score}%`, background: m.color }} />
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
 
                   {/* Highlights & missing blocks */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-5 border rounded-2xl space-y-3 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                    <motion.div
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={0}
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-5 border rounded-2xl space-y-3 bg-white/[0.01]"
+                      style={{ borderColor: c.border }}
+                    >
                       <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-                        <CheckCircle2 size={14} /> Section Completions
+                        <motion.div
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                        >
+                          <CheckCircle2 size={14} />
+                        </motion.div> Section Completions
                       </h4>
                       <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
                         <li>✓ Summary Statement</li>
@@ -323,18 +425,32 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         <li>✓ Education Details</li>
                         <li>✓ Contact Details</li>
                       </ul>
-                    </div>
+                    </motion.div>
 
-                    <div className="p-5 border rounded-2xl space-y-3 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                    <motion.div
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={1}
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-5 border rounded-2xl space-y-3 bg-white/[0.01]"
+                      style={{ borderColor: c.border }}
+                    >
                       <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
-                        <Info size={14} /> Missing Areas
+                        <motion.div
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                        >
+                          <Info size={14} />
+                        </motion.div> Missing Areas
                       </h4>
                       <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
                         <li>• Custom Hobbies</li>
                         <li>• Certifications</li>
                         <li>• LinkedIn Outreach URL</li>
                       </ul>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
@@ -352,7 +468,15 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 {/* Growth stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Category level */}
-                  <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                  <motion.div
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={0}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]"
+                    style={{ borderColor: c.border }}
+                  >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Skill Mastery Levels</h4>
                     {[
                       { label: "Programming Languages (Python, Java)", val: 90, color: "#10b981" },
@@ -360,8 +484,15 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                       { label: "Database Management (SQL, Postgres)", val: 80, color: "#8b5cf6" },
                       { label: "Machine Learning Concepts", val: 70, color: "#f59e0b" },
                       { label: "Cloud Computing (AWS, GCP)", val: 60, color: "#ec4899" }
-                    ].map(skill => (
-                      <div key={skill.label} className="space-y-1.5">
+                    ].map((skill, i) => (
+                      <motion.div
+                        key={skill.label}
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                        className="space-y-1.5"
+                      >
                         <div className="flex justify-between text-[11px] font-bold" style={{ color: c.textSec }}>
                           <span>{skill.label}</span>
                           <span>{skill.val}%</span>
@@ -369,12 +500,20 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         <div className="h-2 w-full rounded-full bg-white/5 border overflow-hidden" style={{ borderColor: c.border }}>
                           <div className="h-full rounded-full" style={{ width: `${skill.val}%`, background: skill.color }} />
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
 
                   {/* Growth log timeline */}
-                  <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
+                  <motion.div
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={1}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]"
+                    style={{ borderColor: c.border }}
+                  >
                     <h4 className="text-xs font-bold uppercase tracking-wider">Growth Log Timeline</h4>
                     <div className="space-y-3 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1px] before:bg-white/10">
                       {[
@@ -382,17 +521,24 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                         { title: "TypeScript & Data Schemas", date: "May 2026", desc: "Integrated types into global database schemas." },
                         { title: "Generative AI API integration", date: "April 2026", desc: "Completed Gemini model pipeline completions." }
                       ].map((item, idx) => (
-                        <div key={idx} className="pl-6 relative space-y-1">
+                        <motion.div
+                          key={idx}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={idx}
+                          className="pl-6 relative space-y-1"
+                        >
                           <div className="absolute left-[5px] top-1.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
                           <div className="flex justify-between text-[10px] font-bold">
                             <span style={{ color: c.text }}>{item.title}</span>
                             <span style={{ color: c.textMuted }}>{item.date}</span>
                           </div>
                           <p className="text-[10px]" style={{ color: c.textSec }}>{item.desc}</p>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -401,29 +547,70 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
         </div>
 
         {/* ==================== 4. CENTRAL AI PERFORMANCE INSIGHTS ==================== */}
-        <div className="p-5 border rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10 space-y-2 shrink-0">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+          whileHover={{ y: -4, scale: 1.01 }}
+          className="p-5 border rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10 space-y-2 shrink-0"
+        >
           <h4 className="text-xs font-extrabold flex items-center gap-1.5 text-amber-500" style={{ fontFamily: "'Outfit', sans-serif" }}>
-            <Sparkles size={14} /> AI Performance Insights
+            <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 280, damping: 18 }}
+            >
+              <Sparkles size={14} />
+            </motion.div> AI Performance Insights
           </h4>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <li className="flex items-start gap-2" style={{ color: c.textSec }}>
+            <motion.li
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0}
+              className="flex items-start gap-2"
+              style={{ color: c.textSec }}
+            >
               <span className="text-amber-500 font-bold">•</span>
               <span>Your interview scores improved by **18%** this month. Keep practicing!</span>
-            </li>
-            <li className="flex items-start gap-2" style={{ color: c.textSec }}>
+            </motion.li>
+            <motion.li
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={1}
+              className="flex items-start gap-2"
+              style={{ color: c.textSec }}
+            >
               <span className="text-amber-500 font-bold">•</span>
               <span>Continue practicing **Data Structures** to improve placement readiness.</span>
-            </li>
-            <li className="flex items-start gap-2" style={{ color: c.textSec }}>
+            </motion.li>
+            <motion.li
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={2}
+              className="flex items-start gap-2"
+              style={{ color: c.textSec }}
+            >
               <span className="text-amber-500 font-bold">•</span>
               <span>Completing 2 more mock tests can unlock top tier recruiter readiness levels.</span>
-            </li>
-            <li className="flex items-start gap-2" style={{ color: c.textSec }}>
+            </motion.li>
+            <motion.li
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={3}
+              className="flex items-start gap-2"
+              style={{ color: c.textSec }}
+            >
               <span className="text-amber-500 font-bold">•</span>
               <span>Focus on **Machine Learning projects** to strengthen your resume match rate.</span>
-            </li>
+            </motion.li>
           </ul>
-        </div>
+        </motion.div>
 
       </div>
 
@@ -461,12 +648,14 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 </div>
               </div>
               <div className="flex justify-end pt-2">
-                <button
+                <motion.button
                   onClick={() => setSelectedLog(null)}
                   className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-xs font-bold transition-colors"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                 >
                   Close Feedback
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -486,15 +675,23 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                >
+                  <Sparkles size={14} className="text-amber-500" />
+                </motion.div>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Performance Coach</span>
               </div>
-              <button
+              <motion.button
                 onClick={() => setAssistantOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
               >
                 <XCircle size={14} />
-              </button>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -502,7 +699,14 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={idx}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -513,17 +717,24 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
-                    <Clock size={12} className="text-amber-500 animate-spin" />
-                    <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
-                  </div>
-                </div>
-              )}
+              <AnimatePresence>
+                {chatLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
+                      <Clock size={12} className="text-amber-500 animate-spin" />
+                      <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div ref={chatEndRef} />
             </div>
 
@@ -534,15 +745,21 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 "Show learning hours",
                 "Recommend missing skills",
                 "Audit my interview performance"
-              ].map(s => (
-                <button
+              ].map((s, i) => (
+                <motion.button
                   key={s}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={i}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -558,18 +775,20 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
               >
                 <Send size={12} />
-              </button>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

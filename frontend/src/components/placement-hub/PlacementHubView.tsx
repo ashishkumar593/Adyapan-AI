@@ -10,6 +10,16 @@ import {
   HelpCircle, ShieldAlert, Award as BadgeIcon, Lightbulb, BookOpen, Target, Flame
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface Question {
   id: string;
   text: string;
@@ -368,7 +378,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   };
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-1 flex flex-col gap-4">
 
         {/* Compact Module Header */}
@@ -383,12 +393,14 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
               {tab === "readiness" && "Readiness Score"}
             </h2>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setAssistantOpen(!assistantOpen)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
+            <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Sparkles size={12} className="animate-pulse" /></motion.span> AI Assistant
+          </motion.button>
         </div>
 
         {/* ==================== 3. CONTENT AREA ==================== */}
@@ -404,16 +416,21 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 exit={{ opacity: 0, y: -10 }}
                 className="grid grid-cols-2 sm:grid-cols-5 gap-4"
               >
-                {APTITUDE_TOPICS.map(item => (
-                  <div
+                {APTITUDE_TOPICS.map((item, i) => (
+                  <motion.div
                     key={item.name}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={{ y: -4, scale: 1.01 }}
                     onClick={() => handleStartPractice(item.name, "aptitude")}
                     className="p-5 border rounded-2xl text-center cursor-pointer hover:shadow-lg hover:border-amber-500/30 transition-all flex flex-col items-center justify-center gap-3"
                     style={{ background: c.cardBg, borderColor: c.border }}
                   >
                     <span className="text-3xl">{item.icon}</span>
                     <span className="text-xs font-bold font-sans" style={{ color: c.text }}>{item.name}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
@@ -427,16 +444,21 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 exit={{ opacity: 0, y: -10 }}
                 className="grid grid-cols-2 sm:grid-cols-5 gap-4"
               >
-                {REASONING_TOPICS.map(item => (
-                  <div
+                {REASONING_TOPICS.map((item, i) => (
+                  <motion.div
                     key={item.name}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={{ y: -4, scale: 1.01 }}
                     onClick={() => handleStartPractice(item.name, "reasoning")}
                     className="p-5 border rounded-2xl text-center cursor-pointer hover:shadow-lg hover:border-amber-500/30 transition-all flex flex-col items-center justify-center gap-3"
                     style={{ background: c.cardBg, borderColor: c.border }}
                   >
                     <span className="text-3xl">{item.icon}</span>
                     <span className="text-xs font-bold font-sans" style={{ color: c.text }}>{item.name}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
@@ -450,16 +472,21 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 exit={{ opacity: 0, y: -10 }}
                 className="grid grid-cols-2 sm:grid-cols-4 gap-4"
               >
-                {TECHNICAL_TOPICS.map(item => (
-                  <div
+                {TECHNICAL_TOPICS.map((item, i) => (
+                  <motion.div
                     key={item.name}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={{ y: -4, scale: 1.01 }}
                     onClick={() => handleStartPractice(item.name, "mcqs")}
                     className="p-5 border rounded-2xl text-center cursor-pointer hover:shadow-lg hover:border-amber-500/30 transition-all flex flex-col items-center justify-center gap-3"
                     style={{ background: c.cardBg, borderColor: c.border }}
                   >
                     <span className="text-3xl">{item.icon}</span>
                     <span className="text-xs font-bold font-sans" style={{ color: c.text }}>{item.name}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
@@ -470,6 +497,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 key="practice-active"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -2, scale: 1.005 }}
                 className="p-6 border rounded-2xl space-y-6"
                 style={{ background: c.cardBg, borderColor: c.border }}
               >
@@ -479,12 +507,14 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                     <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">Practice Module</span>
                     <h3 className="text-sm font-extrabold" style={{ color: c.text }}>{practiceSession.topic}</h3>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setPracticeSession(null)}
                     className="text-xs font-bold text-gray-400 hover:text-white"
                   >
                     Exit Session
-                  </button>
+                  </motion.button>
                 </div>
 
                 {/* Question Details */}
@@ -522,8 +552,9 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                       }
 
                       return (
-                        <div
+                        <motion.div
                           key={oIdx}
+                          whileHover={{ y: -2, scale: 1.005 }}
                           onClick={() => {
                             if (!isSubmitted) {
                               setPracticeSession(prev => {
@@ -536,9 +567,9 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                           style={{ color: optText }}
                         >
                           <span>{opt}</span>
-                          {isSubmitted && isCorrectAnswer && <CheckCircle2 size={14} className="text-emerald-500" />}
-                          {isSubmitted && isSelected && !isCorrectAnswer && <XCircle size={14} className="text-red-500" />}
-                        </div>
+                          {isSubmitted && isCorrectAnswer && <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><CheckCircle2 size={14} className="text-emerald-500" /></motion.span>}
+                          {isSubmitted && isSelected && !isCorrectAnswer && <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><XCircle size={14} className="text-red-500" /></motion.span>}
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -548,31 +579,37 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 <div className="pt-4 border-t flex flex-wrap justify-between items-center gap-4" style={{ borderColor: c.border }}>
                   <div className="flex gap-2">
                     {!practiceSession.submitted ? (
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
                         onClick={handlePracticeSubmit}
                         disabled={practiceSession.selectedOptionIdx === null}
                         className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-40 transition-colors"
                       >
                         Submit Answer
-                      </button>
+                      </motion.button>
                     ) : (
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
                         onClick={handlePracticeNext}
                         className="py-2 px-4 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-colors"
                       >
                         {practiceSession.currentIdx + 1 < practiceSession.questions.length ? "Next Question" : "Finish Practice"}
-                      </button>
+                      </motion.button>
                     )}
 
                     {practiceSession.submitted && (
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
                         onClick={() => setShowTrick(!showTrick)}
                         className="py-2 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold flex items-center gap-1.5 transition-colors"
                         style={{ borderColor: c.border }}
                       >
                         <Lightbulb size={13} className="text-amber-500" />
                         {showTrick ? "Show Solution" : "Show Trick/Shortcut"}
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                 </div>
@@ -580,8 +617,8 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 {/* Solution Box */}
                 {practiceSession.submitted && (
                   <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     className="p-4 bg-white/5 border rounded-xl space-y-2 text-xs leading-relaxed"
                     style={{ borderColor: c.border }}
                   >
@@ -612,21 +649,30 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
               >
                 {/* Reports Summary */}
                 {testCompletedReport && (
-                  <div className="p-5 border rounded-2xl bg-emerald-500/10 border-emerald-500/20 space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="p-5 border rounded-2xl bg-emerald-500/10 border-emerald-500/20 space-y-3"
+                  >
                     <h4 className="text-xs font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
-                      <CheckCircle2 size={16} /> Latest Mock Test Evaluation
+                      <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><CheckCircle2 size={16} /></motion.span> Latest Mock Test Evaluation
                     </h4>
                     <p className="text-xs leading-relaxed" style={{ color: c.textSec }}>
                       You completed the mock test with a score of **{testCompletedReport.score}%** ({testCompletedReport.correct}/{testCompletedReport.total} questions correct). We have adjusted your readiness indicators!
                     </p>
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Mock lists */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {MOCK_MOCK_TESTS.map(test => (
-                    <div
+                  {MOCK_MOCK_TESTS.map((test, i) => (
+                    <motion.div
                       key={test.id}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={i}
+                      whileHover={{ y: -4, scale: 1.01 }}
                       className="p-5 border rounded-2xl flex flex-col justify-between"
                       style={{ background: c.cardBg, borderColor: c.border }}
                     >
@@ -642,14 +688,16 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                       </div>
 
                       <div className="mt-6 pt-3 border-t flex justify-end" style={{ borderColor: c.border }}>
-                        <button
+                        <motion.button
                           onClick={() => handleStartMockTest(test)}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
                           className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 transition-colors"
                         >
-                          <Play size={10} className="fill-current" /> Launch Test
-                        </button>
+                          <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Play size={10} className="fill-current" /></motion.span> Launch Test
+                        </motion.button>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -659,8 +707,9 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
             {activeTest && (
               <motion.div
                 key="test-exam-active"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.35 }}
                 className="flex flex-col h-[calc(100vh-130px)] rounded-2xl border"
                 style={{ background: c.cardBg, borderColor: c.border }}
               >
@@ -672,26 +721,42 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1 text-xs font-black" style={{ color: testTimeRemaining < 5 * 60 * 1000 ? c.red : c.text }}>
-                      <Clock size={14} /> {formatTime(testTimeRemaining)}
+                      <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Clock size={14} /></motion.span> {formatTime(testTimeRemaining)}
                     </div>
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => handleEndMockTest(false)}
                       className="py-1.5 px-3 rounded bg-red-500/15 border border-red-500/20 text-red-500 text-[10px] font-bold hover:bg-red-500/25 transition-colors"
                     >
                       Finish Test
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 
                 {/* Exam Sections & Questions */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                   {activeTest.sections.map((sec, sIdx) => (
-                    <div key={sIdx} className="space-y-6">
+                    <motion.div
+                      key={sIdx}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={sIdx}
+                      className="space-y-6"
+                    >
                       <h4 className="text-xs font-black uppercase tracking-wider text-amber-500 border-b pb-2" style={{ borderColor: c.border }}>
                         Section: {sec.name}
                       </h4>
                       {sec.questions.map((q, qIdx) => (
-                        <div key={q.id} className="space-y-3">
+                        <motion.div
+                          key={q.id}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={qIdx}
+                          className="space-y-3"
+                        >
                           <p className="text-xs font-bold leading-relaxed whitespace-pre-line" style={{ color: c.text }}>
                             Q{qIdx + 1}. {q.text}
                           </p>
@@ -699,8 +764,9 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                             {q.options.map((opt, oIdx) => {
                               const isSelected = testAnswers[q.id] === oIdx;
                               return (
-                                <div
+                                <motion.div
                                   key={oIdx}
+                                  whileHover={{ y: -2, scale: 1.005 }}
                                   onClick={() => handleSelectMockAnswer(q.id, oIdx)}
                                   className={`p-2.5 border rounded-lg cursor-pointer transition-all text-xs font-semibold ${
                                     isSelected ? "bg-amber-500/15 border-amber-500/35 text-amber-500" : "bg-white/5 border-white/10"
@@ -708,13 +774,13 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                                   style={isSelected ? {} : { color: c.textSec }}
                                 >
                                   {opt}
-                                </div>
+                                </motion.div>
                               );
                             })}
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -730,7 +796,11 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 className="space-y-6"
               >
                 {/* Readiness Circular Ring Dashboard */}
-                <div className="p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-8 justify-around" style={{ background: c.cardBg, borderColor: c.border }}>
+                <motion.div
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  className="p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-8 justify-around"
+                  style={{ background: c.cardBg, borderColor: c.border }}
+                >
                   <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="64" cy="64" r="54" stroke="var(--border-color)" strokeWidth="10" fill="transparent" style={{ stroke: c.border }} />
@@ -759,12 +829,16 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                       Your stats show excellent programming core concepts, but need higher focus on quant (probability) and logical deduction frameworks to unlock top tier interview links.
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Readiness Breakdown list */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Category bars */}
-                  <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+                  <motion.div
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    className="p-5 border rounded-2xl space-y-4"
+                    style={{ background: c.cardBg, borderColor: c.border }}
+                  >
                     <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.text }}>Category Breakdown</h4>
                     {[
                       { label: "Technical Concepts", val: 85, color: "#10b981" },
@@ -772,8 +846,15 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                       { label: "Logical Reasoning", val: 72, color: "#06b6d4" },
                       { label: "Coding Algorithms", val: 80, color: "#8b5cf6" },
                       { label: "Communication Flow", val: 65, color: "#ec4899" }
-                    ].map(bar => (
-                      <div key={bar.label} className="space-y-1.5">
+                    ].map((bar, i) => (
+                      <motion.div
+                        key={bar.label}
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                        className="space-y-1.5"
+                      >
                         <div className="flex justify-between text-[11px] font-bold" style={{ color: c.textSec }}>
                           <span>{bar.label}</span>
                           <span>{bar.val}%</span>
@@ -781,58 +862,85 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                         <div className="h-2 w-full rounded-full bg-white/5 border overflow-hidden" style={{ borderColor: c.border }}>
                           <div className="h-full rounded-full" style={{ width: `${bar.val}%`, background: bar.color }} />
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
 
                   {/* Weak vs Strong topics */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-5 border rounded-2xl space-y-3"
+                      style={{ background: c.cardBg, borderColor: c.border }}
+                    >
                       <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-                        <CheckCircle2 size={14} /> Strong Topics
+                        <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><CheckCircle2 size={14} /></motion.span> Strong Topics
                       </h4>
                       <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
-                        <li>• OOP / Programming Core</li>
-                        <li>• Data Structures</li>
-                        <li>• Percentages / Profit & Loss</li>
-                        <li>• Coding Logic</li>
+                        {["OOP / Programming Core", "Data Structures", "Percentages / Profit & Loss", "Coding Logic"].map((item, i) => (
+                          <motion.li
+                            key={item}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={i}
+                          >• {item}</motion.li>
+                        ))}
                       </ul>
-                    </div>
+                    </motion.div>
 
-                    <div className="p-5 border rounded-2xl space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-5 border rounded-2xl space-y-3"
+                      style={{ background: c.cardBg, borderColor: c.border }}
+                    >
                       <h4 className="text-xs font-bold uppercase tracking-wider text-red-500 flex items-center gap-1">
-                        <XCircle size={14} /> Focus Topics
+                        <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><XCircle size={14} /></motion.span> Focus Topics
                       </h4>
                       <ul className="space-y-1.5 text-xs font-semibold" style={{ color: c.textSec }}>
-                        <li>• Probability</li>
-                        <li>• Permutations & Combos</li>
-                        <li>• Syllogisms / Deduction</li>
-                        <li>• Speech / Interview Confidence</li>
+                        {["Probability", "Permutations & Combos", "Syllogisms / Deduction", "Speech / Interview Confidence"].map((item, i) => (
+                          <motion.li
+                            key={item}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={i}
+                          >• {item}</motion.li>
+                        ))}
                       </ul>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
 
                 {/* AI Roadmap / Learning Path */}
-                <div className="p-5 border rounded-2xl space-y-3 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10">
+                <motion.div
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  className="p-5 border rounded-2xl space-y-3 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10"
+                >
                   <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
-                    <Sparkles size={14} /> AI Improvement Roadmap
+                    <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Sparkles size={14} /></motion.span> AI Improvement Roadmap
                   </h4>
                   <ul className="space-y-2">
-                    <li className="text-xs leading-relaxed flex items-start gap-2" style={{ color: c.textSec }}>
-                      <span className="text-amber-500 font-bold">1.</span>
-                      <span>Initiate a timed practice session for **Probability** under Aptitude to learn shortcut formulas.</span>
-                    </li>
-                    <li className="text-xs leading-relaxed flex items-start gap-2" style={{ color: c.textSec }}>
-                      <span className="text-amber-500 font-bold">2.</span>
-                      <span>Run a **TCS NQT placement simulation** mock test to evaluate section time management.</span>
-                    </li>
-                    <li className="text-xs leading-relaxed flex items-start gap-2" style={{ color: c.textSec }}>
-                      <span className="text-amber-500 font-bold">3.</span>
-                      <span>Access the **Interview Hub** once your readiness score crosses 80% to start behavioral checks.</span>
-                    </li>
+                    {[
+                      { num: "1.", text: "Initiate a timed practice session for **Probability** under Aptitude to learn shortcut formulas." },
+                      { num: "2.", text: "Run a **TCS NQT placement simulation** mock test to evaluate section time management." },
+                      { num: "3.", text: "Access the **Interview Hub** once your readiness score crosses 80% to start behavioral checks." },
+                    ].map((item, i) => (
+                      <motion.li
+                        key={item.num}
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                        className="text-xs leading-relaxed flex items-start gap-2"
+                        style={{ color: c.textSec }}
+                      >
+                        <span className="text-amber-500 font-bold">{item.num}</span>
+                        <span>{item.text}</span>
+                      </motion.li>
+                    ))}
                   </ul>
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
@@ -853,15 +961,19 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex">
+                  <Sparkles size={14} className="text-amber-500" />
+                </motion.span>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Placement Coach</span>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setAssistantOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
                 <XCircle size={14} />
-              </button>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -869,7 +981,14 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={idx}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -880,7 +999,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
@@ -901,15 +1020,21 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 "Create a mock test for TCS",
                 "Explain percentages shortcuts",
                 "Generate SQL technical MCQs"
-              ].map(s => (
-                <button
+              ].map((s, i) => (
+                <motion.button
                   key={s}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={i}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -925,18 +1050,20 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
                 <Send size={12} />
-              </button>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

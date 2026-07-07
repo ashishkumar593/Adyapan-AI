@@ -7,6 +7,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }),
+};
+
 function useTheme() {
   const [theme, setTheme] = useState("dark");
   useEffect(() => {
@@ -77,80 +82,104 @@ export function ManageAccountView() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={0}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
         
         {/* Personal Details Form */}
-        <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+        <motion.div
+          custom={0} variants={fadeUp} initial="hidden" animate="visible"
+          whileHover={{ y: -2, scale: 1.005 }}
+          className="p-5 border rounded-2xl space-y-4"
+          style={{ background: c.cardBg, borderColor: c.border }}
+        >
           <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
             <User size={16} /> Personal Information
           </h3>
           <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Full Name</label>
-              <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 text-xs transition-colors"
-                style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Email Address</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 pl-8 text-xs transition-colors"
-                  style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                />
-                <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Phone Number</label>
-              <div className="relative">
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 pl-8 text-xs transition-colors"
-                  style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
-                />
-                <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} />
-              </div>
-            </div>
+            {[
+              { label: "Full Name", val: fullName, set: setFullName, icon: null },
+              { label: "Email Address", val: email, set: setEmail, icon: <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} /> },
+              { label: "Phone Number", val: phone, set: setPhone, icon: <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: c.textMuted }} /> },
+            ].map((field, i) => (
+              <motion.div key={field.label} custom={i} variants={fadeUp} initial="hidden" animate="visible" className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>{field.label}</label>
+                {field.label === "Full Name" ? (
+                  <input
+                    value={field.val as string}
+                    onChange={(e) => (field.set as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
+                    className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 text-xs transition-colors"
+                    style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                  />
+                ) : (
+                  <div className="relative">
+                    <input
+                      value={field.val as string}
+                      onChange={(e) => (field.set as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
+                      className="w-full bg-[var(--bg-card)] border focus:border-amber-500 focus:outline-none rounded-lg p-2.5 pl-8 text-xs transition-colors"
+                      style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
+                    />
+                    {field.icon}
+                  </div>
+                )}
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Connections & Security Column */}
-        <div className="space-y-6">
-          <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+        <motion.div
+          custom={1} variants={fadeUp} initial="hidden" animate="visible"
+          className="space-y-6"
+        >
+          <motion.div
+            whileHover={{ y: -2, scale: 1.005 }}
+            className="p-5 border rounded-2xl space-y-4"
+            style={{ background: c.cardBg, borderColor: c.border }}
+          >
             <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
               <Globe size={16} /> Connected Accounts
             </h3>
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between items-center p-2.5 border rounded-xl" style={{ borderColor: c.border }}>
-                <span className="font-semibold">Google Account</span>
-                <span className="text-emerald-500 font-bold">Connected</span>
-              </div>
-              <div className="flex justify-between items-center p-2.5 border rounded-xl" style={{ borderColor: c.border }}>
-                <span className="font-semibold">GitHub OAuth</span>
-                <span className="text-emerald-500 font-bold">Connected</span>
-              </div>
-              <div className="flex justify-between items-center p-2.5 border rounded-xl" style={{ borderColor: c.border }}>
-                <span className="font-semibold">LinkedIn Profile</span>
-                <button
-                  onClick={() => toast.success("Connected to LinkedIn successfully!")}
-                  className="text-amber-500 hover:underline font-bold"
+              {([
+                { name: "Google Account", status: "Connected" },
+                { name: "GitHub OAuth", status: "Connected" },
+                { name: "LinkedIn Profile", status: null },
+              ] as { name: string; status: string | null }[]).map((acct, i) => (
+                <motion.div
+                  key={acct.name}
+                  custom={i} variants={fadeUp} initial="hidden" animate="visible"
+                  className="flex justify-between items-center p-2.5 border rounded-xl"
+                  style={{ borderColor: c.border }}
                 >
-                  Connect
-                </button>
-              </div>
+                  <span className="font-semibold">{acct.name}</span>
+                  {acct.status ? (
+                    <span className="text-emerald-500 font-bold">{acct.status}</span>
+                  ) : (
+                    <motion.button
+                      onClick={() => toast.success("Connected to LinkedIn successfully!")}
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      className="text-amber-500 hover:underline font-bold"
+                    >
+                      Connect
+                    </motion.button>
+                  )}
+                </motion.div>
+              ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Security */}
-          <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+          <motion.div
+            whileHover={{ y: -2, scale: 1.005 }}
+            className="p-5 border rounded-2xl space-y-4"
+            style={{ background: c.cardBg, borderColor: c.border }}
+          >
             <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
               <Lock size={16} /> Security
             </h3>
@@ -159,64 +188,77 @@ export function ManageAccountView() {
                 <span className="font-semibold block">Two-Factor Authentication</span>
                 <span className="text-[10px]" style={{ color: c.textMuted }}>Secure account logins with SMS/Email checks.</span>
               </div>
-              <button
+              <motion.button
                 onClick={() => setTwoFactor(!twoFactor)}
+                whileTap={{ scale: 0.9 }}
                 className={`w-10 h-6 rounded-full relative transition-colors ${twoFactor ? "bg-amber-500" : "bg-white/10"}`}
                 style={{ border: `1px solid ${c.border}` }}
               >
                 <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${twoFactor ? "right-1" : "left-1"}`} />
-              </button>
+              </motion.button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-      </div>
+      </motion.div>
 
       {/* Privacy settings */}
-      <div className="p-5 border rounded-2xl space-y-4" style={{ background: c.cardBg, borderColor: c.border }}>
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={1}
+        whileHover={{ y: -2, scale: 1.005 }}
+        className="p-5 border rounded-2xl space-y-4"
+        style={{ background: c.cardBg, borderColor: c.border }}
+      >
         <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.primary }}>
           <ShieldCheck size={16} /> Privacy Visibility
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="flex justify-between items-center">
-            <div className="text-xs">
-              <span className="font-semibold block">Public Community Profile</span>
-              <span className="text-[10px]" style={{ color: c.textMuted }}>Allow followers to view achievements and feeds.</span>
-            </div>
-            <button
-              onClick={() => setPrivacyProfile(!privacyProfile)}
-              className={`w-10 h-6 rounded-full relative transition-colors ${privacyProfile ? "bg-amber-500" : "bg-white/10"}`}
-              style={{ border: `1px solid ${c.border}` }}
+          {[
+            { label: "Public Community Profile", desc: "Allow followers to view achievements and feeds.", val: privacyProfile, set: setPrivacyProfile },
+            { label: "Resume Visibility", desc: "Share resume documents with partner recruiters.", val: privacyResume, set: setPrivacyResume },
+          ].map((item, i) => (
+            <motion.div
+              key={item.label}
+              custom={i} variants={fadeUp} initial="hidden" animate="visible"
+              className="flex justify-between items-center"
             >
-              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${privacyProfile ? "right-1" : "left-1"}`} />
-            </button>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div className="text-xs">
-              <span className="font-semibold block">Resume Visibility</span>
-              <span className="text-[10px]" style={{ color: c.textMuted }}>Share resume documents with partner recruiters.</span>
-            </div>
-            <button
-              onClick={() => setPrivacyResume(!privacyResume)}
-              className={`w-10 h-6 rounded-full relative transition-colors ${privacyResume ? "bg-amber-500" : "bg-white/10"}`}
-              style={{ border: `1px solid ${c.border}` }}
-            >
-              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${privacyResume ? "right-1" : "left-1"}`} />
-            </button>
-          </div>
+              <div className="text-xs">
+                <span className="font-semibold block">{item.label}</span>
+                <span className="text-[10px]" style={{ color: c.textMuted }}>{item.desc}</span>
+              </div>
+              <motion.button
+                onClick={() => item.set(!item.val)}
+                whileTap={{ scale: 0.9 }}
+                className={`w-10 h-6 rounded-full relative transition-colors ${item.val ? "bg-amber-500" : "bg-white/10"}`}
+                style={{ border: `1px solid ${c.border}` }}
+              >
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${item.val ? "right-1" : "left-1"}`} />
+              </motion.button>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Save Button Row */}
-      <div className="flex justify-end pt-2">
-        <button
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={2}
+        className="flex justify-end pt-2"
+      >
+        <motion.button
           onClick={handleSave}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           className="py-2.5 px-6 rounded-xl bg-amber-500 text-black hover:bg-amber-400 font-extrabold text-xs transition-all"
         >
           Save Settings
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </motion.div>
   );
 }

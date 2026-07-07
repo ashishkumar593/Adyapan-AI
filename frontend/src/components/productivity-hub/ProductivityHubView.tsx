@@ -10,6 +10,16 @@ import {
   Copy, Download, FileSpreadsheet, Eye, Save, Edit3, Clipboard, CheckSquare
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface Document {
   id: string;
   title: string;
@@ -250,11 +260,17 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
   };
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="relative flex flex-col h-full min-h-[calc(100vh-120px)]"
+      style={{ color: c.text }}
+    >
       <div className="flex-1 flex flex-col gap-4">
 
         {/* Compact Module Header */}
-        <div className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
+        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="flex justify-between items-center border-b pb-2.5 shrink-0" style={{ borderColor: c.border }}>
           <div>
             <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Productivity Workspace</p>
             <h2 className="text-base font-extrabold" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -264,13 +280,15 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
               {tab === "content" && "Content Writer"}
             </h2>
           </div>
-          <button
+          <motion.button
             onClick={() => setAssistantOpen(!assistantOpen)}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
           >
-            <Sparkles size={12} className="animate-pulse" /> AI Assistant
-          </button>
-        </div>
+            <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Sparkles size={12} className="animate-pulse" /></motion.span> AI Assistant
+          </motion.button>
+        </motion.div>
 
         {/* ==================== 3. SPLIT PANEL: INPUT FORM & LIVE EDITOR ==================== */}
         <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -287,6 +305,8 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
+                  custom={0}
+                  whileHover={{ y: -3, scale: 1.008 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -336,13 +356,15 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                     />
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={generating}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                   >
                     {generating ? "Generating..." : "Generate Email"}
-                  </button>
+                  </motion.button>
                 </motion.form>
               )}
 
@@ -354,6 +376,8 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
+                  custom={1}
+                  whileHover={{ y: -3, scale: 1.008 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -420,13 +444,15 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                     />
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={generating}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                   >
                     {generating ? "Generating..." : "Generate SOP"}
-                  </button>
+                  </motion.button>
                 </motion.form>
               )}
 
@@ -438,6 +464,8 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
+                  custom={2}
+                  whileHover={{ y: -3, scale: 1.008 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -508,13 +536,15 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                     </label>
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={generating}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                   >
                     {generating ? "Generating..." : "Generate LinkedIn Post"}
-                  </button>
+                  </motion.button>
                 </motion.form>
               )}
 
@@ -526,6 +556,8 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
+                  custom={3}
+                  whileHover={{ y: -3, scale: 1.008 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -584,13 +616,15 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                     />
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={generating}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                   >
                     {generating ? "Generating..." : "Generate Content"}
-                  </button>
+                  </motion.button>
                 </motion.form>
               )}
 
@@ -598,86 +632,117 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
           </div>
 
           {/* RIGHT SIDE: LIVE PREVIEW & EDIT CONSOLE */}
-          <div className="flex flex-col border rounded-2xl overflow-hidden h-[450px]" style={{ background: c.cardBg, borderColor: c.border }}>
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={1}
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="flex flex-col border rounded-2xl overflow-hidden h-[450px]"
+            style={{ background: c.cardBg, borderColor: c.border }}
+          >
             {/* Header controls */}
             <div className="px-4 py-3 border-b flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
               <span className="text-xs font-extrabold" style={{ color: c.text }}>Output Workspace</span>
               <div className="flex gap-2">
-                <button
+                <motion.button
                   onClick={() => setIsPreview(true)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
                     isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
                   }`}
                   style={{ borderColor: c.border }}
                 >
-                  <Eye size={12} className="inline mr-1" /> Preview
-                </button>
-                <button
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Eye size={12} className="inline mr-1" /></motion.span> Preview
+                </motion.button>
+                <motion.button
                   onClick={() => setIsPreview(false)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
                     !isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
                   }`}
                   style={{ borderColor: c.border }}
                 >
-                  <Edit3 size={12} className="inline mr-1" /> Edit
-                </button>
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Edit3 size={12} className="inline mr-1" /></motion.span> Edit
+                </motion.button>
               </div>
             </div>
 
             {/* Content Display/Edit */}
             <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-              {isPreview ? (
-                <div className="text-xs leading-relaxed whitespace-pre-wrap p-2 h-full select-text" style={{ color: c.textSec }}>
+              <AnimatePresence mode="wait">
+                {isPreview ? (
+                  <motion.div
+                    key="preview"
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -10 }}
+                    className="text-xs leading-relaxed whitespace-pre-wrap p-2 h-full select-text"
+                    style={{ color: c.textSec }}
+                  >
                   {subjectLine && (
                     <div className="font-extrabold pb-2 mb-2 border-b" style={{ borderColor: c.border }}>
                       Subject: {subjectLine}
                     </div>
                   )}
                   {editingContent || <span className="italic" style={{ color: c.textMuted }}>Draft content will be rendered here...</span>}
-                </div>
-              ) : (
-                <textarea
-                  value={editingContent}
-                  onChange={(e) => setEditingContent(e.target.value)}
-                  placeholder="Draft content will generate here. You can manually type and tweak details here directly..."
-                  className="w-full h-full bg-transparent border-0 focus:outline-none focus:ring-0 text-xs leading-relaxed resize-none p-1"
-                  style={{ color: c.text }}
-                />
+                  </motion.div>
+                ) : (
+                  <motion.textarea
+                    key="edit"
+                    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -10 }}
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    placeholder="Draft content will generate here. You can manually type and tweak details here directly..."
+                    className="w-full h-full bg-transparent border-0 focus:outline-none focus:ring-0 text-xs leading-relaxed resize-none p-1"
+                    style={{ color: c.text }}
+                  />
               )}
+              </AnimatePresence>
             </div>
 
             {/* Quick Actions Bar */}
             <div className="p-3 border-t bg-white/[0.01] flex justify-between items-center gap-2" style={{ borderColor: c.border }}>
               <div className="flex gap-2">
-                <button
+                <motion.button
                   onClick={handleCopyText}
                   disabled={!editingContent.trim()}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
                   style={{ borderColor: c.border, color: c.text }}
                 >
-                  <Copy size={12} /> Copy
-                </button>
-                <button
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Copy size={12} /></motion.span> Copy
+                </motion.button>
+                <motion.button
                   onClick={handleSaveDraft}
                   disabled={!editingContent.trim()}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
                   style={{ borderColor: c.border, color: c.text }}
                 >
-                  <Save size={12} /> Save Draft
-                </button>
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Save size={12} /></motion.span> Save Draft
+                </motion.button>
               </div>
 
               {tab === "sop" && (
-                <button
+                <motion.button
                   onClick={() => alert("💾 Downloading PDF Statement of Purpose.")}
                   disabled={!editingContent.trim()}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
                 >
-                  <Download size={12} /> Download PDF
-                </button>
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Download size={12} /></motion.span> Download PDF
+                </motion.button>
               )}
             </div>
-          </div>
+          </motion.div>
 
         </div>
 
@@ -696,15 +761,17 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Sparkles size={14} className="text-amber-500" /></motion.span>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Productivity Coach</span>
               </div>
-              <button
+              <motion.button
                 onClick={() => setAssistantOpen(false)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
-                <XCircle size={14} />
-              </button>
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><XCircle size={14} /></motion.span>
+              </motion.button>
             </div>
 
             {/* Chat Messages */}
@@ -712,7 +779,13 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={idx}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -723,41 +796,61 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
-                <div className="flex justify-start">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="flex justify-start"
+                >
                   <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
                     <Clock size={12} className="text-amber-500 animate-spin" />
                     <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Drafting response...</span>
                   </div>
-                </div>
+                </motion.div>
               )}
               <div ref={chatEndRef} />
             </div>
 
             {/* Suggestions */}
-            <div className="p-3 border-t bg-white/[0.01] flex flex-col gap-1.5" style={{ borderColor: c.border }}>
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={2}
+              className="p-3 border-t bg-white/[0.01] flex flex-col gap-1.5"
+              style={{ borderColor: c.border }}
+            >
               <span className="text-[8px] uppercase tracking-wider font-extrabold" style={{ color: c.textMuted }}>Suggestions</span>
               {[
                 "Write a professional internship email",
                 "Generate an SOP for MS in Computer Science",
                 "Create a LinkedIn post for ML project"
               ].map(s => (
-                <button
+                <motion.button
                   key={s}
                   onClick={() => { setChatInput(s); }}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
 
             {/* Input form */}
-            <div className="p-3 border-t flex gap-1.5" style={{ borderColor: c.border }}>
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={3}
+              className="p-3 border-t flex gap-1.5"
+              style={{ borderColor: c.border }}
+            >
               <input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
@@ -768,18 +861,20 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
-                <Send size={12} />
-              </button>
-            </div>
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} style={{ display: "inline-flex", verticalAlign: "middle" }}><Send size={12} /></motion.span>
+              </motion.button>
+            </motion.div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

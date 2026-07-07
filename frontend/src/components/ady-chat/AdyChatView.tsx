@@ -130,6 +130,18 @@ function useVoiceRecognition(onResult: (text: string) => void) {
   return { listening, toggle };
 }
 
+// ─── Variants ────────────────────────────────────────────────────────────
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 // =========================================================================
 // MAIN COMPONENT
 // =========================================================================
@@ -386,10 +398,16 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   const renderMessage = (msg: ChatMessage, index: number) => {
     const isUser = msg.role === "user";
     return (
-      <div key={msg.id || index} className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
+      <motion.div
+        key={msg.id || index}
+        className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
+        variants={fadeUp} initial="hidden" animate="visible" custom={index}
+      >
         {!isUser && (
           <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
-            <Bot className="w-4 h-4 text-amber-500" />
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+              <Bot className="w-4 h-4 text-amber-500" />
+            </motion.div>
           </div>
         )}
         <div className={`max-w-[75%] ${isUser ? "order-1" : "order-2"}`}>
@@ -409,10 +427,12 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
         </div>
         {isUser && (
           <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-1">
-            <User className="w-4 h-4 text-black" />
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+              <User className="w-4 h-4 text-black" />
+            </motion.div>
           </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
@@ -421,34 +441,43 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   // =========================================================================
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col" style={{ background: c.bg }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="h-[calc(100vh-120px)] flex flex-col" style={{ background: c.bg }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b flex-shrink-0" style={{ borderColor: c.border }}>
-        <button
+        <motion.button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
           style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
+          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
         >
-          <Menu className="w-4 h-4" />
-        </button>
-        <button
+          <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+            <Menu className="w-4 h-4" />
+          </motion.div>
+        </motion.button>
+        <motion.button
           onClick={() => setView("dashboard")}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
           style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
+          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
         >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+          <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+            <ArrowLeft className="w-4 h-4" />
+          </motion.div>
+        </motion.button>
         <div className="flex-1" />
         <div className="relative">
-          <button
+          <motion.button
             onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
             style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            </motion.div>
             {currentModelObj.name}
             <ChevronDown className={`w-3 h-3 transition-transform ${modelDropdownOpen ? "rotate-180" : ""}`} />
-          </button>
+          </motion.button>
           <AnimatePresence>
             {modelDropdownOpen && (
               <motion.div
@@ -458,8 +487,8 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                 className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl z-50 overflow-hidden"
                 style={{ background: theme === "dark" ? "#1a1a2e" : "#ffffff", border: `1px solid ${c.border}` }}
               >
-                {CHAT_MODELS.map(model => (
-                  <button
+                {CHAT_MODELS.map((model, i) => (
+                  <motion.button
                     key={model.id}
                     onClick={() => { setSelectedModel(model.id); setModelDropdownOpen(false); }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-left transition-colors"
@@ -467,12 +496,14 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                       background: selectedModel === model.id ? "rgba(245,158,11,0.1)" : "transparent",
                       color: selectedModel === model.id ? c.primary : c.text,
                     }}
+                    variants={fadeUp} initial="hidden" animate="visible" custom={i}
+                    whileHover={{ y: -2, scale: 1.005 }} whileTap={{ scale: 0.96 }}
                   >
                     <div className="flex-1">
                       <div className="font-bold">{model.name}</div>
                       <div style={{ color: c.textMuted }}>{model.provider} {model.cheap ? "· Fast" : "· Premium"}</div>
                     </div>
-                  </button>
+                  </motion.button>
                 ))}
               </motion.div>
             )}
@@ -493,26 +524,30 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
               style={{ borderColor: c.border, background: c.bg }}
             >
               <div className="p-3">
-                <button
+                <motion.button
                   onClick={handleNewSession}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all"
                   style={{
                     background: "linear-gradient(135deg, #f59e0b, #d97706)",
                     color: "#000",
                   }}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 >
-                  <Plus className="w-4 h-4" /> New Chat
-                </button>
+                  <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                    <Plus className="w-4 h-4" />
+                  </motion.div>
+                  New Chat
+                </motion.button>
               </div>
               <div className="flex-1 overflow-y-auto px-2 space-y-1">
                 {sessions.length === 0 ? (
-                  <div className="text-center py-10" style={{ color: c.textMuted }}>
+                  <motion.div variants={fadeUp} initial="hidden" animate="visible" className="text-center py-10" style={{ color: c.textMuted }}>
                     <Bot className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <div className="text-xs font-semibold">No chats yet</div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  sessions.map(s => (
-                    <div
+                  sessions.map((s, i) => (
+                    <motion.div
                       key={s.id}
                       onClick={() => setActiveSessionId(s.id)}
                       className="flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors group"
@@ -520,21 +555,26 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                         background: activeSessionId === s.id ? "rgba(245,158,11,0.1)" : "transparent",
                         color: activeSessionId === s.id ? c.primary : c.text,
                       }}
+                      variants={fadeUp} initial="hidden" animate="visible" custom={i}
+                      whileHover={{ y: -4, scale: 1.01 }}
                     >
-                      <MessageCircleIcon className="w-4 h-4 flex-shrink-0" style={{ color: c.textMuted }} />
+                      <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                        <MessageCircleIcon className="w-4 h-4 flex-shrink-0" style={{ color: c.textMuted }} />
+                      </motion.div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-semibold truncate">{s.title}</div>
                         <div className="text-[9px]" style={{ color: c.textMuted }}>
                           {new Date(s.updatedAt).toLocaleDateString()}
                         </div>
                       </div>
-                      <button
+                      <motion.button
                         onClick={(e) => handleDeleteSession(s.id, e)}
                         className="w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/10"
+                        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                       >
                         <Trash2 className="w-3 h-3 text-red-400" />
-                      </button>
-                    </div>
+                      </motion.button>
+                    </motion.div>
                   ))
                 )}
               </div>
@@ -546,93 +586,129 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-            {messages.length === 0 && !streamingText ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-amber-500" />
-                </div>
-                <h2 className="text-xl font-extrabold mb-2" style={{ fontFamily: "'Outfit', sans-serif", color: c.text }}>
-                  Ady Chat
-                </h2>
-                <p className="text-sm max-w-md mb-8" style={{ color: c.textSec }}>
-                  Ask me anything. I support text, voice, and file uploads.
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-                  {[
-                    "Explain quantum computing simply",
-                    "Write a Python script to sort files",
-                    "Summarize this article",
-                    "Help me debug my code",
-                  ].map(hint => (
-                    <button
-                      key={hint}
-                      onClick={() => setInput(hint)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
-                      style={{ background: c.surface, color: c.textSec, border: `1px solid ${c.border}` }}
-                    >
-                      {hint}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                {messages.map((msg, i) => renderMessage(msg, i))}
-                {streamingText && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div
-                      className="px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap rounded-2xl rounded-bl-md max-w-[75%]"
-                      style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                    >
-                      {streamingText}
-                      <span className="inline-block w-2 h-4 ml-0.5 animate-pulse" style={{ background: c.primary }} />
-                    </div>
+            <AnimatePresence mode="wait">
+              {messages.length === 0 && !streamingText ? (
+                <motion.div
+                  key="empty"
+                  variants={scaleIn} initial="hidden" animate="visible" exit={{ opacity: 0, scale: 0.92 }}
+                  className="flex flex-col items-center justify-center h-full text-center py-20"
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                    className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4"
+                  >
+                    <Sparkles className="w-8 h-8 text-amber-500" />
+                  </motion.div>
+                  <h2 className="text-xl font-extrabold mb-2" style={{ fontFamily: "'Outfit', sans-serif", color: c.text }}>
+                    Ady Chat
+                  </h2>
+                  <p className="text-sm max-w-md mb-8" style={{ color: c.textSec }}>
+                    Ask me anything. I support text, voice, and file uploads.
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                    {[
+                      "Explain quantum computing simply",
+                      "Write a Python script to sort files",
+                      "Summarize this article",
+                      "Help me debug my code",
+                    ].map((hint, i) => (
+                      <motion.button
+                        key={hint}
+                        onClick={() => setInput(hint)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                        style={{ background: c.surface, color: c.textSec, border: `1px solid ${c.border}` }}
+                        variants={fadeUp} initial="hidden" animate="visible" custom={i}
+                        whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.96 }}
+                      >
+                        {hint}
+                      </motion.button>
+                    ))}
                   </div>
-                )}
-              </>
-            )}
+                </motion.div>
+              ) : (
+                <motion.div key="messages" variants={scaleIn} initial="hidden" animate="visible" exit={{ opacity: 0, scale: 0.92 }}>
+                  {messages.map((msg, i) => renderMessage(msg, i))}
+                  {streamingText && (
+                    <motion.div
+                      variants={fadeUp} initial="hidden" animate="visible" custom={messages.length}
+                      className="flex gap-3 justify-start"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                          <Bot className="w-4 h-4 text-amber-500" />
+                        </motion.div>
+                      </div>
+                      <div
+                        className="px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap rounded-2xl rounded-bl-md max-w-[75%]"
+                        style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
+                      >
+                        {streamingText}
+                        <span className="inline-block w-2 h-4 ml-0.5 animate-pulse" style={{ background: c.primary }} />
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Bar */}
           <div className="border-t px-4 py-3" style={{ borderColor: c.border }}>
             {/* Uploaded file badge */}
-            {uploadedFile && (
-              <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg text-xs" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
-                <FileText className="w-3.5 h-3.5 text-amber-500" />
-                <span className="flex-1 font-semibold truncate" style={{ color: c.text }}>{uploadedFile.name}</span>
-                <button onClick={() => setUploadedFile(null)} className="hover:opacity-70">
-                  <X className="w-3.5 h-3.5" style={{ color: c.textMuted }} />
-                </button>
-              </div>
-            )}
+            <AnimatePresence>
+              {uploadedFile && (
+                <motion.div
+                  key="uploaded-file"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg text-xs"
+                  style={{ background: c.surface, border: `1px solid ${c.border}` }}
+                  whileHover={{ y: -2, scale: 1.005 }}
+                >
+                  <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                    <FileText className="w-3.5 h-3.5 text-amber-500" />
+                  </motion.div>
+                  <span className="flex-1 font-semibold truncate" style={{ color: c.text }}>{uploadedFile.name}</span>
+                  <motion.button onClick={() => setUploadedFile(null)} className="hover:opacity-70" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <X className="w-3.5 h-3.5" style={{ color: c.textMuted }} />
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="flex items-end gap-2" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: "8px 12px" }}>
               {/* File upload button */}
-              <button
+              <motion.button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors hover:bg-white/5"
                 style={{ color: c.textMuted }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               >
-                <Paperclip className="w-4 h-4" />
-              </button>
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                  <Paperclip className="w-4 h-4" />
+                </motion.div>
+              </motion.button>
               <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFileSelect} />
 
               {/* Voice button */}
-              <button
+              <motion.button
                 onClick={toggleVoice}
                 className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                 style={{
                   color: listening ? c.primary : c.textMuted,
                   background: listening ? "rgba(245,158,11,0.15)" : "transparent",
                 }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               >
-                {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </button>
+                <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                  {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </motion.div>
+              </motion.button>
 
               {/* Text input */}
               <textarea
@@ -652,7 +728,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
               />
 
               {/* Send button */}
-              <button
+              <motion.button
                 onClick={handleSend}
                 disabled={loading || (!input.trim() && !uploadedFile)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
@@ -660,20 +736,23 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                   background: loading || (!input.trim() && !uploadedFile) ? c.surface : c.primary,
                   color: loading || (!input.trim() && !uploadedFile) ? c.textMuted : "#000",
                 }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               >
                 {loading ? (
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
                     <Sparkles className="w-4 h-4" />
                   </motion.div>
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}>
+                    <Send className="w-4 h-4" />
+                  </motion.div>
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

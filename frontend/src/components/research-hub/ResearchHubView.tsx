@@ -10,6 +10,16 @@ import {
   Layers, SearchCode, Eye, Edit3
 } from "lucide-react";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
+};
+
 interface ResearchLog {
   id: string;
   topic: string;
@@ -180,7 +190,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
   };
 
   return (
-    <div className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="relative flex flex-col h-full min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-1 flex flex-col gap-4">
 
         {/* Compact Module Header */}
@@ -192,12 +202,14 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
             </h2>
           </div>
           <div className="flex gap-2">
-            <button
+            <motion.button
               onClick={() => setAssistantOpen(!assistantOpen)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
             >
-              <Sparkles size={12} className="animate-pulse" /> AI Assistant
-            </button>
+              <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Sparkles size={12} className="animate-pulse" /></motion.span> AI Assistant
+            </motion.button>
           </div>
         </div>
 
@@ -213,9 +225,12 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                 <motion.form
                   key="paper-form"
                   onSubmit={handleGenerateResearch}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={0}
                   exit={{ opacity: 0, x: -10 }}
+                  whileHover={{ y: -4, scale: 1.01 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -266,13 +281,15 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                     />
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={generating}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-full py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                   >
                     {generating ? "Running AI Models..." : "Generate Research Insights"}
-                  </button>
+                  </motion.button>
                 </motion.form>
               )}
 
@@ -280,9 +297,12 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
               {tab === "plagiarism" && (
                 <motion.div
                   key="plagiarism-form"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={1}
                   exit={{ opacity: 0, x: -10 }}
+                  whileHover={{ y: -4, scale: 1.01 }}
                   className="space-y-4 p-5 border rounded-2xl"
                   style={{ background: c.cardBg, borderColor: c.border }}
                 >
@@ -300,28 +320,34 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                   </div>
 
                   <div className="flex gap-2">
-                    <button
+                    <motion.button
                       onClick={handleCheckPlagiarism}
                       disabled={!plagiarismText.trim() || checkingPlagiarism}
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
                       className="flex-1 py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
                     >
                       {checkingPlagiarism ? "Scanning Database Indices..." : "Check Similarity Index"}
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={handleRunRephraser}
                       disabled={!plagiarismText.trim() || generating}
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
                       className="py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold disabled:opacity-50 transition-colors"
                       style={{ borderColor: c.border }}
                     >
                       AI Paraphraser
-                    </button>
+                    </motion.button>
                   </div>
 
                   {/* Results report */}
                   {plagiarismResult && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      custom={0}
                       className="space-y-4 pt-4 border-t"
                       style={{ borderColor: c.border }}
                     >
@@ -335,13 +361,22 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                       <div className="space-y-2">
                         <span className="text-[9px] uppercase tracking-wider font-bold block" style={{ color: c.textSec }}>Sources Matched</span>
                         {plagiarismResult.sources.map((s: any, i: number) => (
-                          <div key={i} className="p-2 border rounded-xl flex justify-between text-xs" style={{ borderColor: c.border }}>
+                          <motion.div
+                            key={i}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                            custom={i}
+                            whileHover={{ y: -2, scale: 1.005 }}
+                            className="p-2 border rounded-xl flex justify-between text-xs"
+                            style={{ borderColor: c.border }}
+                          >
                             <div>
                               <span className="font-extrabold block">{s.title}</span>
                               <span className="text-[9px]" style={{ color: c.textMuted }}>{s.url}</span>
                             </div>
                             <span className="font-black text-amber-500 shrink-0">{s.match}%</span>
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
                     </motion.div>
@@ -353,28 +388,40 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
           </div>
 
           {/* RIGHT SIDE: LIVE EDITOR PREVIEW */}
-          <div className="flex flex-col border rounded-2xl overflow-hidden h-[450px]" style={{ background: c.cardBg, borderColor: c.border }}>
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={2}
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="flex flex-col border rounded-2xl overflow-hidden h-[450px]"
+            style={{ background: c.cardBg, borderColor: c.border }}
+          >
             <div className="px-4 py-3 border-b flex justify-between items-center bg-white/[0.01]" style={{ borderColor: c.border }}>
               <span className="text-xs font-extrabold" style={{ color: c.text }}>Research Workspace</span>
               <div className="flex gap-2">
-                <button
+                <motion.button
                   onClick={() => setIsPreview(true)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
                     isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
                   }`}
                   style={{ borderColor: c.border }}
                 >
-                  <Eye size={12} className="inline mr-1" /> Preview
-                </button>
-                <button
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Eye size={12} className="inline mr-1" /></motion.span> Preview
+                </motion.button>
+                <motion.button
                   onClick={() => setIsPreview(false)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className={`py-1.5 px-3 rounded-lg text-[10px] font-bold border transition-all ${
                     !isPreview ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "border-white/10 hover:bg-white/5"
                   }`}
                   style={{ borderColor: c.border }}
                 >
-                  <Edit3 size={12} className="inline mr-1" /> Edit
-                </button>
+                  <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Edit3 size={12} className="inline mr-1" /></motion.span> Edit
+                </motion.button>
               </div>
             </div>
 
@@ -395,25 +442,29 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
             </div>
 
             <div className="p-3 border-t bg-white/[0.01] flex justify-between items-center gap-2" style={{ borderColor: c.border }}>
-              <button
+              <motion.button
                 onClick={handleCopyText}
                 disabled={!editingContent.trim()}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="py-1.5 px-3 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
                 style={{ borderColor: c.border, color: c.text }}
               >
-                <Copy size={12} /> Copy Output
-              </button>
-              <button
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Copy size={12} /></motion.span> Copy Output
+              </motion.button>
+              <motion.button
                 onClick={() => {
                   alert("💾 Document draft saved successfully.");
                 }}
                 disabled={!editingContent.trim()}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="py-1.5 px-3 rounded bg-amber-500 text-black hover:bg-amber-400 text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-30 transition-colors"
               >
-                <PlusCircle size={12} /> Save Draft
-              </button>
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><PlusCircle size={12} /></motion.span> Save Draft
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
         </div>
 
@@ -431,22 +482,31 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
           >
             <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: c.border }}>
               <div className="flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-500" />
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Sparkles size={14} className="text-amber-500" /></motion.span>
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: c.text }}>AI Research Coach</span>
               </div>
-              <button
+              <motion.button
                 onClick={() => setAssistantOpen(false)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 text-gray-400 hover:text-white"
               >
-                <XCircle size={14} />
-              </button>
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><XCircle size={14} /></motion.span>
+              </motion.button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {chatMessages.map((msg, idx) => {
                 const isAI = msg.role === "assistant";
                 return (
-                  <div key={idx} className={`flex ${isAI ? "justify-start" : "justify-end"}`}>
+                  <motion.div
+                    key={idx}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={idx}
+                    className={`flex ${isAI ? "justify-start" : "justify-end"}`}
+                  >
                     <div
                       className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${
                         isAI
@@ -457,13 +517,13 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
               {chatLoading && (
                 <div className="flex justify-start">
                   <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-3 flex items-center gap-1.5">
-                    <Clock size={12} className="text-amber-500 animate-spin" />
+                    <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Clock size={12} className="text-amber-500 animate-spin" /></motion.span>
                     <span className="text-[10px] font-bold" style={{ color: c.textMuted }}>Compiling analysis...</span>
                   </div>
                 </div>
@@ -477,15 +537,21 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                 "Generate APA citation style",
                 "Explain literature outlines",
                 "Help audit research plagiarism"
-              ].map(s => (
-                <button
+              ].map((s, i) => (
+                <motion.button
                   key={s}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={i}
+                  whileHover={{ y: -2, scale: 1.005 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => { setChatInput(s); }}
                   className="w-full text-left p-1.5 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-[10px] font-semibold truncate transition-colors"
                   style={{ borderColor: c.border, color: c.textSec }}
                 >
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -500,18 +566,20 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
                 className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                 style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
               />
-              <button
+              <motion.button
                 onClick={handleAssistantSend}
                 disabled={!chatInput.trim() || chatLoading}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="w-8 h-8 rounded-lg bg-amber-500 text-black hover:bg-amber-400 flex items-center justify-center shrink-0 disabled:opacity-30 transition-colors"
               >
-                <Send size={12} />
-              </button>
+                <motion.span initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="inline-flex"><Send size={12} /></motion.span>
+              </motion.button>
             </div>
 
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
