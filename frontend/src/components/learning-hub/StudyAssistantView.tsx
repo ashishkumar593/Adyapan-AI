@@ -6,7 +6,9 @@ import CountUp from "react-countup";
 import {
   Upload, FileText, Copy, Download, Printer,
   RefreshCw, Search, CheckCircle2, ChevronRight, BookOpen, AlertCircle,
-  FileDown, Layers, HelpCircle, History, Plus
+  FileDown, Layers, HelpCircle, History, Plus, Sparkles, Brain,
+  BarChart2, Tag, Clock, FileSearch, Zap, ArrowRight, Star,
+  ChevronLeft, Eye, X, Hash
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
@@ -36,19 +38,19 @@ interface AIInsights {
   repeatedTopics: string[];
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-};
-
-const itemVariants = {
+const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } })
 };
 
-const scaleInVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.35 } }
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } })
+};
+
+const slideRight = {
+  hidden: { opacity: 0, x: -24 },
+  visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.07, duration: 0.4 } })
 };
 
 export function StudyAssistantView() {
@@ -60,85 +62,74 @@ export function StudyAssistantView() {
   const [currentStage, setCurrentStage] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTopic, setActiveTopic] = useState("");
-  const [activeView, setActiveView] = useState<"dashboard" | "help">("dashboard");
   const [revealedTopics, setRevealedTopics] = useState<number>(0);
   const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: any }>>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const [summaryData, setSummaryData] = useState<{
     title: string; topics: TopicSummary[]; stats: DocStats; insights: AIInsights;
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const mainContentRef = useRef<HTMLDivElement>(null);
-
-  const c = { inputBg: "rgba(0,0,0,0.4)", border: "rgba(255,255,255,0.08)" };
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const MOCK_SUMMARY = {
-    title: "Operating Systems Notes",
+    title: "Data Structures & Algorithms",
     topics: [
       {
-        name: "Introduction to OS",
-        overview: "An Operating System (OS) is an intermediary between a user of a computer and the computer hardware. The purpose of an OS is to provide an environment in which a user can execute programs in a convenient and efficient manner.",
-        keyConcepts: ["Convenience & Efficiency", "Hardware Abstraction Layer", "Resource Allocator", "Kernel vs Systems Programs"],
-        importantPoints: ["The main goal is convenience; the secondary goal is resource efficiency.", "Kernel is the one program running at all times on the computer.", "Bootstrap program initializes the system at power-on."],
-        quickRevision: "The OS manages hardware, handles security access, regulates software executions, and allocates system resources efficiently.",
-        keywords: ["Kernel", "Bootstrap", "Resource Allocator", "System Program"]
+        name: "Introduction to Data Structures",
+        overview: "Data structures are ways of organizing and storing data in a computer so that it can be accessed and modified efficiently. They are fundamental to computer science and programming, enabling efficient management of data for various applications. Understanding different data structures is crucial for writing optimized and scalable code.",
+        keyConcepts: ["Abstract Data Type (ADT)", "Data Organization", "Efficiency (Time and Space Complexity)", "Linear vs. Non-linear Data Structures", "Static vs. Dynamic Data Structures"],
+        importantPoints: ["Choosing the right data structure can significantly impact program performance.", "Each data structure has its own strengths and weaknesses for specific operations.", "Understanding the underlying memory allocation for each structure is vital.", "ADTs define the logical form of data, independent of its physical implementation."],
+        quickRevision: "Data structures organize data for efficient access and modification. Key aspects include ADTs, time/space complexity, and choosing the right structure for the task.",
+        keywords: ["Data Structure", "ADT", "Efficiency", "Time Complexity", "Space Complexity", "Data Organization"]
       },
       {
-        name: "Process Management",
-        overview: "A program in execution is called a process. A process needs resources like CPU time, memory, files, and I/O devices to accomplish its task.",
-        keyConcepts: ["Process Control Block (PCB)", "Process States (Ready, Running, Blocked)", "Context Switching", "Inter-Process Communication (IPC)"],
-        importantPoints: ["PCB stores CPU registers, state, program counter, and scheduling info.", "Context switching is pure overhead during CPU context saves and restores.", "Shared memory and message passing are the two primary IPC models."],
-        quickRevision: "Process states change from new, ready, running, waiting, to terminated. The scheduler selects ready processes for execution.",
-        keywords: ["PCB", "Context Switch", "IPC", "Process State", "Scheduler"]
+        name: "Arrays and Linked Lists",
+        overview: "Arrays provide contiguous memory allocation for elements of the same type, offering O(1) random access. Linked Lists consist of nodes connected via pointers, enabling dynamic memory allocation. Each has unique trade-offs in insertion, deletion, and access patterns.",
+        keyConcepts: ["Static vs. Dynamic Arrays", "Singly / Doubly / Circular Linked Lists", "Memory Allocation", "Pointer-based traversal", "Cache locality"],
+        importantPoints: ["Arrays have O(1) access but O(n) insertion/deletion.", "Linked lists have O(n) access but O(1) insertion at head.", "Dynamic arrays (e.g. ArrayList) resize automatically with amortized O(1) append.", "Memory overhead in linked lists due to pointers."],
+        quickRevision: "Arrays = fast access, slow insert. Linked Lists = slow access, fast insert. Choose based on usage patterns.",
+        keywords: ["Array", "Linked List", "Pointer", "Dynamic Array", "Cache", "Traversal"]
       },
       {
-        name: "Memory Management",
-        overview: "Memory management optimizes CPU utilization by keeping multiple processes in memory. It tracks every byte of memory, allocating it to active processes and reclaiming it when they terminate.",
-        keyConcepts: ["Paging & Segmentation", "Address Translation (Logical vs Physical)", "Translation Lookaside Buffer (TLB)", "Fragmentation (Internal vs External)"],
-        importantPoints: ["Paging divides physical memory into fixed-sized frames and logical memory into pages.", "TLB is a fast hardware cache that speeds up logical-to-physical address mapping.", "External fragmentation is solved by compaction or paging techniques."],
-        quickRevision: "Memory is allocated in frames and pages to avoid external fragmentation. TLBs speed up lookup.",
-        keywords: ["Paging", "Segmentation", "TLB", "Page Fault", "Virtual Memory"]
+        name: "Trees and Graphs",
+        overview: "Trees are hierarchical data structures with a root node and child nodes forming parent-child relationships. Graphs extend this concept to any arbitrary connections between nodes, enabling modeling of complex relationships like social networks and routing algorithms.",
+        keyConcepts: ["Binary Trees & BST", "AVL and Red-Black Trees", "Graph Representations (Adjacency Matrix/List)", "DFS and BFS traversal", "Minimum Spanning Trees"],
+        importantPoints: ["BST search is O(log n) for balanced trees, O(n) for skewed.", "DFS uses a stack (or recursion); BFS uses a queue.", "Dijkstra's algorithm finds shortest paths in weighted graphs.", "Trees are a special case of graphs with no cycles."],
+        quickRevision: "Trees are hierarchical (parent-child); Graphs are arbitrary connections. DFS/BFS are universal traversal strategies.",
+        keywords: ["BST", "AVL Tree", "DFS", "BFS", "Graph", "Dijkstra", "Spanning Tree"]
       },
       {
-        name: "Virtual Memory",
-        overview: "Virtual Memory separates logical user memory from physical memory. This allows programs to run even if they are larger than the computer's physical RAM.",
-        keyConcepts: ["Demand Paging", "Page Replacement Algorithms (FIFO, LRU, Optimal)", "Thrashing & Working Set Model", "Copy-on-Write"],
-        importantPoints: ["Demand paging loads pages into memory only when they are referenced.", "Page replacement happens when a page fault occurs and RAM is full.", "Thrashing happens when a process spends more time paging than executing."],
-        quickRevision: "Demand paging loads pages on demand. LRU and Optimal algorithms resolve page replacement.",
-        keywords: ["Demand Paging", "LRU", "Thrashing", "Page Replacement", "Working Set"]
+        name: "Sorting Algorithms",
+        overview: "Sorting algorithms arrange data in a defined order. They vary in time complexity, space usage, stability, and suitability for different input sizes. Understanding the trade-offs is critical for selecting the right algorithm in production systems.",
+        keyConcepts: ["Comparison-based Sorting (Bubble, Merge, Quick, Heap)", "Non-comparison Sorting (Counting, Radix, Bucket)", "Stability in Sorting", "In-place vs. Out-of-place", "Divide and Conquer"],
+        importantPoints: ["Quick Sort average O(n log n) but O(n²) worst case.", "Merge Sort is always O(n log n) but requires O(n) extra space.", "Heap Sort is O(n log n) and in-place but not stable.", "For small arrays, Insertion Sort beats asymptotically faster algorithms."],
+        quickRevision: "Quick Sort is fast on average; Merge Sort is consistent; Heap Sort is space-efficient. Stability matters when sorting complex objects.",
+        keywords: ["Quick Sort", "Merge Sort", "Heap Sort", "Stability", "Divide and Conquer", "Radix Sort"]
       }
     ],
-    stats: { pages: 86, words: 34500, topicsFound: 4, readingTime: "2 hrs", summaryLength: "1,200 words" },
-    insights: { mainSubject: "Computer Science", difficultyLevel: "Intermediate", estimatedStudyTime: "2 Hours", importantChapters: ["Process Management", "Memory Management", "Virtual Memory"], repeatedTopics: ["Context Switching", "Paging vs Segmentation", "Page Replacement Algorithms"] }
+    stats: { pages: 1, words: 20, topicsFound: 6, readingTime: "1 minute", summaryLength: "long" },
+    insights: { mainSubject: "Data Structures and Alg...", difficultyLevel: "Medium to High", estimatedStudyTime: "100+ hours (for compre...", importantChapters: ["Arrays & Linked Lists", "Trees & Graphs", "Sorting Algorithms"], repeatedTopics: ["Time Complexity", "Space Complexity", "Traversal Algorithms"] }
   };
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("adyapan-study-history");
-      if (stored) {
-        setHistory(JSON.parse(stored));
-      } else {
-        setHistory([]);
-        localStorage.setItem("adyapan-study-history", JSON.stringify([]));
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      setHistory(stored ? JSON.parse(stored) : []);
+    } catch { setHistory([]); }
   }, []);
 
   useEffect(() => {
     if (status !== "uploading") return;
     const stages = ["Upload", "Extract Text", "Analyze Content", "Identify Topics", "Generate Summary"];
-    let currentIdx = 0;
+    let idx = 0;
     setCurrentStage(stages[0]);
     const timer = setInterval(() => {
-      currentIdx += 1;
-      if (currentIdx < stages.length) {
-        setCurrentStage(stages[currentIdx]);
-      } else {
-        clearInterval(timer);
-      }
+      idx += 1;
+      if (idx < stages.length) setCurrentStage(stages[idx]);
+      else clearInterval(timer);
     }, 600);
     return () => clearInterval(timer);
   }, [status]);
@@ -146,7 +137,7 @@ export function StudyAssistantView() {
   useEffect(() => {
     if (status !== "ready" || !summaryData) return;
     const timers = summaryData.topics.map((_, i) =>
-      setTimeout(() => setRevealedTopics((prev) => Math.max(prev, i + 1)), i * 150)
+      setTimeout(() => setRevealedTopics(prev => Math.max(prev, i + 1)), i * 180)
     );
     return () => timers.forEach(clearTimeout);
   }, [status, summaryData]);
@@ -161,11 +152,9 @@ export function StudyAssistantView() {
       time: "20 seconds"
     });
     setStatus("uploading");
-
     try {
       const isBinary = /\.(pdf|docx|doc|pptx|ppt)$/i.test(droppedFile.name);
       let res;
-
       if (isBinary) {
         const formData = new FormData();
         formData.append("file", droppedFile);
@@ -178,44 +167,28 @@ export function StudyAssistantView() {
         });
         res = await api.post("/study/analyze", { documentText: fileText });
       }
-
-      if (res.data && res.data.success && res.data.analysis) {
+      if (res.data?.success && res.data?.analysis) {
         const newAnalysis = res.data.analysis;
         setSummaryData(newAnalysis);
         setStatus("ready");
         setRevealedTopics(0);
-        if (newAnalysis.topics && newAnalysis.topics.length > 0) {
-          setActiveTopic(newAnalysis.topics[0].name);
-        }
-
-        // Add to history
-        const newHistoryItem = {
-          name: droppedFile.name,
-          date: "Just now",
-          pages: newAnalysis.stats?.pages || Math.floor(Math.random() * 80) + 15,
-          topics: newAnalysis.topics?.length || 0,
-          analysis: newAnalysis
-        };
-        const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== droppedFile.name)].slice(0, 10);
-        setHistory(updatedHistory);
-        localStorage.setItem("adyapan-study-history", JSON.stringify(updatedHistory));
-      } else {
-        throw new Error("Invalid response schema");
-      }
-    } catch (err) {
-      console.error("Failed to analyze document:", err);
-      // Fallback
+        if (newAnalysis.topics?.length > 0) setActiveTopic(newAnalysis.topics[0].name);
+        const newItem = { name: droppedFile.name, date: "Just now", pages: newAnalysis.stats?.pages || 1, topics: newAnalysis.topics?.length || 0, analysis: newAnalysis };
+        const updated = [newItem, ...history.filter(h => h.name !== droppedFile.name)].slice(0, 10);
+        setHistory(updated);
+        localStorage.setItem("adyapan-study-history", JSON.stringify(updated));
+      } else throw new Error("Invalid response");
+    } catch {
       setStatus("ready");
       setSummaryData(MOCK_SUMMARY);
       setRevealedTopics(0);
-      if (MOCK_SUMMARY.topics.length > 0) {
-        setActiveTopic(MOCK_SUMMARY.topics[0].name);
-      }
+      if (MOCK_SUMMARY.topics.length > 0) setActiveTopic(MOCK_SUMMARY.topics[0].name);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  const handleDrop = (e: React.DragEvent) => { e.preventDefault(); if (e.dataTransfer.files?.[0]) handleFileDrop(e.dataTransfer.files[0]); };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => setIsDragging(false);
+  const handleDrop = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFileDrop(e.dataTransfer.files[0]); };
   const handleBrowseFiles = () => fileInputRef.current?.click();
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) handleFileDrop(e.target.files[0]); };
 
@@ -231,26 +204,15 @@ export function StudyAssistantView() {
     navigator.clipboard.writeText(txt);
     toast.success("Summary copied to clipboard!");
   };
-  const handlePrint = () => window.print();
 
-  const loadHistoryItem = (name: string) => {
-    const item = history.find(h => h.name === name);
-    if (!item) return;
-
+  const loadHistoryItem = (item: typeof history[0]) => {
     setFile({ name: item.name } as File);
-    setFileDetails({
-      name: item.name,
-      size: "18.2 MB",
-      pages: item.pages,
-      language: "English",
-      time: "20 seconds"
-    });
+    setFileDetails({ name: item.name, size: "—", pages: item.pages, language: "English", time: "20 seconds" });
     setStatus("ready");
     setSummaryData(item.analysis);
     setRevealedTopics(0);
-    if (item.analysis.topics && item.analysis.topics.length > 0) {
-      setActiveTopic(item.analysis.topics[0].name);
-    }
+    if (item.analysis.topics?.length > 0) setActiveTopic(item.analysis.topics[0].name);
+    setShowHistory(false);
   };
 
   const filteredTopics = summaryData?.topics.filter(t =>
@@ -263,458 +225,666 @@ export function StudyAssistantView() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-col gap-3 p-1 antialiased text-white w-full text-xs"
+      className="flex flex-col h-full antialiased"
+      style={{ color: "#e5e7eb" }}
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-4">
-        <div>
-          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }} className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-            <BookOpen className="text-amber-500" size={20} /> Study Assistant
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.35 }} className="text-[11px] text-gray-400 mt-0.5 max-w-xl">
-            Upload PDF, DOCX, PPT, TXT or Markdown files and let AI generate topic-wise summaries, key concepts and quick revision notes.
-          </motion.p>
+      {/* ── TOP HEADER ── */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <motion.div
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 280, damping: 18 }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+          >
+            <BookOpen size={18} className="text-black" />
+          </motion.div>
+          <div>
+            <motion.h1
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35 }}
+              className="text-base font-extrabold text-white leading-tight"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              Study Assistant
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="text-xs text-gray-400 leading-tight"
+            >
+              AI-powered document summarizer & topic analyzer
+            </motion.p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => { setStatus("empty"); setFile(null); setSummaryData(null); }}
-            className="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition-all"
-          ><Plus size={16} /> New Upload</motion.button>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => { const el = document.getElementById("recent-documents-section"); if (el) el.scrollIntoView({ behavior: "smooth" }); }}
-            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
-          ><History size={16} /> History</motion.button>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-            onClick={() => setActiveView(activeView === "help" ? "dashboard" : "help")}
-            className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all text-white"
-          ><HelpCircle size={16} /> Help</motion.button>
+
+        <div className="flex items-center gap-2">
+          {status === "ready" && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => { setStatus("empty"); setFile(null); setSummaryData(null); setSearchQuery(""); }}
+              className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e5e7eb" }}
+            >
+              <Plus size={14} /> New Upload
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowHistory(!showHistory)}
+            className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+            style={{
+              background: showHistory ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)",
+              border: showHistory ? "1px solid rgba(245,158,11,0.3)" : "1px solid rgba(255,255,255,0.1)",
+              color: showHistory ? "#f59e0b" : "#e5e7eb"
+            }}
+          >
+            <History size={14} /> History {history.length > 0 && <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black" style={{ background: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>{history.length}</span>}
+          </motion.button>
         </div>
       </div>
 
-      {activeView === "help" ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-2.5">
-          <h2 className="text-sm font-bold text-white">Study Assistant Help Guide</h2>
-          <p className="text-xs text-gray-300 leading-relaxed">Welcome to the Document Summarizer. Drop your academic notes, textbooks, slides, or guidelines here. The engine will extract the text context, automatically identify syllabus topics, generate chapter-wise bullet reviews, list keywords, and provide a 4-5 line fast revision block suitable for exams.</p>
-          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={() => setActiveView("dashboard")} className="h-8 px-3 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">Back to Dashboard</motion.button>
-        </motion.div>
-      ) : (
-        <>
-          {status === "empty" ? (
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
-              <motion.div variants={itemVariants}
-                onDragOver={handleDragOver} onDrop={handleDrop}
-                className="border border-dashed border-white/10 hover:border-amber-500/50 rounded-xl p-6 text-center transition-all bg-white/[0.01] hover:bg-amber-500/[0.01] cursor-pointer group max-w-2xl mx-auto w-full"
-                onClick={handleBrowseFiles}
-                whileHover={{ scale: 1.01, borderColor: "rgba(245,158,11,0.5)" }}
-              >
-                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.rtf" className="hidden" onChange={handleFileInputChange} />
-                <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 group-hover:border-amber-500/30 group-hover:bg-amber-500/10 transition-colors"
-                >
-                  <Upload className="text-gray-400 group-hover:text-amber-500 transition-colors" size={18} />
-                </motion.div>
-                <h3 className="text-sm font-bold text-white mb-0.5">Upload Your Study Material</h3>
-                <p className="text-xs text-gray-300">Drag & Drop or Browse Files</p>
-                <p className="text-[11px] text-gray-400 mt-1">Supports PDF, DOCX, PPTX, TXT, MD · Max Size 100 MB</p>
-              </motion.div>
-
-              <div className="space-y-2">
-                <motion.h2 variants={itemVariants} className="text-sm font-bold text-white">Supported Formats</motion.h2>
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                  {[
-                    { title: "PDF", list: ["Books", "Notes", "Research"] },
-                    { title: "Word", list: ["Assignments", "Reports", "Notes"] },
-                    { title: "PowerPoint", list: ["Slides", "Presentations"] },
-                    { title: "Markdown", list: ["Programming Notes", "Documentation"] },
-                    { title: "Text", list: ["Simple Notes", "Articles"] },
-                    { title: "Rich Text", list: [".rtf formats"] }
-                  ].map(fmt => (
-                    <motion.div key={fmt.title} variants={itemVariants} whileHover={{ y: -3, scale: 1.01 }}
-                      className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-1">
-                      <span className="text-xs font-bold text-white block">{fmt.title}</span>
-                      <div className="space-y-0.5">{fmt.list.map(l => <span key={l} className="text-[11px] text-gray-400 block">{l}</span>)}</div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-
-              <div className="space-y-2">
-                <motion.h2 variants={itemVariants} className="text-sm font-bold text-white">How It Works</motion.h2>
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { step: "Upload", desc: "Upload any study material (lecture notes, textbooks, presentation slides)." },
-                    { step: "Analyze", desc: "AI engine parses documents, extracts text context, and maps complex syllabus structures." },
-                    { step: "Generate", desc: "Instantly receive core concept lists, exam prep summaries, and keywords." }
-                  ].map((item, idx) => (
-                    <motion.div key={item.step} variants={itemVariants} whileHover={{ y: -3, scale: 1.01 }}
-                      className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-1">
-                      <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Step 0{idx + 1}</div>
-                      <h4 className="text-xs font-bold text-white">{item.step}</h4>
-                      <p className="text-[11px] text-gray-300 leading-relaxed">{item.desc}</p>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-
-              <motion.div variants={itemVariants} className="p-4 border border-white/5 rounded-xl bg-white/[0.01] space-y-2.5">
-                <h2 className="text-sm font-bold text-white">Document Summarizer Features</h2>
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  {["Topic Detection", "AI Summary", "Key Points", "Quick Revision", "Smart Search", "Multi-format Support", "Copy Summary", "Export PDF", "Export DOCX"].map(feat => (
-                    <motion.div key={feat} variants={itemVariants} className="flex items-center gap-1.5 text-xs text-gray-300">
-                      <CheckCircle2 size={14} className="text-amber-500" /><span className="text-[12px]">{feat}</span>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="p-4 border border-white/5 bg-white/[0.01] rounded-xl space-y-3"
-              >
-                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
-                      <FileText className="text-amber-500" size={20} />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-xs font-bold text-white">{fileDetails?.name || "Uploading..."}</h3>
-                      <p className="text-[11px] text-gray-400">{fileDetails?.size}</p>
-                    </div>
-                  </div>
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider"
-                  >{status === "ready" ? "Completed" : "Processing"}</motion.span>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>AI Analysis Progress</span>
-                    <span className="text-amber-500 font-extrabold">{status === "ready" ? "100%" : "Analyzing..."}</span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-xs">
-                    {uploadStages.map((step, idx) => {
-                      const stageIdx = uploadStages.indexOf(currentStage);
-                      const isActive = status === "ready" || idx <= stageIdx;
-                      return (
-                        <motion.div
-                          key={step}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.1, duration: 0.3 }}
-                          className={`p-2 rounded-lg border transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
-                            isActive ? "bg-amber-500/10 border-amber-500/20 text-white" : "bg-white/5 border-white/10 text-gray-500"
-                          }`}
-                        >
-                          <span className="text-[9px] font-black uppercase text-amber-500">Stage 0{idx + 1}</span>
-                          <span className="text-[12px] font-semibold">{step}</span>
-                          {isActive && status !== "ready" && idx === stageIdx && (
-                            <motion.div
-                              animate={{ scale: [1, 1.2, 1] }}
-                              transition={{ duration: 1, repeat: Infinity }}
-                              className="w-1.5 h-1.5 rounded-full bg-amber-500"
-                            />
-                          )}
-                          {status === "ready" && (
-                            <CheckCircle2 size={10} className="text-emerald-500" />
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </motion.div>
-
-              {status === "ready" && summaryData && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start"
-                >
-                  <div className="md:col-span-3 space-y-3">
+      {/* ── HISTORY PANEL ── */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="mb-4 rounded-2xl overflow-hidden"
+            style={{ border: "1px solid rgba(245,158,11,0.15)", background: "rgba(245,158,11,0.03)" }}
+          >
+            <div className="p-4">
+              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <History size={15} className="text-amber-500" /> Recent Documents
+              </h3>
+              {history.length === 0 ? (
+                <p className="text-sm text-gray-500 py-2">No documents analyzed yet. Upload a study file to get started.</p>
+              ) : (
+                <div className="space-y-2">
+                  {history.map((doc, i) => (
                     <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 }}
-                      className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
+                      key={doc.name}
+                      custom={i}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      onClick={() => loadHistoryItem(doc)}
+                      whileHover={{ scale: 1.01, borderColor: "rgba(245,158,11,0.2)" }}
                     >
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">Detected Topics</span>
-                      <div className="space-y-0.5">
-                        {summaryData.topics.map((t, i) => (
-                          <motion.button
-                            key={t.name}
-                            initial={{ opacity: 0, x: -15 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 + i * 0.08, duration: 0.3 }}
-                            onClick={() => handleScrollToTopic(t.name)}
-                            whileHover={{ x: 3 }}
-                            className={`w-full text-left py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
-                              activeTopic === t.name ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-gray-400 hover:bg-white/5 hover:text-white"
-                            }`}
-                          >
-                            <span className="truncate text-[12px]">{t.name}</span>
-                            <motion.div animate={{ x: activeTopic === t.name ? [0, 3, 0] : 0 }} transition={{ duration: 1, repeat: activeTopic === t.name ? Infinity : 0, repeatDelay: 2 }}>
-                              <ChevronRight size={12} className={activeTopic === t.name ? "text-amber-500" : "text-gray-600"} />
-                            </motion.div>
-                          </motion.button>
-                        ))}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
+                          <FileText size={14} className="text-amber-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{doc.name}</p>
+                          <p className="text-xs text-gray-500">{doc.date} · {doc.pages} pages · {doc.topics} topics</p>
+                        </div>
                       </div>
-                    </motion.div>
-                  </div>
-
-                  <div className="md:col-span-6 space-y-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500"><Search size={14} /></span>
-                        <motion.input
-                          type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                          placeholder="Search summaries..."
-                          whileFocus={{ borderColor: "#f59e0b" }}
-                          className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 pl-8 text-xs text-white h-9 transition-colors"
-                          style={{ background: c.inputBg, borderColor: c.border }}
-                        />
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
-                      {filteredTopics.slice(0, revealedTopics).map((t, idx) => (
-                        <motion.div
-                          key={t.name}
-                          id={`topic-${t.name.replace(/\s+/g, "-")}`}
-                          variants={scaleInVariants}
-                          whileHover={{ y: -3 }}
-                          className="p-4 border rounded-xl bg-white/[0.01] border-white/5 space-y-3"
-                        >
-                          <div className="flex items-center justify-between border-b pb-2 border-white/5">
-                            <h3 className="text-xs font-extrabold text-white">{t.name}</h3>
-                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Module 0{idx + 1}</span>
-                          </div>
-
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.15 }}
-                            className="space-y-0.5"
-                          >
-                            <span className="text-[9px] uppercase tracking-wider font-bold block text-amber-500/95">Overview</span>
-                            <p className="text-[12px] leading-relaxed text-gray-300">{t.overview}</p>
-                          </motion.div>
-
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.25 }}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-3"
-                          >
-                            <div className="space-y-1">
-                              <span className="text-[9px] uppercase tracking-wider font-bold block text-gray-400">Key Concepts</span>
-                              <ul className="list-disc pl-3.5 space-y-0.5 text-[12px] text-gray-300">
-                                {t.keyConcepts.map((item, i) => <li key={i}>{item}</li>)}
-                              </ul>
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-[9px] uppercase tracking-wider font-bold block text-gray-400">Important Points</span>
-                              <ul className="list-disc pl-3.5 space-y-0.5 text-[12px] text-gray-300">
-                                {t.importantPoints.map((item, i) => <li key={i}>{item}</li>)}
-                              </ul>
-                            </div>
-                          </motion.div>
-
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.35 }}
-                            className="p-2.5 bg-amber-500/[0.03] border border-amber-500/10 rounded-lg space-y-0.5"
-                          >
-                            <span className="text-[9px] uppercase tracking-wider font-bold block text-amber-500">Quick Revision</span>
-                            <p className="text-[12px] leading-relaxed text-gray-300 italic">&ldquo;{t.quickRevision}&rdquo;</p>
-                          </motion.div>
-
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.45 }}
-                            className="space-y-1"
-                          >
-                            <span className="text-[9px] uppercase tracking-wider font-bold block text-gray-400">Keywords</span>
-                            <div className="flex flex-wrap gap-1">
-                              {t.keywords.map(kw => (
-                                <motion.span key={kw} whileHover={{ scale: 1.05 }}
-                                  className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400 font-medium text-[11px]"
-                                >{kw}</motion.span>
-                              ))}
-                            </div>
-                          </motion.div>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="p-2 border border-white/5 bg-white/[0.01] rounded-xl flex flex-wrap gap-1.5 items-center justify-between"
-                    >
-                      <div className="flex gap-1.5">
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={handleCopySummary}
-                          className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all">
-                          <Copy size={14} /> Copy
-                        </motion.button>
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                          className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all">
-                          <FileDown size={14} /> Download PDF
-                        </motion.button>
-                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={handlePrint}
-                          className="h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold flex items-center gap-1 transition-all">
-                          <Printer size={14} /> Print
-                        </motion.button>
-                      </div>
-                      <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={() => setStatus("uploading")}
-                        className="h-8 px-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 transition-all">
-                        Regenerate Summary
+                      <motion.button
+                        whileHover={{ x: 2 }}
+                        className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}
+                      >
+                        Open <ChevronRight size={12} />
                       </motion.button>
                     </motion.div>
-                  </div>
-
-                  <div className="md:col-span-3 space-y-3">
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.3 }}
-                      className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
-                    >
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">AI Subject Insights</span>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {[
-                          { label: "Main Subject", value: summaryData.insights.mainSubject },
-                          { label: "Difficulty", value: summaryData.insights.difficultyLevel },
-                          { label: "Reading Time", value: summaryData.insights.estimatedStudyTime },
-                          { label: "Exam Priority", value: "High" }
-                        ].map((insight, i) => (
-                          <motion.div
-                            key={insight.label}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.4 + i * 0.1 }}
-                            className="p-2 border border-white/5 rounded-lg bg-black/20 text-center space-y-0.5"
-                          >
-                            <span className="text-[10px] text-gray-400 block">{insight.label}</span>
-                            <span className="text-[11px] font-bold text-white block truncate">{insight.value}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.4 }}
-                      className="p-3 border border-white/5 rounded-xl bg-white/[0.01] space-y-2"
-                    >
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 block">Document Details</span>
-                      <div className="space-y-1 text-xs">
-                          {[
-                            { label: "Pages Detected", val: summaryData.stats.pages, num: true },
-                            { label: "Word Count", val: summaryData.stats.words.toLocaleString(), num: false },
-                            { label: "Topics Found", val: summaryData.stats.topicsFound, num: true },
-                            { label: "Reading Time", val: summaryData.stats.readingTime, num: false },
-                            { label: "Summary Length", val: summaryData.stats.summaryLength, num: false }
-                          ].map((stat, i) => (
-                            <motion.div
-                              key={stat.label}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.5 + i * 0.08 }}
-                              className="flex justify-between items-center py-0.5 border-b border-white/[0.03]"
-                            >
-                              <span className="text-gray-400 text-[11px]">{stat.label}</span>
-                              <span className="font-extrabold text-white text-[12px]">
-                                {stat.num ? <CountUp start={0} end={stat.val as number} duration={0.8} /> : stat.val as string}
-                              </span>
-                            </motion.div>
-                          ))}
-                      </div>
-                    </motion.div>
-                  </div>
-                </motion.div>
+                  ))}
+                </div>
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MAIN CONTENT ── */}
+      <div className="flex-1 min-h-0">
+        <AnimatePresence mode="wait">
+
+          {/* ── EMPTY STATE ── */}
+          {status === "empty" && (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35 }}
+              className="space-y-6"
+            >
+              {/* Upload Zone */}
+              <motion.div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleBrowseFiles}
+                animate={{
+                  borderColor: isDragging ? "rgba(245,158,11,0.6)" : "rgba(255,255,255,0.1)",
+                  background: isDragging ? "rgba(245,158,11,0.05)" : "rgba(255,255,255,0.01)",
+                  scale: isDragging ? 1.01 : 1
+                }}
+                transition={{ duration: 0.2 }}
+                className="cursor-pointer rounded-3xl p-10 text-center relative overflow-hidden"
+                style={{ border: "2px dashed rgba(255,255,255,0.1)" }}
+                whileHover={{ borderColor: "rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.03)" }}
+              >
+                {/* Background decoration */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-4 right-8 w-24 h-24 rounded-full opacity-5" style={{ background: "radial-gradient(circle, #f59e0b, transparent)" }} />
+                  <div className="absolute bottom-4 left-8 w-16 h-16 rounded-full opacity-5" style={{ background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
+                </div>
+
+                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.rtf" className="hidden" onChange={handleFileInputChange} />
+
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                  style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))", border: "1px solid rgba(245,158,11,0.25)" }}
+                >
+                  <Upload className="text-amber-500" size={28} />
+                </motion.div>
+
+                <h3 className="text-xl font-extrabold text-white mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  {isDragging ? "Drop your file here!" : "Upload Your Study Material"}
+                </h3>
+                <p className="text-sm text-gray-400 mb-1">Drag & Drop or <span className="text-amber-500 font-semibold">Browse Files</span></p>
+                <p className="text-xs text-gray-500">Supports PDF, DOCX, PPTX, TXT, MD · Max 100 MB</p>
+
+                <div className="flex flex-wrap justify-center gap-2 mt-5">
+                  {["PDF", "DOCX", "PPTX", "TXT", "Markdown"].map((fmt, i) => (
+                    <motion.span
+                      key={fmt}
+                      custom={i}
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      className="px-3 py-1 rounded-full text-xs font-bold"
+                      style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}
+                    >
+                      {fmt}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* How It Works */}
+              <div>
+                <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <Zap size={15} className="text-amber-500" /> How It Works
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { step: "01", title: "Upload", desc: "Drop any study material — lecture notes, textbooks, or presentation slides.", icon: <Upload size={18} className="text-amber-500" /> },
+                    { step: "02", title: "Analyze", desc: "AI engine extracts text context and maps complex syllabus structures automatically.", icon: <Brain size={18} className="text-purple-400" /> },
+                    { step: "03", title: "Generate", desc: "Instantly get core concept lists, exam prep summaries, keywords, and quick revision.", icon: <Sparkles size={18} className="text-cyan-400" /> }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.step}
+                      custom={i}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      className="p-5 rounded-2xl relative overflow-hidden group"
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+                    >
+                      <div className="absolute top-0 right-0 w-20 h-20 rounded-full opacity-0 group-hover:opacity-5 transition-opacity" style={{ background: "#f59e0b", transform: "translate(30%, -30%)" }} />
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          {item.icon}
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Step {item.step}</span>
+                          <h4 className="text-sm font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>{item.title}</h4>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Features */}
+              <motion.div
+                variants={fadeUp}
+                custom={3}
+                initial="hidden"
+                animate="visible"
+                className="p-5 rounded-2xl"
+                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <Star size={14} className="text-amber-500" /> Features
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                  {["Topic Detection", "AI Summary", "Key Points", "Quick Revision", "Smart Search", "Multi-format Support", "Copy Summary", "Export PDF", "Export DOCX"].map((feat, i) => (
+                    <motion.div key={feat} custom={i} variants={scaleIn} initial="hidden" animate="visible" className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle2 size={14} className="text-amber-500 shrink-0" />
+                      <span>{feat}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             </motion.div>
           )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5 }}
-            id="recent-documents-section"
-            className="space-y-2.5 pt-4 border-t border-white/5"
-          >
-            <h2 className="text-sm font-bold text-white">Recent Documents</h2>
-            <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02] text-gray-400 font-bold text-[10px] uppercase tracking-wider">
-                    <th className="p-2.5">Document</th>
-                    <th className="p-2.5">Uploaded</th>
-                    <th className="p-2.5 text-center">Pages</th>
-                    <th className="p-2.5 text-center">Topics</th>
-                    <th className="p-2.5">Status</th>
-                    <th className="p-2.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {history.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-6 text-center text-gray-500 font-semibold text-xs">
-                        No documents analyzed yet. Upload a study file above to get started.
-                      </td>
-                    </tr>
-                  ) : (
-                    history.map((doc, i) => (
-                      <motion.tr
-                        key={doc.name}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.08, duration: 0.3 }}
-                        className="hover:bg-white/[0.02] transition-colors"
+          {/* ── UPLOADING STATE ── */}
+          {status === "uploading" && (
+            <motion.div
+              key="uploading"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center justify-center py-16 gap-8"
+            >
+              {/* Animated ring */}
+              <div className="relative w-24 h-24">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full"
+                  style={{ border: "3px solid transparent", borderTopColor: "#f59e0b", borderRightColor: "rgba(245,158,11,0.3)" }}
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-3 rounded-full"
+                  style={{ border: "2px solid transparent", borderTopColor: "rgba(139,92,246,0.6)", borderLeftColor: "rgba(139,92,246,0.2)" }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Brain size={28} className="text-amber-500" />
+                </div>
+              </div>
+
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>Analyzing Document...</h3>
+                <p className="text-sm text-gray-400">{currentStage} in progress</p>
+              </div>
+
+              <div className="w-full max-w-lg grid grid-cols-3 gap-3">
+                {uploadStages.slice(0, 6).map((step, idx) => {
+                  const stageIdx = uploadStages.indexOf(currentStage);
+                  const isActive = idx <= stageIdx;
+                  return (
+                    <motion.div
+                      key={step}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="p-3 rounded-xl text-center space-y-1.5 transition-all duration-500"
+                      style={{
+                        background: isActive ? "rgba(245,158,11,0.08)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${isActive ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.06)"}`
+                      }}
+                    >
+                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 block">Stage {idx + 1}</span>
+                      <span className="text-xs font-semibold text-white block">{step}</span>
+                      {isActive && idx === stageIdx && (
+                        <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 rounded-full bg-amber-500 mx-auto" />
+                      )}
+                      {isActive && idx < stageIdx && <CheckCircle2 size={12} className="text-emerald-500 mx-auto" />}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── READY STATE: 30/70 SPLIT LAYOUT ── */}
+          {status === "ready" && summaryData && (
+            <motion.div
+              key="ready"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="flex gap-0 h-full"
+              style={{ height: "calc(100vh - 220px)", minHeight: "500px" }}
+            >
+              {/* ── LEFT PANEL 30% ── */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="flex flex-col gap-3 overflow-y-auto pr-3 custom-scrollbar"
+                style={{ width: "30%", minWidth: "220px" }}
+              >
+                {/* File info compact */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-2xl shrink-0"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                      <FileText size={14} className="text-amber-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{fileDetails?.name || "Document"}</p>
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Analyzed</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "Pages", value: summaryData.stats.pages },
+                      { label: "Topics", value: summaryData.stats.topicsFound },
+                      { label: "Words", value: summaryData.stats.words.toLocaleString() },
+                      { label: "Read Time", value: summaryData.stats.readingTime }
+                    ].map(stat => (
+                      <div key={stat.label} className="p-2 rounded-lg text-center" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                        <span className="text-[10px] text-gray-500 block">{stat.label}</span>
+                        <span className="text-xs font-extrabold text-white">{stat.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Detected Topics nav */}
+                <div
+                  className="flex-1 rounded-2xl overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <div className="p-3 border-b sticky top-0 z-10" style={{ borderColor: "rgba(255,255,255,0.05)", background: "rgba(10,10,20,0.85)", backdropFilter: "blur(12px)" }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500 block mb-2">Detected Topics</span>
+                    <div className="relative">
+                      <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search topics..."
+                        className="w-full rounded-lg pl-7 pr-2 py-1.5 text-xs bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-white placeholder-gray-600 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-2 space-y-0.5">
+                    {summaryData.topics.map((t, i) => (
+                      <motion.button
+                        key={t.name}
+                        custom={i}
+                        variants={slideRight}
+                        initial="hidden"
+                        animate="visible"
+                        onClick={() => handleScrollToTopic(t.name)}
+                        whileHover={{ x: 3 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full text-left py-2.5 px-3 rounded-xl flex items-center justify-between transition-all duration-200"
+                        style={{
+                          background: activeTopic === t.name ? "rgba(245,158,11,0.1)" : "transparent",
+                          border: activeTopic === t.name ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+                          color: activeTopic === t.name ? "#f59e0b" : "#9ca3af"
+                        }}
                       >
-                        <td className="p-2.5 font-semibold text-white flex items-center gap-1.5 truncate max-w-[180px]">
-                          <FileText size={14} className="text-amber-500 shrink-0" /> {doc.name}
-                        </td>
-                        <td className="p-2.5 text-gray-400">{doc.date}</td>
-                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.pages}</td>
-                        <td className="p-2.5 text-center text-gray-300 font-medium">{doc.topics}</td>
-                        <td className="p-2.5 text-emerald-500 font-bold">Completed</td>
-                        <td className="p-2.5 text-right">
-                          <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => loadHistoryItem(doc.name)}
-                            className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-black font-extrabold text-[11px] transition-all"
-                          >Open</motion.button>
-                        </td>
-                      </motion.tr>
-                    ))
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-1.5 h-1.5 rounded-full shrink-0 transition-colors"
+                            style={{ background: activeTopic === t.name ? "#f59e0b" : "rgba(255,255,255,0.15)" }}
+                          />
+                          <span className="text-sm font-semibold truncate" style={{ color: activeTopic === t.name ? "#f59e0b" : "#d1d5db" }}>{t.name}</span>
+                        </div>
+                        <ChevronRight size={12} className={activeTopic === t.name ? "text-amber-500 shrink-0" : "text-gray-600 shrink-0"} />
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Insights */}
+                <motion.div
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="p-3 rounded-2xl shrink-0"
+                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.12)" }}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-500 block mb-2.5 flex items-center gap-1.5">
+                    <Sparkles size={11} /> AI Subject Insights
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "Main Subject", value: summaryData.insights.mainSubject },
+                      { label: "Difficulty", value: summaryData.insights.difficultyLevel },
+                      { label: "Reading Time", value: summaryData.insights.estimatedStudyTime },
+                      { label: "Exam Priority", value: "High" }
+                    ].map((insight, i) => (
+                      <motion.div
+                        key={insight.label}
+                        initial={{ opacity: 0, scale: 0.88 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 + i * 0.08 }}
+                        className="p-2 rounded-xl text-center"
+                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.05)" }}
+                      >
+                        <span className="text-[10px] text-gray-500 block leading-tight">{insight.label}</span>
+                        <span className="text-xs font-extrabold text-white block truncate mt-0.5">{insight.value}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Actions */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="p-3 rounded-2xl shrink-0 space-y-2"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 block">Actions</span>
+                  {[
+                    { icon: <Copy size={13} />, label: "Copy Summary", fn: handleCopySummary },
+                    { icon: <FileDown size={13} />, label: "Download PDF", fn: () => {} },
+                    { icon: <Printer size={13} />, label: "Print", fn: () => window.print() },
+                  ].map((action) => (
+                    <motion.button
+                      key={action.label}
+                      whileHover={{ x: 2 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={action.fn}
+                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#d1d5db" }}
+                    >
+                      <span className="text-amber-500 shrink-0">{action.icon}</span>
+                      {action.label}
+                    </motion.button>
+                  ))}
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setStatus("empty"); setFile(null); setSummaryData(null); }}
+                    className="w-full py-2 rounded-lg text-sm font-extrabold transition-all flex items-center justify-center gap-1.5"
+                    style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
+                  >
+                    <RefreshCw size={13} /> New Upload
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+
+              {/* ── RIGHT PANEL 70% ── */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.15 }}
+                ref={contentRef}
+                className="flex-1 flex flex-col min-w-0 overflow-y-auto pl-4 custom-scrollbar"
+              >
+                {/* Search Bar */}
+                <div className="sticky top-0 z-10 pb-3" style={{ background: "inherit" }}>
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search summaries, keywords, topics..."
+                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm transition-all focus:outline-none"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "#e5e7eb",
+                        boxShadow: searchQuery ? "0 0 0 2px rgba(245,158,11,0.2)" : "none",
+                        borderColor: searchQuery ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"
+                      }}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <p className="text-xs text-gray-500 mt-1.5 ml-1">{filteredTopics.length} topic{filteredTopics.length !== 1 ? "s" : ""} found for "{searchQuery}"</p>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        </>
-      )}
+                </div>
+
+                {/* Topic Cards */}
+                <div className="space-y-5 pb-4">
+                  {(searchQuery ? filteredTopics : filteredTopics.slice(0, revealedTopics)).map((t, idx) => (
+                    <motion.div
+                      key={t.name}
+                      id={`topic-${t.name.replace(/\s+/g, "-")}`}
+                      custom={idx}
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      className="rounded-2xl overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
+                    >
+                      {/* Topic Header */}
+                      <div
+                        className="flex items-center justify-between px-5 py-4 border-b"
+                        style={{ borderColor: "rgba(255,255,255,0.06)", background: activeTopic === t.name ? "rgba(245,158,11,0.05)" : "rgba(255,255,255,0.01)" }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                            <BookOpen size={14} className="text-amber-500" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-extrabold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>{t.name}</h3>
+                          </div>
+                        </div>
+                        <span
+                          className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#6b7280" }}
+                        >
+                          MODULE {String(idx + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+
+                      <div className="p-5 space-y-5">
+                        {/* Overview */}
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+                          <span className="text-[10px] uppercase tracking-widest font-black text-amber-500/90 block mb-2">Overview</span>
+                          <p className="text-[15px] leading-[1.75] text-gray-300">{t.overview}</p>
+                        </motion.div>
+
+                        {/* Key Concepts + Important Points */}
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div
+                            className="p-4 rounded-xl"
+                            style={{ background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.12)" }}
+                          >
+                            <span className="text-[10px] uppercase tracking-widest font-black text-purple-400 block mb-3 flex items-center gap-1.5">
+                              <Layers size={11} /> Key Concepts
+                            </span>
+                            <ul className="space-y-1.5">
+                              {t.keyConcepts.map((item, i) => (
+                                <li key={i} className="flex items-start gap-2 text-[14px] text-gray-300 leading-snug">
+                                  <span className="text-purple-400 mt-1 shrink-0">▸</span>
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div
+                            className="p-4 rounded-xl"
+                            style={{ background: "rgba(6,182,212,0.05)", border: "1px solid rgba(6,182,212,0.12)" }}
+                          >
+                            <span className="text-[10px] uppercase tracking-widest font-black text-cyan-400 block mb-3 flex items-center gap-1.5">
+                              <Star size={11} /> Important Points
+                            </span>
+                            <ul className="space-y-1.5">
+                              {t.importantPoints.map((item, i) => (
+                                <li key={i} className="flex items-start gap-2 text-[14px] text-gray-300 leading-snug">
+                                  <span className="text-cyan-400 mt-1 shrink-0">▸</span>
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </motion.div>
+
+                        {/* Quick Revision */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                          className="p-4 rounded-xl relative overflow-hidden"
+                          style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)" }}
+                        >
+                          <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03]" style={{ background: "radial-gradient(circle, #f59e0b, transparent)", transform: "translate(30%, -30%)" }} />
+                          <span className="text-[10px] uppercase tracking-widest font-black text-amber-500 block mb-2 flex items-center gap-1.5">
+                            <Zap size={11} /> Quick Revision
+                          </span>
+                          <p className="text-[15px] leading-[1.75] text-gray-300 italic">&ldquo;{t.quickRevision}&rdquo;</p>
+                        </motion.div>
+
+                        {/* Keywords */}
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+                          <span className="text-[10px] uppercase tracking-widest font-black text-gray-500 block mb-2.5 flex items-center gap-1.5">
+                            <Hash size={11} /> Keywords
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {t.keywords.map(kw => (
+                              <motion.span
+                                key={kw}
+                                whileHover={{ scale: 1.06, y: -1 }}
+                                className="px-3 py-1 rounded-full text-sm font-semibold cursor-default"
+                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#9ca3af" }}
+                              >
+                                {kw}
+                              </motion.span>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {revealedTopics < (summaryData?.topics.length || 0) && !searchQuery && (
+                    <div className="flex justify-center py-4">
+                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "0.1s" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: "0.2s" }} />
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
