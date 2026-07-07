@@ -335,6 +335,15 @@ button, input, select, textarea {
   .dash-sidebar.open {
     transform: translateX(0) !important;
   }
+  .dash-sidebar.open .sb-label {
+    display: inline;
+  }
+  .dash-sidebar.open .sb-arrow {
+    display: inline-flex;
+  }
+  .dash-sidebar.open .sb-submenu {
+    display: block;
+  }
   .dash-main {
     margin-left: 0 !important;
     padding: 1rem 0.75rem !important;
