@@ -2,7 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateStudyResponse } from "../lib/ai/gemini";
 import { prisma } from "../config/prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateJSON } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 
 export const studyRouter = Router();
@@ -44,9 +44,6 @@ studyRouter.post("/analyze", async (req, res) => {
       return res.status(400).json({ error: "Document text is required" });
     }
 
-    const genAI = new GoogleGenerativeAI(env.geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
     const prompt = `You are an expert academic tutor. Analyze the following document text and return a structured JSON summary.
 
 Document Text:
@@ -73,13 +70,16 @@ Return a JSON object with this exact structure:
 
 Extract 3-6 major topics from the document. Be thorough and educational. Return ONLY valid JSON.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const analysis = await generateJSON(
+      "You are an expert academic tutor. Analyze the document and return a structured JSON summary.",
+      prompt,
+      { model: "google/gemini-2.5-flash" },
+      null
+    );
 
-    // Parse the JSON from the response
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
-    const analysis = JSON.parse(cleaned);
+    if (!analysis) {
+      return res.status(500).json({ error: "Failed to generate study document summary." });
+    }
 
     res.json({ success: true, analysis });
   } catch (error) {
