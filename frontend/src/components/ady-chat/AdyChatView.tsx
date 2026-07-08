@@ -327,7 +327,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       </AnimatePresence>
 
       {/* Animated background — absolute within container */}
-      <ChatBackground />
+      <ChatBackground isDark={isDark} />
 
       {/* Sidebar toggle — amber pill, only visible when sidebar is closed */}
       <AnimatePresence>

@@ -183,6 +183,8 @@ export function StudyAssistantView() {
   const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: any }>>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [topicHistory, setTopicHistory] = useState<Array<{ topic: string; date: string; duration: string; level: string; lesson: UnifiedLesson }>>([]);
+  const [showTopicHistory, setShowTopicHistory] = useState(false);
   const [summaryData, setSummaryData] = useState<{
     title: string; topics: TopicSummary[]; stats: DocStats; insights: AIInsights;
   } | null>(null);
@@ -217,6 +219,10 @@ export function StudyAssistantView() {
       const stored = localStorage.getItem("adyapan-study-history");
       setHistory(stored ? JSON.parse(stored) : []);
     } catch { setHistory([]); }
+    try {
+      const topicStored = localStorage.getItem("adyapan-topic-history");
+      setTopicHistory(topicStored ? JSON.parse(topicStored) : []);
+    } catch { setTopicHistory([]); }
   }, []);
 
   useEffect(() => {
@@ -374,6 +380,13 @@ export function StudyAssistantView() {
       setLessonData(payload.data);
       setCurrentTopic(targetTopic);
       setIsGenerating(false);
+      // Save to topic history
+      const newEntry = { topic: targetTopic, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), duration, level, lesson: payload.data };
+      setTopicHistory(prev => {
+        const updated = [newEntry, ...prev.filter(h => h.topic !== targetTopic)].slice(0, 20);
+        localStorage.setItem("adyapan-topic-history", JSON.stringify(updated));
+        return updated;
+      });
     };
     const onError = (payload: { error: string }) => {
       socket.off("lesson:progress", onProgress);
@@ -1192,7 +1205,7 @@ export function StudyAssistantView() {
         <div className="flex items-center gap-2">
           {/* Mode Toggle */}
           <div className="flex p-0.5 rounded-lg" style={{ background: c.inputBg, border: `1px solid ${c.border}` }}>
-            <button onClick={() => { setMode("document"); setStatus("empty"); setFile(null); setSummaryData(null); setLessonData(null); setIsGenerating(false); setTopicError(null); }}
+            <button onClick={() => { setMode("document"); setStatus("empty"); setFile(null); setSummaryData(null); setIsGenerating(false); setTopicError(null); setShowTopicHistory(false); }}
               className="relative px-3 py-1.5 rounded-md text-[10px] font-bold select-none cursor-pointer z-10 transition-colors">
               <span style={{ color: mode === "document" ? c.text : c.textMuted }}><FileText size={12} className="inline mr-1" />Document</span>
               {mode === "document" && (
@@ -1202,7 +1215,7 @@ export function StudyAssistantView() {
                   transition={{ type: "spring", stiffness: 380, damping: 30 }} />
               )}
             </button>
-            <button onClick={() => { setMode("topic"); setStatus("empty"); setFile(null); setSummaryData(null); }}
+            <button onClick={() => { setMode("topic"); setShowHistory(false); }}
               className="relative px-3 py-1.5 rounded-md text-[10px] font-bold select-none cursor-pointer z-10 transition-colors">
               <span style={{ color: mode === "topic" ? c.text : c.textMuted }}><GraduationCap size={12} className="inline mr-1" />Topic</span>
               {mode === "topic" && (
@@ -1242,6 +1255,26 @@ export function StudyAssistantView() {
               {history.length > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black" style={{ background: c.amberBg, color: c.amber }}>
                   {history.length}
+                </span>
+              )}
+            </motion.button>
+          )}
+          {mode === "topic" && (
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setShowTopicHistory(!showTopicHistory)}
+              className="h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+              style={{
+                background: showTopicHistory ? c.amberActive : c.surface,
+                border: `1px solid ${showTopicHistory ? c.amberBorder : c.border}`,
+                color: showTopicHistory ? c.amber : c.text
+              }}
+            >
+              <History size={14} /> History
+              {topicHistory.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black" style={{ background: c.amberBg, color: c.amber }}>
+                  {topicHistory.length}
                 </span>
               )}
             </motion.button>
@@ -1295,6 +1328,69 @@ export function StudyAssistantView() {
                         style={{ background: c.amberActive, color: c.amber }}
                       >
                         Open <ChevronRight size={12} />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+        {mode === "topic" && showTopicHistory && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="mb-4 rounded-2xl overflow-hidden"
+            style={{ border: `1px solid ${c.amberBorder}`, background: c.amberBg }}
+          >
+            <div className="p-4">
+              <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
+                <History size={15} style={{ color: c.amber }} /> Topic Learning History
+              </h3>
+              {topicHistory.length === 0 ? (
+                <p className="text-sm py-2" style={{ color: c.textMuted }}>No topics studied yet. Generate a lesson to get started.</p>
+              ) : (
+                <div className="space-y-2">
+                  {topicHistory.map((item, i) => (
+                    <motion.div
+                      key={`${item.topic}-${i}`}
+                      custom={i}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-all"
+                      style={{ background: c.cardBg, border: `1px solid ${c.border}` }}
+                      onClick={() => {
+                        setLessonData(item.lesson);
+                        setCurrentTopic(item.topic);
+                        setInputTopic(item.topic);
+                        setDuration(item.duration as typeof duration);
+                        setLevel(item.level as typeof level);
+                        setQuizAnswers({});
+                        setQuizSubmitted({});
+                        setExpandedConceptIdx(null);
+                        setPracticeRevealed({});
+                        setShowTopicHistory(false);
+                      }}
+                      whileHover={{ scale: 1.01, borderColor: c.amberBorder }}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                          <GraduationCap size={14} style={{ color: c.amber }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{item.topic}</p>
+                          <p className="text-xs" style={{ color: c.textMuted }}>{item.date} · {item.duration} · {item.level}</p>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ x: 2 }}
+                        className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ background: c.amberActive, color: c.amber }}
+                      >
+                        Reload <ChevronRight size={12} />
                       </motion.button>
                     </motion.div>
                   ))}

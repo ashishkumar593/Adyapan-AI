@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Trash2, MessageSquare,
-  HardDrive, Clock, Star, Zap,
+  Clock, Star, Zap,
 } from "lucide-react";
 import type { ChatSession } from "./types";
 
@@ -213,28 +213,6 @@ export function ChatSidebar({
             className="p-2.5 flex-shrink-0"
             style={{ borderTop: `1px solid ${border}` }}
           >
-            {/* Storage usage */}
-            <div className="mb-2 px-1">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] flex items-center gap-1" style={{ color: textMuted }}>
-                  <HardDrive className="w-2.5 h-2.5" /> Storage
-                </span>
-                <span className="text-[9px]" style={{ color: textMuted }}>2.1 GB / 5 GB</span>
-              </div>
-              <div
-                className="w-full h-1 rounded-full overflow-hidden"
-                style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}
-              >
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: "linear-gradient(90deg, #f59e0b, #d97706)" }}
-                  initial={{ width: 0 }}
-                  animate={{ width: "42%" }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </div>
-            </div>
-
             {/* User card */}
             <motion.div
               className="flex items-center gap-2 px-2 py-1.5 rounded-xl cursor-pointer"

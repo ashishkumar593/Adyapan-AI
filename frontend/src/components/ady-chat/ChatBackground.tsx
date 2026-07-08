@@ -5,7 +5,11 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 
 // ─── Animated background: gradient mesh + aurora + particles + mouse glow ─────
 
-export function ChatBackground() {
+interface ChatBackgroundProps {
+  isDark: boolean;
+}
+
+export function ChatBackground({ isDark }: ChatBackgroundProps) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 60, damping: 30 });
@@ -29,31 +33,45 @@ export function ChatBackground() {
       className="absolute inset-0 overflow-hidden pointer-events-none"
       style={{ zIndex: 0 }}
     >
-      {/* Base dark background */}
+      {/* Base background */}
       <div
         className="absolute inset-0"
-        style={{ background: "linear-gradient(135deg, #060614 0%, #090920 50%, #070715 100%)" }}
+        style={{
+          background: isDark
+            ? "linear-gradient(135deg, #060614 0%, #090920 50%, #070715 100%)"
+            : "linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f8faff 100%)",
+        }}
       />
 
       {/* Animated gradient mesh */}
       <div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0"
         style={{
-          background: `
-            radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.06) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 60% at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 60%)
-          `,
+          opacity: isDark ? 0.4 : 0.25,
+          background: isDark
+            ? `
+              radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.06) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 60% at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 60%)
+            `
+            : `
+              radial-gradient(ellipse 80% 50% at 20% 20%, rgba(245,158,11,0.05) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.04) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 60% at 50% 50%, rgba(139,92,246,0.03) 0%, transparent 60%)
+            `,
         }}
       />
 
       {/* Aurora light 1 */}
       <motion.div
-        className="absolute rounded-full opacity-20 blur-[120px]"
+        className="absolute rounded-full blur-[120px]"
         style={{
           width: 600,
           height: 600,
-          background: "radial-gradient(circle, rgba(245,158,11,0.3) 0%, transparent 70%)",
+          background: isDark
+            ? "radial-gradient(circle, rgba(245,158,11,0.3) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)",
+          opacity: isDark ? 0.2 : 0.35,
           top: "-10%",
           left: "-5%",
         }}
@@ -67,11 +85,14 @@ export function ChatBackground() {
 
       {/* Aurora light 2 */}
       <motion.div
-        className="absolute rounded-full opacity-15 blur-[150px]"
+        className="absolute rounded-full blur-[150px]"
         style={{
           width: 500,
           height: 500,
-          background: "radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)",
+          background: isDark
+            ? "radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)",
+          opacity: isDark ? 0.15 : 0.3,
           bottom: "10%",
           right: "5%",
         }}
@@ -85,11 +106,14 @@ export function ChatBackground() {
 
       {/* Aurora light 3 */}
       <motion.div
-        className="absolute rounded-full opacity-10 blur-[100px]"
+        className="absolute rounded-full blur-[100px]"
         style={{
           width: 400,
           height: 400,
-          background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)",
+          background: isDark
+            ? "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)",
+          opacity: isDark ? 0.1 : 0.25,
           top: "40%",
           left: "40%",
         }}

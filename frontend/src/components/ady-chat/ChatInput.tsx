@@ -121,8 +121,12 @@ export function ChatInput({
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           boxShadow: focused
-            ? `0 0 0 4px rgba(245,158,11,0.08), 0 8px 40px rgba(0,0,0,0.2)`
-            : `0 4px 24px rgba(0,0,0,0.12)`,
+            ? isDark
+              ? `0 0 0 4px rgba(245,158,11,0.08), 0 8px 40px rgba(0,0,0,0.2)`
+              : `0 0 0 4px rgba(245,158,11,0.08), 0 8px 40px rgba(0,0,0,0.06)`
+            : isDark
+              ? `0 4px 24px rgba(0,0,0,0.12)`
+              : `0 4px 24px rgba(0,0,0,0.04)`,
           transition: "all 0.25s ease",
         }}
       >
@@ -155,7 +159,11 @@ export function ChatInput({
             whileHover={{
               scale: 1.1,
               color: listening ? "#f59e0b" : textMuted,
-              background: listening ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.05)",
+              background: listening
+                ? "rgba(245,158,11,0.18)"
+                : isDark
+                  ? "rgba(255,255,255,0.05)"
+                  : "rgba(0,0,0,0.04)",
             }}
             whileTap={{ scale: 0.9 }}
             title={listening ? "Stop listening" : "Voice input"}
