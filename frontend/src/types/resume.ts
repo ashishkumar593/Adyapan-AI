@@ -25,6 +25,8 @@ export type ResumeHubViewType =
   | "interview-hr"
   | "interview-technical"
   | "interview-mock"
+  | "flashcards"
+  | "learn"
   | "internship-hub"
   | "internship-finder"
   | "internship-recommendations"

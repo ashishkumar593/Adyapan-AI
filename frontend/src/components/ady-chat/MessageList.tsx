@@ -13,6 +13,7 @@ interface MessageListProps {
   loading: boolean;
   isDark: boolean;
   onRegenerate?: () => void;
+  onEditUserMessage?: (text: string) => void;
 }
 
 export function MessageList({
@@ -21,6 +22,7 @@ export function MessageList({
   loading,
   isDark,
   onRegenerate,
+  onEditUserMessage,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +36,13 @@ export function MessageList({
         <AnimatePresence initial={false}>
           {messages.map((msg, i) =>
             msg.role === "user" ? (
-              <UserMessage key={msg.id || i} message={msg} index={i} isDark={isDark} />
+              <UserMessage
+                key={msg.id || i}
+                message={msg}
+                index={i}
+                isDark={isDark}
+                onEdit={onEditUserMessage}
+              />
             ) : (
               <AIMessage
                 key={msg.id || i}
@@ -43,6 +51,7 @@ export function MessageList({
                 isDark={isDark}
                 onRegenerate={onRegenerate}
               />
+
             )
           )}
         </AnimatePresence>

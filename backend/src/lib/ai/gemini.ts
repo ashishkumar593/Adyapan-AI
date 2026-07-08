@@ -933,3 +933,197 @@ Provide comprehensive feedback as JSON:
 
   return generateJSON<InterviewFeedback>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
 }
+
+// ============================================================================
+// ENHANCED LEARNING HUB AI FUNCTIONS
+// ============================================================================
+
+export interface EnhancedMindMapResult {
+  mindmap: {
+    nodes: Array<{
+      id: string;
+      label: string;
+      type: "root" | "concept" | "example" | "application" | "sub_concept";
+      definition: string;
+      whyItMatters: string;
+      realExample: string;
+      commonMistakes: string;
+      interviewTip: string;
+    }>;
+    edges: Array<{ source: string; target: string }>;
+  };
+}
+
+export async function generateEnhancedMindMap(
+  topic: string,
+  mode: string
+): Promise<EnhancedMindMapResult> {
+  const prompt = `Create a comprehensive mind map for topic: "${topic}" at "${mode}" level.
+
+Output JSON with:
+1. "mindmap" object containing:
+   - "nodes": array of concept nodes, each with:
+     * "id": unique string like "root-1", "concept-1", etc.
+     * "label": short name
+     * "type": one of "root", "concept", "sub_concept", "example", "application"
+     * "definition": clear definition
+     * "whyItMatters": why this concept matters
+     * "realExample": real-world example
+     * "commonMistakes": common mistakes
+     * "interviewTip": interview tip
+   - "edges": array of { source: string, target: string }
+   
+The root node should be the main topic. Include 5-8 concept nodes connected to root. Add sub_concepts, examples, applications as children of concepts.`;
+
+  const fallback: EnhancedMindMapResult = { mindmap: { nodes: [], edges: [] } };
+  return generateJSON<EnhancedMindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+}
+
+export interface SmartQuizQuestion {
+  question: string;
+  type: "mcq" | "true_false" | "scenario" | "interview" | "revision";
+  options: string[];
+  correct_answer: string;
+  explanation: string;
+  follow_up?: string;
+}
+
+export interface SmartQuizData {
+  quiz_title: string;
+  topic: string;
+  difficulty: string;
+  estimated_time: string;
+  mode: string;
+  questions: SmartQuizQuestion[];
+  performance_insights_template: {
+    strengths: string[];
+    weak_areas: string[];
+    recommended_next_step: string;
+  };
+}
+
+export async function generateEnhancedQuiz(
+  topic: string,
+  mode: string,
+  duration: string
+): Promise<SmartQuizData> {
+  const prompt = `Generate a quiz on topic: "${topic}" for "${mode}" level, duration: "${duration}".
+
+Output JSON with:
+1. "quiz_title": engaging title
+2. "topic": the topic
+3. "difficulty": auto-detected
+4. "estimated_time": duration
+5. "mode": the mode
+6. "questions": array of 5-10 questions, each with:
+   - "question": text
+   - "type": "mcq" | "true_false" | "scenario" | "interview" | "revision"
+   - "options": array of 4 strings
+   - "correct_answer": exact match from options
+   - "explanation": detailed explanation
+   - "follow_up": optional follow-up for interview mode
+7. "performance_insights_template": object with "strengths", "weak_areas", "recommended_next_step"`;
+
+  const fallback: SmartQuizData = {
+    quiz_title: "", topic, difficulty: "", estimated_time: duration, mode,
+    questions: [], performance_insights_template: { strengths: [], weak_areas: [], recommended_next_step: "" }
+  };
+  return generateJSON<SmartQuizData>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+}
+
+export interface FlashcardData {
+  cards: Array<{
+    front: string;
+    back: string;
+    explanation: string;
+    memoryTip: string;
+    difficulty: "easy" | "medium" | "hard";
+  }>;
+}
+
+export async function generateFlashcards(
+  topic: string,
+  mode: string,
+  cardCount: number
+): Promise<FlashcardData> {
+  const prompt = `Generate ${cardCount} flashcards for topic: "${topic}" at "${mode}" level.
+
+Output JSON with:
+1. "cards": array of flashcard objects, each with:
+   - "front": question/term
+   - "back": answer/definition
+   - "explanation": detailed explanation
+   - "memoryTip": mnemonic or memory tip
+   - "difficulty": "easy" | "medium" | "hard"`;
+
+  const fallback: FlashcardData = { cards: [] };
+  return generateJSON<FlashcardData>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED, responseFormat: { type: "json_object" } }, fallback);
+}
+
+export interface LearnLessonData {
+  learning_goal: string;
+  estimated_completion_time: string;
+  lesson_structure: string[];
+  overview: string;
+  key_concepts: Array<{
+    title: string;
+    content: string;
+    sub_concepts?: string[];
+    tips?: string[];
+  }>;
+  examples: Array<{
+    title: string;
+    scenario: string;
+    code_or_data?: string;
+    explanation?: string;
+  }>;
+  practice_questions: Array<{
+    question: string;
+    guidance?: string;
+    expected_answer?: string;
+    red_flag?: string;
+  }>;
+  quiz: Array<{
+    question: string;
+    options: string[];
+    answer: string;
+    explanation: string;
+  }>;
+  summary: string;
+  why_matters?: string;
+  simple_explanation?: string;
+  real_life_analogy?: string;
+  example?: string;
+  key_takeaways?: string[];
+  mini_quiz?: Array<{
+    question: string;
+    options: string[];
+    answer: string;
+    explanation: string;
+  }>;
+}
+
+export async function generateLearnLesson(
+  topic: string,
+  duration: string,
+  level: string
+): Promise<LearnLessonData> {
+  const prompt = `Teach the topic: "${topic}" at "${level}" level, duration: "${duration}".
+
+If level is "beginner":
+- Output: overview, why_matters, simple_explanation, real_life_analogy, example, key_takeaways (3), mini_quiz (1-2), key_concepts (2-3)
+
+If level is "intermediate", "interview", or "revision":
+- Output: overview, key_concepts (3-5 with sub_concepts and tips), examples (1-3 with code), practice_questions (1-3), quiz (2-4), summary
+
+Always include: learning_goal, estimated_completion_time, lesson_structure as array of section names.
+
+Keep responses concise for short durations and detailed for longer durations. Use simple language for beginners, technical depth for intermediate+.`;
+
+  const fallback: LearnLessonData = {
+    learning_goal: "", estimated_completion_time: duration, lesson_structure: [],
+    overview: "", key_concepts: [], examples: [], practice_questions: [], quiz: [], summary: "",
+    why_matters: "", simple_explanation: "", real_life_analogy: "", example: "", key_takeaways: [], mini_quiz: []
+  };
+  return generateJSON<LearnLessonData>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+}

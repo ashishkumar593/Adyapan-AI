@@ -436,6 +436,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
                       setMessages(prev => prev.slice(0, -1));
                     }
                   }}
+                  onEditUserMessage={setInput}
                 />
                 <div
                   className="pb-5 pt-2 flex-shrink-0"
