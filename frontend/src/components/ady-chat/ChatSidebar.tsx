@@ -119,7 +119,7 @@ export function ChatSidebar({
               {/* New Chat button */}
               <motion.button
                 onClick={onNewChat}
-                className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                className="flex-1 h-10 flex items-center justify-center gap-2 px-3 rounded-xl font-semibold text-sm transition-all"
                 style={{
                   background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
                   color: isDark ? "rgba(255,255,255,0.85)" : "#1e293b",
@@ -156,7 +156,7 @@ export function ChatSidebar({
           </div>
 
           {/* Sessions list */}
-          <div className="flex-1 overflow-y-auto px-2 pb-2">
+          <div data-lenis-prevent className="flex-1 overflow-y-auto px-2 pb-2">
             {sessions.length === 0 ? (
               <motion.div
                 className="flex flex-col items-center justify-center py-16 px-4 text-center"
@@ -307,14 +307,14 @@ function SessionItem({
       onMouseLeave={() => onHover(null)}
       className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer group relative"
       style={{
-        background: isActive ? activeItem : "transparent",
-        borderLeft: isActive ? "2px solid rgba(245,158,11,0.6)" : "2px solid transparent",
+        background: isActive ? (isDark ? "rgba(245,158,11,0.09)" : "rgba(245,158,11,0.06)") : "transparent",
+        border: isActive ? "1.5px solid rgba(245,158,11,0.4)" : "1.5px solid transparent",
       }}
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03, duration: 0.25 }}
       whileHover={{
-        background: isActive ? activeItem : surfaceHover,
+        background: isActive ? (isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)") : surfaceHover,
         x: 2,
       }}
     >

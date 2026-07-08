@@ -314,9 +314,8 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
   // We use relative positioning so we NEVER overlap the dashboard nav or sidebar.
   return (
     <div
-      className="relative flex overflow-hidden"
+      className="relative flex overflow-hidden w-full h-full"
       style={{
-        height: "calc(100vh - 70px)",
         background: isDark ? "#070715" : "#f0f4ff",
       }}
     >
