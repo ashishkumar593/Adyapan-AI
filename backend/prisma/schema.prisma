@@ -62,6 +62,8 @@ model User {
   subscriptionEnd     DateTime? @map("subscription_end")
   payments            Payment[]
   notifications       Notification[]
+  learningAnalytics   LearningAnalytics?
+  learningEvents      LearningEvent[]
 
   @@map("users")
 }
@@ -618,3 +620,41 @@ model BlacklistedToken {
 
   @@map("blacklisted_tokens")
 }
+
+model LearningAnalytics {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  documentsCount     Int      @default(0) @map("documents_count")
+  studyTimeMinutes   Int      @default(0) @map("study_time_minutes")
+  conceptsLearned    Int      @default(0) @map("concepts_learned")
+  learningScore      Int      @default(0) @map("learning_score")
+  examReadiness      Int      @default(0) @map("exam_readiness")
+  currentStreak      Int      @default(0) @map("current_streak")
+  longestStreak      Int      @default(0) @map("longest_streak")
+  toolUsageJson      Json     @map("tool_usage_json")
+  topicAnalyticsJson Json     @map("topic_analytics_json")
+  recommendationsJson Json    @map("recommendations_json")
+  insightsJson       Json     @map("insights_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_analytics")
+}
+
+model LearningEvent {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  eventType  String   @map("event_type")
+  documentId String?  @map("document_id")
+  toolUsed   String?  @map("tool_used")
+  topic      String?
+  duration   Int?     @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_events")
+}
+

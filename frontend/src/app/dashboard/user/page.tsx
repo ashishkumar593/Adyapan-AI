@@ -185,6 +185,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
   setSidebarOpen: (open: boolean) => void;
 }) {
   const [openItem, setOpenItem] = useState<string | null>(null);
+  const router = useRouter();
 
   const toggleItem = (id: string) => {
     setOpenItem((prev) => (prev === id ? null : id));
@@ -307,7 +308,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
                       else if (sub.label === "SOP Generator") onViewTool("prod-sop");
                       else if (sub.label === "LinkedIn Post Gen") onViewTool("prod-linkedin");
                       else if (sub.label === "Content Writer") onViewTool("prod-content");
-                      else if (sub.label === "Learning Progress") onViewTool("analytics-learning");
+                      else if (sub.label === "Learning Progress") router.push("/dashboard/learning-analytics");
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
