@@ -15,6 +15,8 @@ const fadeUp = {
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }),
 };
 
+import { LearningAnalyticsDashboard } from "./LearningAnalyticsDashboard";
+
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
   visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
@@ -167,102 +169,7 @@ export function AnalyticsHubView({ setView, activeModule = "analytics-hub", them
 
             {/* TAB A: LEARNING PROGRESS */}
             {tab === "learning" && (
-              <motion.div
-                key="learning"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* Stats Summary row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {[
-                    { label: "Completed Courses", val: "5" },
-                    { label: "Topics Completed", val: "24" },
-                    { label: "Study Hours", val: "42 hrs" },
-                    { label: "Daily Learning Streak", val: "7 Days" }
-                  ].map((s, idx) => (
-                    <motion.div
-                      key={idx}
-                      variants={fadeUp}
-                      initial="hidden"
-                      animate="visible"
-                      custom={idx}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className="p-4 border rounded-xl text-center space-y-1 bg-white/[0.01]"
-                      style={{ borderColor: c.border }}
-                    >
-                      <span className="text-[9px] uppercase tracking-wider font-bold block" style={{ color: c.textMuted }}>{s.label}</span>
-                      <span className="text-base font-black" style={{ color: c.text }}>{s.val}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Progress bars & Chart */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Subject progress */}
-                  <div className="p-5 border rounded-2xl space-y-4 bg-white/[0.01]" style={{ borderColor: c.border }}>
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Subject-wise Progress</h4>
-                    {[
-                      { label: "Python Programming", pct: 95, color: "#10b981" },
-                      { label: "Computer Networks", pct: 90, color: "#06b6d4" },
-                      { label: "Operating Systems", pct: 80, color: "#8b5cf6" },
-                      { label: "Database Management", pct: 75, color: "#f59e0b" }
-                    ].map(subj => (
-                      <div key={subj.label} className="space-y-1.5">
-                        <div className="flex justify-between text-[11px] font-bold" style={{ color: c.textSec }}>
-                          <span>{subj.label}</span>
-                          <span>{subj.pct}%</span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-white/5 border overflow-hidden" style={{ borderColor: c.border }}>
-                          <div className="h-full rounded-full" style={{ width: `${subj.pct}%`, background: subj.color }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Hourly activity mock graph */}
-                  <motion.div
-                    variants={fadeUp}
-                    initial="hidden"
-                    animate="visible"
-                    custom={1}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    className="p-5 border rounded-2xl space-y-4 bg-white/[0.01] flex flex-col justify-between"
-                    style={{ borderColor: c.border }}
-                  >
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Weekly Activity Trend</h4>
-                    <div className="flex items-end justify-between h-28 pt-2">
-                      {[
-                        { day: "Mon", hrs: 2 },
-                        { day: "Tue", hrs: 4 },
-                        { day: "Wed", hrs: 3 },
-                        { day: "Thu", hrs: 5 },
-                        { day: "Fri", hrs: 4 },
-                        { day: "Sat", hrs: 2 },
-                        { day: "Sun", hrs: 1 }
-                      ].map((item, idx) => {
-                        const htPercent = (item.hrs / 5) * 100;
-                        return (
-                          <motion.div
-                            key={idx}
-                            variants={fadeUp}
-                            initial="hidden"
-                            animate="visible"
-                            custom={idx}
-                            whileHover={{ y: -2, scale: 1.005 }}
-                            className="flex flex-col items-center gap-1.5 flex-1"
-                          >
-                            <span className="text-[9px] font-bold" style={{ color: c.textMuted }}>{item.hrs}h</span>
-                            <div className="w-6 rounded bg-amber-500/25 border border-amber-500/30 hover:bg-amber-500 transition-all cursor-pointer" style={{ height: `${htPercent}%` }} />
-                            <span className="text-[9px] font-bold" style={{ color: c.textSec }}>{item.day}</span>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                </div>
-              </motion.div>
+              <LearningAnalyticsDashboard setView={setView} theme={theme} />
             )}
 
             {/* TAB B: INTERVIEW PROGRESS */}

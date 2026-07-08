@@ -7,47 +7,58 @@ datasource db {
 }
 
 model User {
-  id                     String                @id @default(cuid())
-  name                   String
-  email                  String                @unique
-  password               String
-  role                   Role                  @default(USER)
-  createdAt              DateTime              @default(now()) @map("created_at")
-  updatedAt              DateTime              @updatedAt @map("updated_at")
-  plan                   String                @default("free")
-  razorpayCustomerId     String?               @map("razorpay_customer_id")
-  razorpaySubscriptionId String?               @map("razorpay_subscription_id")
-  subscriptionEnd        DateTime?             @map("subscription_end")
-  subscriptionStatus     String?               @map("subscription_status")
-  assignments            Assignment[]
-  atsReports             ATSReport[]
-  challengeSubmissions   ChallengeSubmission[]
-  chatSessions           ChatSession[]
-  codingSessions         CodingSession[]
-  coverLetters           CoverLetter[]
-  dsaProgress            DSAProgress[]
-  flashcards             Flashcard[]
-  generatedNotes         GeneratedNote[]
-  generatedReadmes       GeneratedReadme[]
-  githubProfiles         GithubProfile[]
-  interviewSessions      InterviewSession[]
-  leaderboards           Leaderboard[]
-  learning_analytics     learning_analytics?
-  learning_events        learning_events[]
-  linkedinReports        LinkedInReport[]
-  mindMaps               MindMap[]
-  notifications          Notification[]
-  payments               Payment[]
-  portfolios             Portfolio[]
-  presentations          Presentation[]
-  profile                Profile?
-  quizAttempts           QuizAttempt[]
-  quizzes                Quiz[]
-  resumeAnalyses         ResumeAnalysis[]
-  resumes                Resume[]
-  studySessions          StudySession[]
-  submissions            Submission[]
-  uploadedDocs           UploadedDocument[]
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  profile   Profile?
+
+  resumes         Resume[]
+  atsReports      ATSReport[]
+  resumeAnalyses  ResumeAnalysis[]
+  coverLetters    CoverLetter[]
+  linkedinReports LinkedInReport[]
+
+  // Learning Hub Relations
+  studySessions   StudySession[]
+  uploadedDocs    UploadedDocument[]
+  generatedNotes  GeneratedNote[]
+  quizzes         Quiz[]
+  quizAttempts    QuizAttempt[]
+  flashcards      Flashcard[]
+  assignments     Assignment[]
+  presentations   Presentation[]
+  mindMaps        MindMap[]
+
+  // Coding Hub Relations
+  codingSessions      CodingSession[]
+  submissions         Submission[]
+  dsaProgress         DSAProgress[]
+  challengeSubmissions ChallengeSubmission[]
+  leaderboards        Leaderboard[]
+  portfolios          Portfolio[]
+  githubProfiles      GithubProfile[]
+  generatedReadmes    GeneratedReadme[]
+
+  // Interview Hub Relations
+  interviewSessions   InterviewSession[]
+
+  // Ady Chat Relations
+  chatSessions        ChatSession[]
+
+  // Payment / Subscription Relations
+  plan                String   @default("free")
+  razorpayCustomerId  String?  @map("razorpay_customer_id")
+  razorpaySubscriptionId String? @map("razorpay_subscription_id")
+  subscriptionStatus  String?  @map("subscription_status")
+  subscriptionEnd     DateTime? @map("subscription_end")
+  payments            Payment[]
+  notifications       Notification[]
+  learningAnalytics   LearningAnalytics?
+  learningEvents      LearningEvent[]
 
   @@map("users")
 }
@@ -553,35 +564,41 @@ model BlacklistedToken {
   @@map("blacklisted_tokens")
 }
 
-model learning_analytics {
-  id                   String   @id
-  user_id              String   @unique
-  documents_count      Int      @default(0)
-  study_time_minutes   Int      @default(0)
-  concepts_learned     Int      @default(0)
-  learning_score       Int      @default(0)
-  exam_readiness       Int      @default(0)
-  current_streak       Int      @default(0)
-  longest_streak       Int      @default(0)
-  tool_usage_json      Json
-  topic_analytics_json Json
-  recommendations_json Json
-  insights_json        Json
-  created_at           DateTime @default(now())
-  updated_at           DateTime
-  users                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model LearningAnalytics {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  documentsCount     Int      @default(0) @map("documents_count")
+  studyTimeMinutes   Int      @default(0) @map("study_time_minutes")
+  conceptsLearned    Int      @default(0) @map("concepts_learned")
+  learningScore      Int      @default(0) @map("learning_score")
+  examReadiness      Int      @default(0) @map("exam_readiness")
+  currentStreak      Int      @default(0) @map("current_streak")
+  longestStreak      Int      @default(0) @map("longest_streak")
+  toolUsageJson      Json     @map("tool_usage_json")
+  topicAnalyticsJson Json     @map("topic_analytics_json")
+  recommendationsJson Json    @map("recommendations_json")
+  insightsJson       Json     @map("insights_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_analytics")
 }
 
-model learning_events {
-  id          String   @id
-  user_id     String
-  event_type  String
-  document_id String?
-  tool_used   String?
-  topic       String?
-  duration    Int?     @default(0)
-  created_at  DateTime @default(now())
-  users       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model LearningEvent {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  eventType  String   @map("event_type")
+  documentId String?  @map("document_id")
+  toolUsed   String?  @map("tool_used")
+  topic      String?
+  duration   Int?     @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_events")
 }
 
 enum Role {
