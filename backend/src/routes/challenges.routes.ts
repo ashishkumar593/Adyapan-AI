@@ -63,7 +63,6 @@ router.get("/leaderboard", async (req, res) => {
     const leaderboard = await userPrisma.leaderboard.findMany({
       orderBy: { score: 'desc' },
       take: 10,
-      include: { user: { select: { name: true } } }
     });
     res.json({ leaderboard });
   } catch (error) {

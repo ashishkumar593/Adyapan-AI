@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/user-client";
 import {
   generateInterviewQuestion,
   generateInterviewFeedback,

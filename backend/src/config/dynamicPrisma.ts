@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/user-client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { databaseService } from "../services/database.service";
 
