@@ -1750,7 +1750,7 @@ function UserDashboardContent() {
         ) : activeView === "billing" ? (
           <BillingView />
         ) : activeView === "resume-hub" || activeView === "resume-builder" ? (
-          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} theme={theme} />
+          <ResumeBuilderView setView={setActiveView} selectedTemplate={selectedTemplate || "ATS Modern"} />
         ) : activeView === "ats-checker" ? (
           <AtsCheckerView setView={setActiveView} />
         ) : activeView === "cover-letter" ? (

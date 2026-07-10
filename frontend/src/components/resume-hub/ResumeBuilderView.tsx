@@ -16,37 +16,58 @@ import type { ResumeHubViewType } from "@/types/resume";
 interface ResumeBuilderViewProps {
   setView: (v: ResumeHubViewType) => void;
   selectedTemplate: string;
-  theme?: string;
 }
 
 const COMPANIES = ["Google", "Microsoft", "Amazon", "Meta", "Apple", "Netflix", "Uber", "Tesla", "Spotify", "Adobe", "Stripe", "LinkedIn", "Nvidia", "Salesforce", "Oracle", "IBM", "Cisco", "Morgan Stanley", "Goldman Sachs", "Deloitte", "Accenture", "TCS", "Infosys", "Wipro", "Other"];
 const PROFESSIONS = ["Software Engineer", "ML Engineer", "Data Scientist", "Full Stack Developer", "Frontend Developer", "Backend Developer", "DevOps Engineer", "Cloud Engineer", "AI Engineer", "Product Manager", "UI/UX Designer", "Data Analyst", "SDE", "SRE", "Systems Engineer", "Research Scientist", "Other"];
 const CAREER_LEVELS = ["Fresher", "Junior (1-2 yrs)", "Mid-Level (3-5 yrs)", "Senior (6-8 yrs)", "Lead (8+ yrs)"];
 const RESUME_STYLES = ["ATS Modern", "ATS Professional", "ATS Minimal", "ATS Developer", "ATS Student"];
-const SCREENS = ["Setup", "Information", "Generation", "Editor", "Review"];
 const CHAT_SUGGESTIONS = ["Optimize for Amazon", "Reduce to one page", "Improve summary", "Improve project descriptions", "Add stronger action verbs", "Rewrite achievements"];
 
+function useTheme() {
+  const [theme, setTheme] = useState("dark");
+  useEffect(() => {
+    const t = document.documentElement.getAttribute("data-theme") || "dark";
+    setTheme(t);
+    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
+}
+
+const mkColors = (theme: string) => {
+  const isDark = theme === "dark";
+  return {
+    isDark,
+    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8",
+    bg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff", bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f8fafc",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    borderLight: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+    borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    cardBg: isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
+    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
+    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
+    red: "#ef4444",
+    chatBg: isDark ? "#0a0e16" : "#ffffff",
+    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    genBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)",
+    textSecondary: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
+    textDim: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
+  };
+};
+
 const pageTransition = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4 } }) };
+const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }) };
 
 const col = "#f59e0b";
 
-export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }: ResumeBuilderViewProps) {
-  const isDark = theme === "dark";
-  const t = {
-    bg: isDark ? "#060b0e" : "#f8fafc",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-    border: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
-    borderLight: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
-    text: isDark ? "#fff" : "#0f172a",
-    textSecondary: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-    textMuted: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)",
-    textDim: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
-    inputBg: isDark ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.9)",
-    cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)",
-    genBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)",
-    genBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
-    chatBg: isDark ? "#0a0e16" : "#ffffff",
-  };
+export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderViewProps) {
+  const theme = useTheme();
+  const c = mkColors(theme);
   const [screen, setScreen] = useState(1);
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -165,43 +186,45 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
   const removeSkill = (s: string) => setSkills(skills.filter((x) => x !== s));
   const canContinue = (screenNum: number) => { if (screenNum === 1) return setup.company && setup.profession && setup.careerLevel; if (screenNum === 2) return personalInfo.fullName && personalInfo.email; return true; };
 
-  const inputSx: React.CSSProperties = { width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.6rem 0.85rem", fontSize: "0.82rem", color: t.text, outline: "none", boxSizing: "border-box" as const, transition: "border-color 0.15s, box-shadow 0.15s" };
+  const inputSx: React.CSSProperties = { width: "100%", background: c.inputBg, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.6rem 0.85rem", fontSize: "0.82rem", color: c.text, outline: "none", boxSizing: "border-box" as const, transition: "border-color 0.15s, box-shadow 0.15s" };
 
   // ─── Toast ──────────────────────────────────────────────────────────────────
   const ToastBar = () => (
     <AnimatePresence>
       {toastMsg && (
-        <motion.div initial={{ opacity: 0, y: -16, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -16, scale: 0.95 }} style={{ position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: isDark ? "#1a1a2e" : "#fff", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "0.55rem 1.1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600, color: t.text }}>
+        <motion.div initial={{ opacity: 0, y: -16, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -16, scale: 0.95 }} style={{ position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: c.isDark ? "#1a1a2e" : "#fff", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "0.55rem 1.1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600, color: c.text }}>
           <Sparkles size={14} style={{ color: col }} /> {toastMsg}
         </motion.div>
       )}
     </AnimatePresence>
   );
 
-  // ─── Progress bar ───────────────────────────────────────────────────────────
-  const ProgressBar = () => (
-    <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "0.5rem 1.25rem 0.35rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
-      {SCREENS.map((label, i) => {
-        const step = i + 1, active = screen === step, done = screen > step;
-        return (
-          <div key={label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-            <motion.button onClick={() => step <= screen && setScreen(step)} whileHover={step <= screen ? { scale: 1.04 } : {}} whileTap={step <= screen ? { scale: 0.96 } : {}} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: step <= screen ? "pointer" : "default", padding: 0 }}>
-              <motion.div animate={{ scale: active ? 1.1 : 1, background: done ? col : active ? "rgba(245,158,11,0.15)" : t.surface, borderColor: done ? col : active ? "rgba(245,158,11,0.5)" : t.borderLight }} style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 800, border: "2px solid", color: done ? "#000" : active ? col : t.textDim }}>
-                {done ? <Check size={11} /> : step}
-              </motion.div>
-              <span style={{ fontSize: "0.48rem", fontWeight: active || done ? 700 : 500, color: active ? col : done ? t.textSecondary : t.textDim, whiteSpace: "nowrap" }}>{label}</span>
-            </motion.button>
-            {i < SCREENS.length - 1 && <motion.div animate={{ background: done ? col : t.surface }} style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 14, borderRadius: 2 }} />}
-          </div>
-        );
-      })}
-    </div>
-  );
+
 
   return (
-    <div className="h-full w-full flex flex-col" style={{ background: t.bg }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text, background: c.bg }}>
       <ToastBar />
-      <ProgressBar />
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
+        <motion.button onClick={() => setView("resume-hub")} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
+          <ArrowLeft size={15} />
+        </motion.button>
+        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+          <FileText size={18} style={{ color: "#000" }} />
+        </motion.div>
+        <div>
+          <motion.h1 initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+            className="text-base font-extrabold leading-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
+            Resume Builder
+          </motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+            className="text-xs leading-tight" style={{ color: c.textMuted }}>
+            AI-powered, ATS-optimized resume tailored to your target role
+          </motion.p>
+        </div>
+      </div>
 
       <div className="flex-1 overflow-hidden" style={{ position: "relative" }}>
         <AnimatePresence mode="wait">
@@ -217,8 +240,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                         <FileText size={22} style={{ color: col }} />
                       </div>
                       <div>
-                        <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: t.text, margin: 0 }}>Build Your Resume</h1>
-                        <p style={{ fontSize: "0.78rem", color: t.textMuted, margin: "2px 0 0" }}>AI-powered, ATS-optimized resume tailored to your target role</p>
+                        <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: c.text, margin: 0 }}>Build Your Resume</h1>
+                        <p style={{ fontSize: "0.78rem", color: c.textMuted, margin: "2px 0 0" }}>AI-powered, ATS-optimized resume tailored to your target role</p>
                       </div>
                     </div>
                   </motion.div>
@@ -230,14 +253,14 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       { label: "Career Level", value: setup.careerLevel, onChange: (v: string) => setSetup({ ...setup, careerLevel: v }), options: CAREER_LEVELS, icon: <Target size={14} /> },
                       { label: "Resume Style", value: setup.resumeStyle, onChange: (v: string) => setSetup({ ...setup, resumeStyle: v }), options: RESUME_STYLES, icon: <FileText size={14} /> },
                     ].map((field) => (
-                      <div key={field.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "0.7rem 1rem" }}>
-                        <label style={{ fontSize: "0.68rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                      <div key={field.label} style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "0.7rem 1rem" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                           <span style={{ color: col }}>{field.icon}</span> {field.label}
                         </label>
                         <select value={field.value} onChange={(e) => field.onChange(e.target.value)}
                           style={{ ...inputSx, cursor: "pointer", appearance: "none" as const, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", paddingRight: "2rem" }}
                           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = "none"; }}
                         >
                           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
                         </select>
@@ -248,14 +271,14 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   <motion.button whileHover={canContinue(1) ? { scale: 1.01, boxShadow: "0 8px 24px rgba(245,158,11,0.3)" } : {}} whileTap={canContinue(1) ? { scale: 0.98 } : {}}
                     onClick={() => canContinue(1) && setScreen(2)}
                     disabled={!canContinue(1)}
-                    style={{ width: "100%", padding: "0.7rem", borderRadius: 12, border: "none", fontWeight: 700, fontSize: "0.85rem", cursor: canContinue(1) ? "pointer" : "not-allowed", background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.surface, color: canContinue(1) ? "#000" : t.textDim, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: "0.75rem" }}
+                    style={{ width: "100%", padding: "0.7rem", borderRadius: 12, border: "none", fontWeight: 700, fontSize: "0.85rem", cursor: canContinue(1) ? "pointer" : "not-allowed", background: canContinue(1) ? "linear-gradient(135deg, #f59e0b, #d97706)" : c.surface, color: canContinue(1) ? "#000" : c.textDim, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: "0.75rem" }}
                   >
                     Continue <ChevronRight size={16} />
                   </motion.button>
                 </div>
 
-                <div className="lg:col-span-2 hidden lg:flex flex-col p-6 h-full overflow-y-auto" style={{ borderLeft: `1px solid ${t.border}`, background: t.surface }}>
-                  <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>Template Preview</h3>
+                <div className="lg:col-span-2 hidden lg:flex flex-col p-6 h-full overflow-y-auto" style={{ borderLeft: `1px solid ${c.border}`, background: c.surface }}>
+                  <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>Template Preview</h3>
                   <div style={{ background: "#fff", borderRadius: 10, padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", flex: 1, minHeight: 300, fontSize: "0.65rem", color: "#334155" }}>
                     <div style={{ textAlign: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.75rem", marginBottom: "0.75rem" }}>
                       <div style={{ fontWeight: 800, fontSize: "0.9rem", color: setup.resumeStyle.includes("Developer") ? "#d97706" : "#1e293b" }}>{personalInfo.fullName || "Your Name"}</div>
@@ -284,7 +307,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {RESUME_STYLES.map((s) => (
                       <motion.button key={s} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                         onClick={() => setSetup({ ...setup, resumeStyle: s })}
-                        style={{ padding: "0.3rem 0.7rem", borderRadius: 20, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", border: `1px solid ${setup.resumeStyle === s ? "rgba(245,158,11,0.4)" : t.border}`, background: setup.resumeStyle === s ? "rgba(245,158,11,0.1)" : "transparent", color: setup.resumeStyle === s ? col : t.textSecondary }}
+                        style={{ padding: "0.3rem 0.7rem", borderRadius: 20, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", border: `1px solid ${setup.resumeStyle === s ? "rgba(245,158,11,0.4)" : c.border}`, background: setup.resumeStyle === s ? "rgba(245,158,11,0.1)" : "transparent", color: setup.resumeStyle === s ? col : c.textSecondary }}
                       >
                         {s}
                       </motion.button>
@@ -302,8 +325,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {/* Left column */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {/* Personal Info */}
-                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
-                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><UserCircle size={14} style={{ color: col }} /> Personal Info</h3>
+                      <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "1rem" }}>
+                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: c.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><UserCircle size={14} style={{ color: col }} /> Personal Info</h3>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           {[{ p: "Full Name *", v: personalInfo.fullName, set: (v: string) => setPersonalInfo({ ...personalInfo, fullName: v }) }, { p: "Email *", v: personalInfo.email, set: (v: string) => setPersonalInfo({ ...personalInfo, email: v }) }, { p: "Phone", v: personalInfo.phone, set: (v: string) => setPersonalInfo({ ...personalInfo, phone: v }) }, { p: "Location", v: personalInfo.location, set: (v: string) => setPersonalInfo({ ...personalInfo, location: v }) }].map((f, i) => (
                             <input key={i} placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={inputSx} />
@@ -312,7 +335,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
                           {[{ p: "LinkedIn URL", v: personalInfo.linkedin, set: (v: string) => setPersonalInfo({ ...personalInfo, linkedin: v }) }, { p: "GitHub URL", v: personalInfo.github, set: (v: string) => setPersonalInfo({ ...personalInfo, github: v }) }, { p: "Portfolio URL", v: personalInfo.portfolio, set: (v: string) => setPersonalInfo({ ...personalInfo, portfolio: v }) }].map((f, i) => (
                             <div key={i} style={{ position: "relative" }}>
-                              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMuted, display: "flex" }}><Globe size={12} /></span>
+                              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: c.textMuted, display: "flex" }}><Globe size={12} /></span>
                               <input placeholder={f.p} value={f.v} onChange={e => f.set(e.target.value)} style={{ ...inputSx, paddingLeft: "1.8rem" }} />
                             </div>
                           ))}
@@ -320,9 +343,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </div>
 
                       {/* Education */}
-                      <CollapsibleSection title="Education" icon={<GraduationCap size={14} />} color={col} t={t} onAdd={addEdu}>
+                      <CollapsibleSection title="Education" icon={<GraduationCap size={14} />} color={col} t={c} onAdd={addEdu}>
                         {education.map((item, idx) => (
-                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                          <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                               <input placeholder="Institution" value={item.institution} onChange={e => updateEdu(idx, "institution", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
                               <input placeholder="Degree" value={item.degree} onChange={e => updateEdu(idx, "degree", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
@@ -339,9 +362,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </CollapsibleSection>
 
                       {/* Experience */}
-                      <CollapsibleSection title="Experience" icon={<Briefcase size={14} />} color={col} t={t} onAdd={addExp}>
+                      <CollapsibleSection title="Experience" icon={<Briefcase size={14} />} color={col} t={c} onAdd={addExp}>
                         {experience.map((item, idx) => (
-                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                          <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
                               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIExperience(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
                               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeExp(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
@@ -363,7 +386,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </CollapsibleSection>
 
                       {/* Achievements */}
-                      <CollapsibleSection title="Achievements" icon={<Trophy size={14} />} color={col} t={t} onAdd={addAchievement}>
+                      <CollapsibleSection title="Achievements" icon={<Trophy size={14} />} color={col} t={c} onAdd={addAchievement}>
                         {achievements.map((ach, idx) => (
                           <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
                             <input placeholder="e.g. Secured 1st place in National Hackathon" value={ach} onChange={e => updateAchievement(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
@@ -376,9 +399,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {/* Right column */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {/* Summary */}
-                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
+                      <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "1rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                          <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}><BookOpen size={14} style={{ color: col }} /> Professional Summary</h3>
+                          <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: c.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}><BookOpen size={14} style={{ color: col }} /> Professional Summary</h3>
                           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAISummary} disabled={generatingAI}
                             style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 6, color: col, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>
                             <Sparkles size={10} /> {generatingAI ? "..." : "AI Generate"}
@@ -390,9 +413,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </div>
 
                       {/* Projects */}
-                      <CollapsibleSection title="Projects" icon={<Code2 size={14} />} color={col} t={t} onAdd={addProj}>
+                      <CollapsibleSection title="Projects" icon={<Code2 size={14} />} color={col} t={c} onAdd={addProj}>
                         {projects.map((item, idx) => (
-                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                          <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
                               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIProject(idx)} disabled={generatingAI} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.5rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 5, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}><Sparkles size={8} /> AI Enhance</motion.button>
                               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => removeProj(idx)} style={{ background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 5, padding: 3, cursor: "pointer", color: "#ef4444", display: "flex" }}><Trash2 size={11} /></motion.button>
@@ -408,8 +431,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </CollapsibleSection>
 
                       {/* Skills */}
-                      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1rem" }}>
-                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><Zap size={14} style={{ color: col }} /> Skills</h3>
+                      <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "1rem" }}>
+                        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: c.text, margin: "0 0 0.65rem", display: "flex", alignItems: "center", gap: 6 }}><Zap size={14} style={{ color: col }} /> Skills</h3>
                         <div style={{ display: "flex", gap: 6 }}>
                           <input placeholder="Add a skill..." value={skillInput} onChange={e => setSkillInput(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && addSkill()}
@@ -422,7 +445,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
                           {skills.map((s) => (
-                            <motion.span key={s} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: 16, fontSize: "0.72rem", color: t.textSecondary, fontWeight: 600 }}>
+                            <motion.span key={s} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.25rem 0.6rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: 16, fontSize: "0.72rem", color: c.textSecondary, fontWeight: 600 }}>
                               {s}
                               <motion.button whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.8 }} onClick={() => removeSkill(s)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.85rem", lineHeight: 1 }}>&times;</motion.button>
                             </motion.span>
@@ -431,9 +454,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </div>
 
                       {/* Certifications */}
-                      <CollapsibleSection title="Certifications" icon={<Award size={14} />} color={col} t={t} onAdd={addCert}>
+                      <CollapsibleSection title="Certifications" icon={<Award size={14} />} color={col} t={c} onAdd={addCert}>
                         {certifications.map((item, idx) => (
-                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
+                          <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.7rem", position: "relative", marginBottom: 6 }}>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                               <input placeholder="Certification Name" value={item.name} onChange={e => updateCert(idx, "name", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
                               <input placeholder="Issuer" value={item.issuer} onChange={e => updateCert(idx, "issuer", e.target.value)} style={{ ...inputSx, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
@@ -445,7 +468,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       </CollapsibleSection>
 
                       {/* Languages */}
-                      <CollapsibleSection title="Languages" icon={<Languages size={14} />} color={col} t={t} onAdd={addLanguage}>
+                      <CollapsibleSection title="Languages" icon={<Languages size={14} />} color={col} t={c} onAdd={addLanguage}>
                         {languages.map((lang, idx) => (
                           <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
                             <input placeholder="e.g. English (Fluent), Hindi (Native)" value={lang} onChange={e => updateLanguage(idx, e.target.value)} style={{ ...inputSx, flex: 1, fontSize: "0.78rem", padding: "0.45rem 0.65rem" }} />
@@ -458,17 +481,17 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                 </div>
 
                 {/* Bottom nav */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.65rem 1.25rem", borderTop: `1px solid ${t.border}`, flexShrink: 0 }}>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(1)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.65rem 1.25rem", borderTop: `1px solid ${c.border}`, flexShrink: 0 }}>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(1)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: c.surface, border: `1px solid ${c.border}`, color: c.textSecondary }}>
                     <ChevronLeft size={14} /> Back
                   </motion.button>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveDraft} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: `1px solid ${t.borderLight}`, color: t.textSecondary }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveDraft} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: `1px solid ${c.borderLight}`, color: c.textSecondary }}>
                       <Save size={13} /> {saving ? "Saving..." : "Save Draft"}
                     </motion.button>
                     <motion.button whileHover={canContinue(2) ? { scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" } : {}} whileTap={canContinue(2) ? { scale: 0.98 } : {}}
                       onClick={() => { if (canContinue(2)) { setScreen(3); handleGenerate(); } }} disabled={!canContinue(2)}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1.2rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: canContinue(2) ? "pointer" : "not-allowed", background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : t.surface, color: canContinue(2) ? "#000" : t.textDim, border: "none" }}>
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.45rem 1.2rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: canContinue(2) ? "pointer" : "not-allowed", background: canContinue(2) ? "linear-gradient(135deg, #f59e0b, #d97706)" : c.surface, color: canContinue(2) ? "#000" : c.textDim, border: "none" }}>
                       Generate Resume <Sparkles size={13} />
                     </motion.button>
                   </div>
@@ -486,23 +509,23 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       style={{ width: 60, height: 60, borderRadius: "50%", background: genStep >= 4 ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)", border: `2px solid ${genStep >= 4 ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.85rem" }}>
                       {genStep >= 4 ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><Check size={28} style={{ color: "#10b981" }} /></motion.div> : <Loader2 size={28} style={{ color: col }} />}
                     </motion.div>
-                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: t.text, margin: 0 }}>{genStep >= 4 ? "Resume Generated!" : "Crafting Your Resume"}</h2>
-                    <p style={{ fontSize: "0.85rem", color: t.textMuted, margin: "0.25rem 0 0" }}>{genStep >= 4 ? "Your ATS-optimized resume is ready for review" : "AI is analyzing and optimizing your profile"}</p>
+                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: c.text, margin: 0 }}>{genStep >= 4 ? "Resume Generated!" : "Crafting Your Resume"}</h2>
+                    <p style={{ fontSize: "0.85rem", color: c.textMuted, margin: "0.25rem 0 0" }}>{genStep >= 4 ? "Your ATS-optimized resume is ready for review" : "AI is analyzing and optimizing your profile"}</p>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     {genSteps.map((step, i) => (
-                      <motion.div key={step.label} animate={{ background: i <= genStep ? t.genBg : t.surface, borderColor: i <= genStep ? "rgba(245,158,11,0.2)" : t.border }}
+                      <motion.div key={step.label} animate={{ background: i <= genStep ? c.genBg : c.surface, borderColor: i <= genStep ? "rgba(245,158,11,0.2)" : c.border }}
                         style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "0.85rem 1rem", borderRadius: 12, border: "1px solid" }}>
-                        <motion.div animate={{ background: i < genStep ? col : i === genStep ? "rgba(245,158,11,0.2)" : t.surface, scale: i === genStep ? [1, 1.15, 1] : 1 }} transition={{ repeat: i === genStep ? Infinity : 0, duration: 1 }}
+                        <motion.div animate={{ background: i < genStep ? col : i === genStep ? "rgba(245,158,11,0.2)" : c.surface, scale: i === genStep ? [1, 1.15, 1] : 1 }} transition={{ repeat: i === genStep ? Infinity : 0, duration: 1 }}
                           style={{ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {i < genStep ? <Check size={14} style={{ color: "#000" }} /> : i === genStep ? <Loader2 size={12} style={{ color: col }} /> : <div style={{ width: 8, height: 8, borderRadius: "50%", background: t.textDim }} />}
+                          {i < genStep ? <Check size={14} style={{ color: "#000" }} /> : i === genStep ? <Loader2 size={12} style={{ color: col }} /> : <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.textDim }} />}
                         </motion.div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: i <= genStep ? t.text : t.textDim, display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: i <= genStep ? c.text : c.textDim, display: "flex", alignItems: "center", gap: 6 }}>
                             {i <= genStep && <span style={{ color: col }}>{step.icon}</span>} {step.label}
                           </div>
-                          <div style={{ fontSize: "0.7rem", color: i <= genStep ? t.textMuted : t.textDim, marginTop: 3, lineHeight: 1.5 }}>{step.desc}</div>
+                          <div style={{ fontSize: "0.7rem", color: i <= genStep ? c.textMuted : c.textDim, marginTop: 3, lineHeight: 1.5 }}>{step.desc}</div>
                         </div>
                         {i < genStep && <Check size={14} style={{ color: "#10b981", flexShrink: 0 }} />}
                       </motion.div>
@@ -526,9 +549,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
             {screen === 4 && (
               <div className="h-full flex" style={{ flexDirection: "row" }}>
                 {/* Editor panel - 40% */}
-                <div style={{ width: "40%", borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                  <div style={{ padding: "0.6rem 0.85rem", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-                    <h3 style={{ fontSize: "0.68rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: "40%", borderRight: `1px solid ${c.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                  <div style={{ padding: "0.6rem 0.85rem", borderBottom: `1px solid ${c.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+                    <h3 style={{ fontSize: "0.68rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                       <Settings size={12} style={{ color: col }} /> Editor
                     </h3>
                     <div style={{ display: "flex", gap: 5 }}>
@@ -537,7 +560,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                         <Save size={10} /> {saving ? "..." : "Save"}
                       </motion.button>
                       <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAIOptimizeCompany} disabled={generatingAI}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.3rem 0.6rem", background: t.surface, border: `1px solid ${t.borderLight}`, borderRadius: 7, color: t.textSecondary, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}>
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0.3rem 0.6rem", background: c.surface, border: `1px solid ${c.borderLight}`, borderRadius: 7, color: c.textSecondary, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}>
                         <Zap size={10} /> {generatingAI ? "..." : "Optimize"}
                       </motion.button>
                     </div>
@@ -546,7 +569,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {/* Summary */}
                     <div style={{ marginBottom: "0.65rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                        <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: t.textSecondary, margin: 0, textTransform: "uppercase", letterSpacing: "0.03em" }}>Professional Summary</h4>
+                        <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: c.textSecondary, margin: 0, textTransform: "uppercase", letterSpacing: "0.03em" }}>Professional Summary</h4>
                         <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={handleAISummary} disabled={generatingAI} style={{ background: "none", border: "none", color: col, fontSize: "0.6rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}><Sparkles size={8} /> AI</motion.button>
                       </div>
                       <textarea value={summary} onChange={e => setSummary(e.target.value)} placeholder="Professional summary..."
@@ -561,9 +584,9 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       { label: "Education", data: education, setData: setEducation as (d: any[]) => void, fields: ["degree", "institution"] },
                     ].map((section) => (
                       <div key={section.label} style={{ marginBottom: "0.65rem" }}>
-                        <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: t.textSecondary, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.03em" }}>{section.label}</h4>
+                        <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: c.textSecondary, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.03em" }}>{section.label}</h4>
                         {(section.data as any[]).map((item, idx) => (
-                          <div key={idx} style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: "0.45rem", marginBottom: 4 }}>
+                          <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 8, padding: "0.45rem", marginBottom: 4 }}>
                             {section.fields.map((f) => (
                               <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)} value={item[f] || ""}
                                 onChange={e => { const u = [...section.data]; (u[idx] as any)[f] = e.target.value; section.setData(u); }}
@@ -577,10 +600,10 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
                     {/* Skills */}
                     <div>
-                      <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: t.textSecondary, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.03em" }}>Skills</h4>
+                      <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: c.textSecondary, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.03em" }}>Skills</h4>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                         {skills.map((s) => (
-                          <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.45rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 12, fontSize: "0.62rem", color: t.textSecondary, fontWeight: 600 }}>
+                          <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.2rem 0.45rem", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 12, fontSize: "0.62rem", color: c.textSecondary, fontWeight: 600 }}>
                             {s}
                             <button onClick={() => removeSkill(s)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.75rem" }}>&times;</button>
                           </span>
@@ -593,33 +616,33 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                 {/* Preview panel - 60% */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                   {/* Toolbar */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem 0.85rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem 0.85rem", borderBottom: `1px solid ${c.border}`, flexShrink: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: t.textSecondary, display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: c.textSecondary, display: "flex", alignItems: "center", gap: 5 }}>
                         <Eye size={13} style={{ color: col }} /> Live Preview
                       </span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ display: "flex", gap: 2, background: t.surface, border: `1px solid ${t.border}`, borderRadius: 7, padding: 2 }}>
+                      <div style={{ display: "flex", gap: 2, background: c.surface, border: `1px solid ${c.border}`, borderRadius: 7, padding: 2 }}>
                         {(["desktop", "tablet", "mobile"] as const).map((d) => (
                           <motion.button key={d} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                             onClick={() => {}} // device preview is visual only
-                            style={{ padding: "0.25rem 0.45rem", borderRadius: 5, border: "none", cursor: "pointer", background: "transparent", color: t.textMuted, display: "flex" }}>
+                            style={{ padding: "0.25rem 0.45rem", borderRadius: 5, border: "none", cursor: "pointer", background: "transparent", color: c.textMuted, display: "flex" }}>
                             <Monitor size={11} />
                           </motion.button>
                         ))}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 2, background: t.surface, border: `1px solid ${t.border}`, borderRadius: 7, padding: "2px 4px" }}>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setZoom(prev => Math.max(40, prev - 10))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, padding: 3, display: "flex" }}><ZoomOut size={11} /></motion.button>
-                        <span style={{ fontSize: "0.58rem", fontWeight: 700, color: t.textMuted, minWidth: 26, textAlign: "center" }}>{zoom}%</span>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setZoom(prev => Math.min(160, prev + 10))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, padding: 3, display: "flex" }}><ZoomIn size={11} /></motion.button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 2, background: c.surface, border: `1px solid ${c.border}`, borderRadius: 7, padding: "2px 4px" }}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setZoom(prev => Math.max(40, prev - 10))} style={{ background: "none", border: "none", cursor: "pointer", color: c.textMuted, padding: 3, display: "flex" }}><ZoomOut size={11} /></motion.button>
+                        <span style={{ fontSize: "0.58rem", fontWeight: 700, color: c.textMuted, minWidth: 26, textAlign: "center" }}>{zoom}%</span>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setZoom(prev => Math.min(160, prev + 10))} style={{ background: "none", border: "none", cursor: "pointer", color: c.textMuted, padding: 3, display: "flex" }}><ZoomIn size={11} /></motion.button>
                       </div>
                       <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setChatOpen(true)}
                         style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "0.3rem 0.6rem", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 7, color: col, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}>
                         <MessageCircle size={10} /> AI Chat
                       </motion.button>
                       <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { const el = document.querySelector('.dash-main'); if (el) { el.classList.toggle('!overflow-hidden'); } }}
-                        style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 7, padding: 5, cursor: "pointer", color: t.textSecondary, display: "flex" }}>
+                        style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 7, padding: 5, cursor: "pointer", color: c.textSecondary, display: "flex" }}>
                         <Maximize2 size={12} />
                       </motion.button>
                     </div>
@@ -635,8 +658,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                   </div>
 
                   {/* Bottom nav */}
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0.85rem", borderTop: `1px solid ${t.border}`, flexShrink: 0 }}>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(2)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.4rem 0.9rem", borderRadius: 8, fontWeight: 600, fontSize: "0.75rem", cursor: "pointer", background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0.85rem", borderTop: `1px solid ${c.border}`, flexShrink: 0 }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(2)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.4rem 0.9rem", borderRadius: 8, fontWeight: 600, fontSize: "0.75rem", cursor: "pointer", background: c.surface, border: `1px solid ${c.border}`, color: c.textSecondary }}>
                       <ChevronLeft size={13} /> Edit Info
                     </motion.button>
                     <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(5)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.4rem 0.9rem", borderRadius: 8, fontWeight: 700, fontSize: "0.75rem", cursor: "pointer", background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
@@ -657,35 +680,35 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                       style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(16,185,129,0.1)", border: "2px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem" }}>
                       <Check size={26} style={{ color: "#10b981" }} />
                     </motion.div>
-                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: t.text, margin: 0 }}>Resume Complete</h2>
-                    <p style={{ fontSize: "0.82rem", color: t.textMuted, margin: "0.2rem 0 0" }}>Your AI-optimized ATS resume is ready to export</p>
+                    <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: c.text, margin: 0 }}>Resume Complete</h2>
+                    <p style={{ fontSize: "0.82rem", color: c.textMuted, margin: "0.2rem 0 0" }}>Your AI-optimized ATS resume is ready to export</p>
                   </div>
 
                   {/* Two-column layout for details + export */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: "1rem" }}>
                     {/* Resume Details */}
-                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1.1rem" }}>
-                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem" }}>Resume Details</h3>
+                    <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "1.1rem" }}>
+                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem" }}>Resume Details</h3>
                       {[
                         { label: "Template", value: setup.resumeStyle },
                         { label: "Target Company", value: setup.company },
                         { label: "Target Profession", value: setup.profession },
                         { label: "Career Level", value: setup.careerLevel },
                       ].map((item) => (
-                        <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", borderBottom: `1px solid ${t.border}`, fontSize: "0.78rem" }}>
-                          <span style={{ color: t.textMuted, fontWeight: 600 }}>{item.label}</span>
-                          <span style={{ color: t.text, fontWeight: 700 }}>{item.value}</span>
+                        <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", borderBottom: `1px solid ${c.border}`, fontSize: "0.78rem" }}>
+                          <span style={{ color: c.textMuted, fontWeight: 600 }}>{item.label}</span>
+                          <span style={{ color: c.text, fontWeight: 700 }}>{item.value}</span>
                         </div>
                       ))}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0", fontSize: "0.78rem" }}>
-                        <span style={{ color: t.textMuted, fontWeight: 600 }}>Sections Included</span>
-                        <span style={{ color: t.text, fontWeight: 700 }}>{[personalInfo.fullName && "Personal", summary && "Summary", experience.some(e => e.company) && "Experience", projects.some(p => p.name) && "Projects", education.some(e => e.institution) && "Education", skills.length && "Skills"].filter(Boolean).length} / 6</span>
+                        <span style={{ color: c.textMuted, fontWeight: 600 }}>Sections Included</span>
+                        <span style={{ color: c.text, fontWeight: 700 }}>{[personalInfo.fullName && "Personal", summary && "Summary", experience.some(e => e.company) && "Experience", projects.some(p => p.name) && "Projects", education.some(e => e.institution) && "Education", skills.length && "Skills"].filter(Boolean).length} / 6</span>
                       </div>
                     </div>
 
                     {/* Export Options */}
-                    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "1.1rem" }}>
-                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: t.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: "1.1rem" }}>
+                      <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
                         <Download size={14} style={{ color: col }} /> Export Options
                       </h3>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
@@ -699,8 +722,8 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                             disabled={exporting !== null || saving}
                             style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "1rem", borderRadius: 12, cursor: "pointer", background: opt.bg, border: `1px solid ${opt.border}` }}>
                             {opt.type === "save" ? <Save size={22} style={{ color: opt.color }} /> : <FileText size={22} style={{ color: opt.color }} />}
-                            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text }}>{exporting === opt.type || saving ? "..." : opt.label}</span>
-                            <span style={{ fontSize: "0.58rem", color: t.textMuted }}>{opt.desc}</span>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: c.text }}>{exporting === opt.type || saving ? "..." : opt.label}</span>
+                            <span style={{ fontSize: "0.58rem", color: c.textMuted }}>{opt.desc}</span>
                           </motion.button>
                         ))}
                       </div>
@@ -709,7 +732,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
 
                   {/* Action buttons */}
                   <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(4)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.55rem 1.2rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: t.surface, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setScreen(4)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.55rem 1.2rem", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", background: c.surface, border: `1px solid ${c.border}`, color: c.textSecondary }}>
                       <ChevronLeft size={14} /> Back to Editor
                     </motion.button>
                     <motion.button whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(245,158,11,0.25)" }} whileTap={{ scale: 0.98 }} onClick={() => setView("resume-hub")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.55rem 1.2rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", border: "none" }}>
@@ -730,19 +753,19 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", justifyContent: "flex-end" }}>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setChatOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              style={{ width: "100%", maxWidth: 400, height: "100%", background: t.chatBg, borderLeft: `1px solid ${t.borderLight}`, position: "relative", zIndex: 1, display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.85rem 1rem", borderBottom: `1px solid ${t.borderLight}`, flexShrink: 0 }}>
+              style={{ width: "100%", maxWidth: 400, height: "100%", background: c.chatBg, borderLeft: `1px solid ${c.borderLight}`, position: "relative", zIndex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.85rem 1rem", borderBottom: `1px solid ${c.borderLight}`, flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Bot size={14} style={{ color: col }} />
                   </div>
                   <div>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: t.text }}>AI Assistant</span>
-                    <span style={{ fontSize: "0.62rem", color: t.textMuted, display: "block" }}>Resume Optimization</span>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: c.text }}>AI Assistant</span>
+                    <span style={{ fontSize: "0.62rem", color: c.textMuted, display: "block" }}>Resume Optimization</span>
                   </div>
                 </div>
                 <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={() => setChatOpen(false)}
-                  style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, padding: 5, cursor: "pointer", color: t.textMuted, display: "flex" }}>
+                  style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 8, padding: 5, cursor: "pointer", color: c.textMuted, display: "flex" }}>
                   <X size={15} />
                 </motion.button>
               </div>
@@ -751,11 +774,11 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                 {chatMessages.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
                     <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 3 }}><Bot size={36} style={{ color: col, margin: "0 auto 0.65rem", opacity: 0.5 }} /></motion.div>
-                    <p style={{ fontSize: "0.8rem", color: t.textMuted, marginBottom: "0.85rem" }}>Ask AI to improve your resume</p>
+                    <p style={{ fontSize: "0.8rem", color: c.textMuted, marginBottom: "0.85rem" }}>Ask AI to improve your resume</p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5, justifyContent: "center" }}>
                       {CHAT_SUGGESTIONS.map((s) => (
                         <motion.button key={s} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => handleAIChat(s)}
-                          style={{ padding: "0.35rem 0.65rem", background: t.surface, border: `1px solid ${t.border}`, borderRadius: 16, fontSize: "0.65rem", color: t.textSecondary, cursor: "pointer", fontWeight: 500 }}>
+                          style={{ padding: "0.35rem 0.65rem", background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, fontSize: "0.65rem", color: c.textSecondary, cursor: "pointer", fontWeight: 500 }}>
                           {s}
                         </motion.button>
                       ))}
@@ -766,7 +789,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {chatMessages.map((msg, idx) => (
                       <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", gap: 6, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
                         {msg.role === "ai" && <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 }}><Bot size={11} style={{ color: col }} /></div>}
-                        <div style={{ maxWidth: "80%", padding: "0.6rem 0.8rem", borderRadius: 12, fontSize: "0.75rem", lineHeight: 1.5, background: msg.role === "user" ? "rgba(245,158,11,0.12)" : t.surface, border: `1px solid ${msg.role === "user" ? "rgba(245,158,11,0.2)" : t.border}`, color: t.text, whiteSpace: "pre-wrap" }}>
+                        <div style={{ maxWidth: "80%", padding: "0.6rem 0.8rem", borderRadius: 12, fontSize: "0.75rem", lineHeight: 1.5, background: msg.role === "user" ? "rgba(245,158,11,0.12)" : c.surface, border: `1px solid ${msg.role === "user" ? "rgba(245,158,11,0.2)" : c.border}`, color: c.text, whiteSpace: "pre-wrap" }}>
                           {msg.text || <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }}>Thinking...</motion.span>}
                         </div>
                         {msg.role === "user" && <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(245,158,11,0.2)", border: "2px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 }}><User size={11} style={{ color: col }} /></div>}
@@ -775,7 +798,7 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                     {chatLoading && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}><Bot size={11} style={{ color: col }} /></div>
-                        <div style={{ padding: "0.6rem 0.8rem", borderRadius: 12, background: t.surface, border: `1px solid ${t.border}` }}><Loader2 size={13} className="animate-spin" style={{ color: col }} /></div>
+                        <div style={{ padding: "0.6rem 0.8rem", borderRadius: 12, background: c.surface, border: `1px solid ${c.border}` }}><Loader2 size={13} className="animate-spin" style={{ color: col }} /></div>
                       </motion.div>
                     )}
                     <div ref={chatEndRef} />
@@ -783,12 +806,12 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
                 )}
               </div>
 
-              <div style={{ padding: "0.65rem 0.85rem", borderTop: `1px solid ${t.borderLight}`, flexShrink: 0 }}>
+              <div style={{ padding: "0.65rem 0.85rem", borderTop: `1px solid ${c.borderLight}`, flexShrink: 0 }}>
                 <div style={{ display: "flex", gap: 6 }}>
                   <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAIChat()} placeholder="Ask AI to improve..." disabled={chatLoading}
                     style={{ flex: 1, ...inputSx, fontSize: "0.75rem", padding: "0.5rem 0.7rem" }}
                     onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,158,11,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.08)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = "none"; }}
                   />
                   <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }} onClick={() => handleAIChat()} disabled={chatLoading || !chatInput.trim()}
                     style={{ padding: "0.5rem 0.7rem", borderRadius: 8, background: "linear-gradient(135deg, #f59e0b, #d97706)", border: "none", color: "#000", cursor: "pointer", opacity: chatLoading || !chatInput.trim() ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -800,19 +823,19 @@ export function ResumeBuilderView({ setView, selectedTemplate, theme = "dark" }:
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
 // ─── Collapsible Section ──────────────────────────────────────────────────────
-function CollapsibleSection({ title, icon, children, onAdd, t, color }: {
+function CollapsibleSection({ title, icon, children, onAdd, t: c, color }: {
   title: string; icon: React.ReactNode; children: React.ReactNode; onAdd?: () => void; t: any; color: string;
 }) {
   const [open, setOpen] = useState(true);
   return (
-    <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, overflow: "hidden" }}>
       <div onClick={() => setOpen(!open)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.65rem 1rem", cursor: "pointer", userSelect: "none" }}>
-        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: t.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: "0.72rem", fontWeight: 700, color: c.text, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ color }}>{icon}</span> {title}
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -822,7 +845,7 @@ function CollapsibleSection({ title, icon, children, onAdd, t, color }: {
               <Plus size={10} /> Add
             </motion.button>
           )}
-          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.12 }}><ChevronRight size={12} style={{ color: t.textMuted }} /></motion.div>
+          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.12 }}><ChevronRight size={12} style={{ color: c.textMuted }} /></motion.div>
         </div>
       </div>
       <AnimatePresence>
