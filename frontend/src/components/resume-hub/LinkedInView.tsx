@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import {
-  Layers, ArrowLeft, Sparkles, RefreshCw, Calendar,
+  Layers, Sparkles, RefreshCw, Calendar,
   Copy, Check, Info, Award
 } from "lucide-react";
 
@@ -145,10 +145,6 @@ export function LinkedInView({ setView }: LinkedInViewProps) {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       {/* HEADER */}
       <div className="flex-shrink-0 flex items-center gap-2.5 pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
-        <motion.button onClick={() => setView("resume-hub")} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
-          <ArrowLeft size={15} />
-        </motion.button>
         <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
           <Layers size={18} style={{ color: "#000" }} />
         </motion.div>
