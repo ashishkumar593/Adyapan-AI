@@ -363,7 +363,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
+      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
         {screen !== "home" && (
           <motion.button
             whileHover={buttonHover} whileTap={buttonTap}
