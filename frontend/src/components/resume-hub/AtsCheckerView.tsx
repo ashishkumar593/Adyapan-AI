@@ -88,7 +88,7 @@ const mkColors = (theme: string) => {
   const isDark = theme === "dark";
   return {
     isDark,
-    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#6b7280" : "#94a3b8",
+    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#828fa3" : "#5f6368",
     bg: isDark ? "rgba(255,255,255,0.025)" : "linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #e8edf5 100%)",
     bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f1f5f9",
     surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
