@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
-import { prisma } from "../config/prisma";
+import { getUserPrisma } from "../config/dynamicPrisma";
 import {
   generateNotes,
   generateQuiz,
@@ -54,6 +54,13 @@ export function initSocketServer(server: HttpServer) {
     // Real-time Study Assistant Streaming (uses actual Gemini API)
     socket.on("study:message", async ({ sessionId, query, context }: { sessionId: string; query: string; context: string }) => {
       try {
+        const userId = await resolveUserId({});
+        if (!userId || userId === "unknown") {
+          socket.emit("study:error", { error: "Authentication required." });
+          return;
+        }
+
+        const userPrisma = await getUserPrisma(userId);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const prompt = `
           You are an expert academic tutor. Provide a clear, educational, and helpful response to the student's query.
@@ -76,34 +83,27 @@ export function initSocketServer(server: HttpServer) {
           io.to(sessionId).emit("study:chunk", { text: chunkText });
         }
 
-        let session = await prisma.studySession.findUnique({
+        const session = await userPrisma.studySession.findUnique({
           where: { id: sessionId },
         });
 
+        if (session && session.userId !== userId) {
+          socket.emit("study:error", { error: "Session does not belong to you." });
+          return;
+        }
+
         if (!session) {
-          const firstUser = await prisma.user.findFirst();
-          if (firstUser) {
-            session = await prisma.studySession.create({
-              data: {
-                id: sessionId,
-                userId: firstUser.id,
-                topic: "General Study",
-              },
-            });
-          }
-        }
-
-        if (session) {
-          await prisma.studyMessage.create({
-            data: { sessionId, role: "user", content: query },
-          });
-          await prisma.studyMessage.create({
-            data: { sessionId, role: "model", content: fullResponse },
+          await userPrisma.studySession.create({
+            data: { id: sessionId, userId, topic: "General Study" },
           });
         }
-
+        await userPrisma.studyMessage.createMany({
+          data: [
+            { sessionId, role: "user", content: query },
+            { sessionId, role: "model", content: fullResponse },
+          ],
+        });
         io.to(sessionId).emit("study:complete", { fullResponse });
-
       } catch (error) {
         console.error("Socket study assistant streaming error:", error);
         io.to(sessionId).emit("study:error", { error: "Failed to process query in real-time." });
@@ -114,8 +114,7 @@ export function initSocketServer(server: HttpServer) {
     async function resolveUserId(payload: any): Promise<string> {
       if (payload.userId) return payload.userId;
       if (socket.data?.userId) return socket.data.userId;
-      const firstUser = await prisma.user.findFirst();
-      return firstUser?.id || "unknown";
+      return "unknown";
     }
 
     // Real-time AI Generation for all Learning Hub tools
@@ -130,6 +129,7 @@ export function initSocketServer(server: HttpServer) {
 
       try {
         const userId = await resolveUserId(payload);
+        const userPrisma = await getUserPrisma(userId);
 
         switch (moduleName) {
           case "notes": {
@@ -137,7 +137,7 @@ export function initSocketServer(server: HttpServer) {
             const content = await generateNotes(payload.topic || "General", payload.difficulty || "Intermediate", payload.type || "Detailed Notes");
 
             emitProgress("Structuring content with headings and bullet points...");
-            const note = await prisma.generatedNote.create({
+            const note = await userPrisma.generatedNote.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -147,6 +147,7 @@ export function initSocketServer(server: HttpServer) {
               },
             });
 
+            emitProgress("Finalizing and saving notes...");
             socket.emit("generate:complete", { content, noteId: note.id });
             break;
           }
@@ -161,7 +162,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Formatting questions and answer keys...");
-            const quiz = await prisma.quiz.create({
+            const quiz = await userPrisma.quiz.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -184,7 +185,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Structuring introduction, body, and conclusion...");
-            const assignment = await prisma.assignment.create({
+            const assignment = await userPrisma.assignment.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -207,7 +208,7 @@ export function initSocketServer(server: HttpServer) {
             );
 
             emitProgress("Polishing slide content and speaker notes...");
-            const presentation = await prisma.presentation.create({
+            const presentation = await userPrisma.presentation.create({
               data: {
                 userId,
                 topic: payload.topic || "General",
@@ -225,7 +226,7 @@ export function initSocketServer(server: HttpServer) {
             const result: MindMapResult = await generateMindMapSchema(payload.topic || "General");
 
             emitProgress("Linking nodes and rendering connections...");
-            const mindMap = await prisma.mindMap.create({
+            const mindMap = await userPrisma.mindMap.create({
               data: {
                 userId,
                 topic: payload.topic || "General",

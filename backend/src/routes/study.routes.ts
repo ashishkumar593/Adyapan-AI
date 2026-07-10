@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
-import { prisma } from "../config/prisma";
 import { generateJSON } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
-const pdfParse = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 import mammoth from "mammoth";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 
 const uploadMemory = multer({
   storage: multer.memoryStorage(),
@@ -20,8 +20,9 @@ studyRouter.use(requireAuth);
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const mimeType = file.mimetype;
   if (mimeType === "application/pdf") {
-    const parsed = await pdfParse(file.buffer);
-    return parsed.text;
+    const pdf = new PDFParse({ data: file.buffer });
+    const result = await pdf.getText();
+    return result.text;
   } else if (
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     mimeType === "application/msword"
@@ -36,7 +37,8 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
 studyRouter.post("/upload", async (req, res) => {
   try {
     const { fileName, fileType, fileUrl, content } = req.body;
-    const doc = await prisma.uploadedDocument.create({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const doc = await userPrisma.uploadedDocument.create({
       data: {
         userId: req.user!.userId,
         fileName,
@@ -103,7 +105,7 @@ Extract 3-6 major topics from the document. Be thorough and educational. Return 
     const analysis = await generateJSON(
       "You are an expert academic tutor. Analyze the document and return a structured JSON summary.",
       prompt,
-      { model: "google/gemini-2.5-flash", maxTokens: 8192 },
+      { model: "google/gemini-2.5-flash", maxTokens: 4000 },
       null
     );
 
@@ -132,7 +134,8 @@ studyRouter.post("/generate-lesson", async (req, res) => {
 // Get study sessions with messages
 studyRouter.get("/sessions", async (req, res) => {
   try {
-    const sessions = await prisma.studySession.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.studySession.findMany({
       where: { userId: req.user!.userId },
       include: { messages: true, documents: true },
       orderBy: { updatedAt: "desc" },
@@ -145,7 +148,8 @@ studyRouter.get("/sessions", async (req, res) => {
 
 studyRouter.get("/history", async (req, res) => {
   try {
-    const sessions = await prisma.studySession.findMany({
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const sessions = await userPrisma.studySession.findMany({
       where: { userId: req.user!.userId },
       include: { messages: true },
     });

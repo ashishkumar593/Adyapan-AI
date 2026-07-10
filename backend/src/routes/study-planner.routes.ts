@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { prisma } from "../config/prisma";
+import { getUserPrismaFromRequest } from "../utils/prisma";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 
 export const studyPlannerRouter = Router();
@@ -23,6 +23,8 @@ studyPlannerRouter.post("/generate", async (req: any, res: any) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const userPrisma = await getUserPrismaFromRequest(req);
+
     // 1. Calculate available days
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -41,7 +43,7 @@ studyPlannerRouter.post("/generate", async (req: any, res: any) => {
     // 2. Query user weak topics for optimization
     let weakTopics: string[] = [];
     try {
-      const progresses = await prisma.topicProgress.findMany({
+      const progresses = await userPrisma.topicProgress.findMany({
         where: { userId, progressPercentage: { lt: 50 } },
         take: 5
       });
@@ -100,15 +102,15 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
 
     // 4. Save to Database
     // Archive previous plans by deleting their tasks
-    const existingPlans = await prisma.studyPlan.findMany({ where: { userId } });
+    const existingPlans = await userPrisma.studyPlan.findMany({ where: { userId } });
     for (const plan of existingPlans) {
-      await prisma.studyTask.deleteMany({ where: { studyPlanId: plan.id } });
+      await userPrisma.studyTask.deleteMany({ where: { studyPlanId: plan.id } });
     }
-    await prisma.studyPlan.deleteMany({ where: { userId } });
+    await userPrisma.studyPlan.deleteMany({ where: { userId } });
     // Keep study revisions clean
-    await prisma.studyRevision.deleteMany({ where: { userId } });
+    await userPrisma.studyRevision.deleteMany({ where: { userId } });
 
-    const newPlan = await prisma.studyPlan.create({
+    const newPlan = await userPrisma.studyPlan.create({
       data: {
         userId,
         title,
@@ -138,7 +140,7 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
         const estTimePerTopic = Math.round((item.study_hours * 60) / item.topics.length);
 
         for (const topic of item.topics) {
-          const task = await prisma.studyTask.create({
+          await userPrisma.studyTask.create({
             data: {
               studyPlanId: newPlan.id,
               topicName: topic,
@@ -156,7 +158,7 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
 
             // Cap revision creation inside exam bounds if needed
             if (!examDate || revDate <= new Date(examDate)) {
-              await prisma.studyRevision.create({
+              await userPrisma.studyRevision.create({
                 data: {
                   userId,
                   topicName: topic,
@@ -182,7 +184,9 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
 studyPlannerRouter.get("/", async (req: any, res: any) => {
   try {
     const userId = req.user!.userId;
-    const plan = await prisma.studyPlan.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const plan = await userPrisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
@@ -191,7 +195,7 @@ studyPlannerRouter.get("/", async (req: any, res: any) => {
       return res.json({ success: true, plan: null });
     }
 
-    const tasks = await prisma.studyTask.findMany({
+    const tasks = await userPrisma.studyTask.findMany({
       where: { studyPlanId: plan.id },
       orderBy: { scheduledDate: "asc" }
     });
@@ -202,7 +206,7 @@ studyPlannerRouter.get("/", async (req: any, res: any) => {
 
     // Update study plan completion percentage in database
     if (completionPercentage !== plan.completionPercentage) {
-      await prisma.studyPlan.update({
+      await userPrisma.studyPlan.update({
         where: { id: plan.id },
         data: { completionPercentage }
       });
@@ -232,7 +236,7 @@ studyPlannerRouter.get("/", async (req: any, res: any) => {
     else if (totalTodayHours > 3.5) burnoutRisk = "Moderate";
 
     // Streaks
-    const progress = await prisma.progressTracking.findUnique({ where: { userId } });
+    const progress = await userPrisma.progressTracking.findUnique({ where: { userId } });
     const streak = progress?.currentStreak || 0;
 
     res.json({
@@ -262,7 +266,9 @@ studyPlannerRouter.get("/", async (req: any, res: any) => {
 studyPlannerRouter.get("/today", async (req: any, res: any) => {
   try {
     const userId = req.user!.userId;
-    const plan = await prisma.studyPlan.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const plan = await userPrisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
@@ -275,7 +281,7 @@ studyPlannerRouter.get("/today", async (req: any, res: any) => {
     const todayStr = today.toISOString().split("T")[0];
 
     // Query tasks for today
-    const tasks = await prisma.studyTask.findMany({
+    const tasks = await userPrisma.studyTask.findMany({
       where: {
         studyPlanId: plan.id,
         scheduledDate: {
@@ -286,7 +292,7 @@ studyPlannerRouter.get("/today", async (req: any, res: any) => {
     });
 
     // Query revisions for today
-    const revisions = await prisma.studyRevision.findMany({
+    const revisions = await userPrisma.studyRevision.findMany({
       where: {
         userId,
         revisionDate: {
@@ -307,7 +313,9 @@ studyPlannerRouter.get("/today", async (req: any, res: any) => {
 studyPlannerRouter.get("/calendar", async (req: any, res: any) => {
   try {
     const userId = req.user!.userId;
-    const plan = await prisma.studyPlan.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const plan = await userPrisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
@@ -316,11 +324,11 @@ studyPlannerRouter.get("/calendar", async (req: any, res: any) => {
       return res.json({ success: true, events: [] });
     }
 
-    const tasks = await prisma.studyTask.findMany({
+    const tasks = await userPrisma.studyTask.findMany({
       where: { studyPlanId: plan.id }
     });
 
-    const revisions = await prisma.studyRevision.findMany({
+    const revisions = await userPrisma.studyRevision.findMany({
       where: { userId }
     });
 
@@ -362,9 +370,10 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
       return res.status(400).json({ error: "Missing task ID or status" });
     }
 
+    const userPrisma = await getUserPrismaFromRequest(req);
     const isCompleted = status === "Completed";
 
-    const task = await prisma.studyTask.update({
+    const task = await userPrisma.studyTask.update({
       where: { id: taskId },
       data: {
         status,
@@ -374,7 +383,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
 
     // Gamification & Analytics Hook: Add Learning Event
     if (isCompleted) {
-      await prisma.learningEvent.create({
+      await userPrisma.learningEvent.create({
         data: {
           userId,
           eventType: "study_task_completed",
@@ -385,12 +394,12 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
       });
 
       // Update Topic Progress
-      const existingProgress = await prisma.topicProgress.findFirst({
+      const existingProgress = await userPrisma.topicProgress.findFirst({
         where: { userId, topicName: task.topicName }
       });
 
       if (existingProgress) {
-        await prisma.topicProgress.update({
+        await userPrisma.topicProgress.update({
           where: { id: existingProgress.id },
           data: {
             progressPercentage: Math.min(100, existingProgress.progressPercentage + 20),
@@ -400,7 +409,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
           }
         });
       } else {
-        await prisma.topicProgress.create({
+        await userPrisma.topicProgress.create({
           data: {
             userId,
             topicName: task.topicName,
@@ -413,11 +422,11 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
       }
 
       // Add Concept Mastery Record
-      const concept = await prisma.conceptMastery.findFirst({
+      const concept = await userPrisma.conceptMastery.findFirst({
         where: { userId, conceptName: task.topicName }
       });
       if (concept) {
-        await prisma.conceptMastery.update({
+        await userPrisma.conceptMastery.update({
           where: { id: concept.id },
           data: {
             masteryScore: Math.min(100, concept.masteryScore + 15),
@@ -426,7 +435,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
           }
         });
       } else {
-        await prisma.conceptMastery.create({
+        await userPrisma.conceptMastery.create({
           data: {
             userId,
             conceptName: task.topicName,
@@ -439,7 +448,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
       }
 
       // Update Progress XP (Gamification Level Ups)
-      const progress = await prisma.progressTracking.findUnique({ where: { userId } });
+      const progress = await userPrisma.progressTracking.findUnique({ where: { userId } });
       if (progress) {
         let nextXP = progress.overallProgress + 8;
         let nextLevel = progress.learningLevel;
@@ -452,7 +461,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
           nextLevelName = levels[Math.min(levels.length - 1, nextLevel - 1)];
         }
 
-        await prisma.progressTracking.update({
+        await userPrisma.progressTracking.update({
           where: { userId },
           data: {
             overallProgress: nextXP,
@@ -475,7 +484,9 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
 studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
   try {
     const userId = req.user!.userId;
-    const plan = await prisma.studyPlan.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const plan = await userPrisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
@@ -488,7 +499,7 @@ studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
     today.setHours(0, 0, 0, 0);
 
     // Fetch all pending overdue tasks
-    const overdueTasks = await prisma.studyTask.findMany({
+    const overdueTasks = await userPrisma.studyTask.findMany({
       where: {
         studyPlanId: plan.id,
         status: "Pending",
@@ -513,13 +524,13 @@ studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
       const targetTask = overdueTasks[i];
       const targetDate = new Date(datePointer);
 
-      await prisma.studyTask.update({
+      await userPrisma.studyTask.update({
         where: { id: targetTask.id },
         data: { scheduledDate: targetDate }
       });
 
       // Shift corresponding revisions
-      const revisions = await prisma.studyRevision.findMany({
+      const revisions = await userPrisma.studyRevision.findMany({
         where: { userId, topicName: targetTask.topicName, status: "Pending" }
       });
 
@@ -529,7 +540,7 @@ studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
         const newRevDate = new Date(targetDate);
         newRevDate.setDate(targetDate.getDate() + intervalDays);
 
-        await prisma.studyRevision.update({
+        await userPrisma.studyRevision.update({
           where: { id: revisions[rIdx].id },
           data: { revisionDate: newRevDate }
         });
@@ -553,7 +564,9 @@ studyPlannerRouter.post("/reschedule", async (req: any, res: any) => {
 studyPlannerRouter.get("/recommendations", async (req: any, res: any) => {
   try {
     const userId = req.user!.userId;
-    const plan = await prisma.studyPlan.findFirst({
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const plan = await userPrisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
@@ -562,13 +575,13 @@ studyPlannerRouter.get("/recommendations", async (req: any, res: any) => {
       return res.json({ success: true, recommendations: [] });
     }
 
-    const tasks = await prisma.studyTask.findMany({
+    const tasks = await userPrisma.studyTask.findMany({
       where: { studyPlanId: plan.id, status: "Pending" },
       orderBy: { scheduledDate: "asc" },
       take: 3
     });
 
-    const revisions = await prisma.studyRevision.findMany({
+    const revisions = await userPrisma.studyRevision.findMany({
       where: { userId, status: "Pending", revisionDate: { lte: new Date() } },
       orderBy: { revisionDate: "asc" },
       take: 2
