@@ -32,3 +32,6 @@ export const env = {
 if (env.nodeEnv === "production" && env.jwtSecret === "replace-this-local-secret-before-production") {
   throw new Error("JWT_SECRET must be set in production");
 }
+
+// Trigger restart to load latest environment variables
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
+import { api } from "@/services/api";
 
 function useTheme() {
   const [theme, setTheme] = useState("dark");
@@ -65,6 +66,13 @@ export function NotesGeneratorView() {
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
+  const topicRef = useRef(topic);
+  const difficultyRef = useRef(difficulty);
+  const noteTypeRef = useRef(noteType);
+
+  useEffect(() => { topicRef.current = topic; }, [topic]);
+  useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
+  useEffect(() => { noteTypeRef.current = noteType; }, [noteType]);
 
   function parseMarkdownToSections(md: string): NoteSection[] {
     const sections: NoteSection[] = [];
@@ -84,6 +92,15 @@ export function NotesGeneratorView() {
     return sections;
   }
 
+  const addToHistory = useCallback((newNotes: any, content: string, parsedSections: NoteSection[]) => {
+    setHistory(prev => {
+      const newItem = { name: topicRef.current, date: "Just now", type: noteTypeRef.current, sections: parsedSections.length, data: newNotes };
+      const updated = [newItem, ...prev.filter(h => h.name !== topicRef.current)].slice(0, 10);
+      localStorage.setItem("adyapan-notes-history", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   useEffect(() => {
     try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
     try { const stored = localStorage.getItem("adyapan-notes-history"); if (stored) setHistory(JSON.parse(stored)); } catch {}
@@ -95,29 +112,41 @@ export function NotesGeneratorView() {
     const handleComplete = ({ content }: { content: string }) => {
       setGenerating(false);
       const parsedSections = parseMarkdownToSections(content);
-      const newNotes = { topic, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty };
+      const newNotes = { topic: topicRef.current, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty: difficultyRef.current };
       setNotesData(newNotes);
       if (parsedSections.length > 0) setActiveSection(parsedSections[0].title);
-      const newHistoryItem = { name: topic, date: "Just now", type: noteType, sections: parsedSections.length, data: newNotes };
-      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
-      setHistory(updatedHistory); localStorage.setItem("adyapan-notes-history", JSON.stringify(updatedHistory));
+      addToHistory(newNotes, content, parsedSections);
     };
     const handleError = ({ error }: { error: string }) => { setGenerating(false); toast.error(`Generation error: ${error}`); };
     socket.on("generate:progress", handleProgress);
     socket.on("generate:complete", handleComplete);
     socket.on("generate:error", handleError);
     return () => { socket.off("generate:progress", handleProgress); socket.off("generate:complete", handleComplete); socket.off("generate:error", handleError); };
-  }, [socket, topic, difficulty, noteType, history]);
+  }, [socket, addToHistory]);
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(async () => {
     setGenerating(true); setProgress(0); setStatusMsg("Starting notes generator pipeline...");
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "notes", payload: { topic, difficulty, type: noteType, userId: userIdRef.current } });
     } else {
-      setGenerating(false);
-      toast.error("Cannot connect to server. Please check your connection and try again.");
+      try {
+        setStatusMsg("Calling API directly...");
+        const res = await api.post("/notes/generate", { topic, difficulty, type: noteType });
+        if (res.data?.success && res.data?.note?.content) {
+          const content = res.data.note.content;
+          const parsedSections = parseMarkdownToSections(content);
+          const newNotes = { topic, sections: parsedSections, wordCount: content.split(/\s+/).length, studyTime: `${Math.ceil(content.split(/\s+/).length / 200)} mins`, difficulty };
+          setNotesData(newNotes);
+          if (parsedSections.length > 0) setActiveSection(parsedSections[0].title);
+          addToHistory(newNotes, content, parsedSections);
+        } else throw new Error("Invalid response");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || "Failed to generate notes via API.");
+      } finally {
+        setGenerating(false);
+      }
     }
-  };
+  }, [socket, isConnected, topic, difficulty, noteType, addToHistory]);
 
   const handleScrollToSection = (title: string) => {
     setActiveSection(prev => (prev === title ? "" : title));
@@ -314,7 +343,7 @@ export function NotesGeneratorView() {
               </div>
               <div className="w-full max-w-lg grid grid-cols-3 gap-3">
                 {stages.map((step, idx) => {
-                  const stageIdx = stages.indexOf(statusMsg);
+                  const stageIdx = progress === 0 ? -1 : Math.min(Math.floor((progress / 100) * (stages.length - 1)), stages.length - 1);
                   const isActive = idx <= stageIdx;
                   return (
                     <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
@@ -415,7 +444,14 @@ export function NotesGeneratorView() {
                     <span style={{ color: c.amber }} className="shrink-0"><Copy size={13} /></span> Copy Notes
                   </motion.button>
                   <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => toast.success("Notes exported successfully.")}
+                    onClick={() => {
+                      const txt = notesData.sections.map(s => `## ${s.title}\n${s.content}\n${s.bulletPoints.map(b => `- ${b}`).join("\n")}`).join("\n\n");
+                      const blob = new Blob([txt], { type: "text/markdown" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a"); a.href = url; a.download = `${notesData.topic.replace(/\s+/g, "_")}_notes.md`; a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success("Notes exported as Markdown!");
+                    }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
                     <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download PDF
                   </motion.button>

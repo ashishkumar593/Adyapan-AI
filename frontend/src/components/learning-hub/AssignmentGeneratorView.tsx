@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PenTool, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
+import { api } from "@/services/api";
 
 function useTheme() {
   const [theme, setTheme] = useState("dark");
@@ -62,6 +63,22 @@ export function AssignmentGeneratorView() {
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
+  const topicRef = useRef(topic);
+  const levelRef = useRef(level);
+  const wordCountRef = useRef(wordCount);
+
+  useEffect(() => { topicRef.current = topic; }, [topic]);
+  useEffect(() => { levelRef.current = level; }, [level]);
+  useEffect(() => { wordCountRef.current = wordCount; }, [wordCount]);
+
+  const addToHistory = useCallback((assignment: AssignmentContent) => {
+    setHistory(prev => {
+      const newItem = { name: topicRef.current, date: "Just now", level: levelRef.current, words: wordCountRef.current, data: assignment };
+      const updated = [newItem, ...prev.filter(h => h.name !== topicRef.current)].slice(0, 10);
+      localStorage.setItem("adyapan-assign-history", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   useEffect(() => {
     try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
@@ -73,26 +90,35 @@ export function AssignmentGeneratorView() {
     const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => { setProgress(p); setStatusMsg(statusMessage); };
     const handleComplete = ({ assignment }: { assignment: AssignmentContent }) => {
       setGenerating(false); setResult(assignment); setActiveSection("Introduction");
-      const newHistoryItem = { name: topic, date: "Just now", level, words: wordCount, data: assignment };
-      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
-      setHistory(updatedHistory); localStorage.setItem("adyapan-assign-history", JSON.stringify(updatedHistory));
+      addToHistory(assignment);
     };
     const handleError = ({ error }: { error: string }) => { setGenerating(false); toast.error(`Generation error: ${error}`); };
     socket.on("generate:progress", handleProgress);
     socket.on("generate:complete", handleComplete);
     socket.on("generate:error", handleError);
     return () => { socket.off("generate:progress", handleProgress); socket.off("generate:complete", handleComplete); socket.off("generate:error", handleError); };
-  }, [socket, topic, level, wordCount, history]);
+  }, [socket, addToHistory]);
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(async () => {
     setGenerating(true); setProgress(0); setStatusMsg("Initializing Assignment Generator...");
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "assignment", payload: { topic, level, wordCount: wordCount.split(" ")[0], userId: userIdRef.current } });
     } else {
-      setGenerating(false);
-      toast.error("Cannot connect to server. Please check your connection and try again.");
+      try {
+        setStatusMsg("Calling API directly...");
+        const res = await api.post("/assignment/generate", { topic, academicLevel: level, wordCount: wordCount.split(" ")[0] });
+        if (res.data?.success && res.data?.assignment?.content) {
+          const assignment = res.data.assignment.content;
+          setResult(assignment); setActiveSection("Introduction");
+          addToHistory(assignment);
+        } else throw new Error("Invalid response");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || "Failed to generate assignment via API.");
+      } finally {
+        setGenerating(false);
+      }
     }
-  };
+  }, [socket, isConnected, topic, level, wordCount, addToHistory]);
 
   const handleScrollToSection = (title: string) => {
     setActiveSection(prev => (prev === title ? "" : title));
@@ -388,7 +414,14 @@ export function AssignmentGeneratorView() {
                     <span style={{ color: c.amber }} className="shrink-0"><Copy size={13} /></span> Copy Assignment
                   </motion.button>
                   <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => toast.success("Assignment exported successfully.")}
+                    onClick={() => {
+                      const txt = `# ${topic}\n\n## Introduction\n${result.introduction}\n\n## Main Body\n${result.body}\n\n## Conclusion\n${result.conclusion}\n\n## References\n${result.references.map(r => `- ${r}`).join("\n")}`;
+                      const blob = new Blob([txt], { type: "text/markdown" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a"); a.href = url; a.download = `${topic.replace(/\s+/g, "_")}_assignment.md`; a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success("Assignment exported as Markdown!");
+                    }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
                     <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Download PDF
                   </motion.button>

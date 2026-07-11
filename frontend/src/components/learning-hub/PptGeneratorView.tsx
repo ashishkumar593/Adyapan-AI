@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Presentation, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
+import { api } from "@/services/api";
 
 function useTheme() {
   const [theme, setTheme] = useState("dark");
@@ -60,6 +61,20 @@ export function PptGeneratorView() {
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
+  const topicRef = useRef(topic);
+  const slideCountRef = useRef(slideCount);
+
+  useEffect(() => { topicRef.current = topic; }, [topic]);
+  useEffect(() => { slideCountRef.current = slideCount; }, [slideCount]);
+
+  const addToHistory = useCallback((slideList: Slide[]) => {
+    setHistory(prev => {
+      const newItem = { name: topicRef.current, date: "Just now", count: slideList.length, data: slideList };
+      const updated = [newItem, ...prev.filter(h => h.name !== topicRef.current)].slice(0, 10);
+      localStorage.setItem("adyapan-ppt-history", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   useEffect(() => {
     try { const raw = localStorage.getItem("adyapan-user"); if (raw) userIdRef.current = (JSON.parse(raw) as { id?: string })?.id ?? ""; } catch { }
@@ -71,26 +86,35 @@ export function PptGeneratorView() {
     const handleProgress = ({ progress: p, statusMessage }: { progress: number; statusMessage: string }) => { setProgress(p); setStatusMsg(statusMessage); };
     const handleComplete = ({ slides: slideList }: { slides: Slide[] }) => {
       setGenerating(false); setSlides(slideList); setActiveSlide(0);
-      const newHistoryItem = { name: topic, date: "Just now", count: slideList.length, data: slideList };
-      const updatedHistory = [newHistoryItem, ...history.filter(h => h.name !== topic)].slice(0, 10);
-      setHistory(updatedHistory); localStorage.setItem("adyapan-ppt-history", JSON.stringify(updatedHistory));
+      addToHistory(slideList);
     };
     const handleError = ({ error }: { error: string }) => { setGenerating(false); toast.error(`Generation error: ${error}`); };
     socket.on("generate:progress", handleProgress);
     socket.on("generate:complete", handleComplete);
     socket.on("generate:error", handleError);
     return () => { socket.off("generate:progress", handleProgress); socket.off("generate:complete", handleComplete); socket.off("generate:error", handleError); };
-  }, [socket, topic, slideCount, history]);
+  }, [socket, addToHistory]);
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(async () => {
     setGenerating(true); setProgress(0); setStatusMsg("Starting Presentation Generator...");
     if (socket && isConnected) {
       socket.emit("generate:start", { moduleName: "ppt", payload: { topic, slideCount: slideCount.split(" ")[0], userId: userIdRef.current } });
     } else {
-      setGenerating(false);
-      toast.error("Cannot connect to server. Please check your connection and try again.");
+      try {
+        setStatusMsg("Calling API directly...");
+        const res = await api.post("/ppt/generate", { topic, slideCount: slideCount.split(" ")[0] });
+        if (res.data?.success && res.data?.presentation?.slides) {
+          const slideList = res.data.presentation.slides;
+          setSlides(slideList); setActiveSlide(0);
+          addToHistory(slideList);
+        } else throw new Error("Invalid response");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || "Failed to generate presentation via API.");
+      } finally {
+        setGenerating(false);
+      }
     }
-  };
+  }, [socket, isConnected, topic, slideCount, addToHistory]);
 
   const loadHistoryItem = (item: typeof history[0]) => {
     setTopic(item.name); setSlideCount(`${item.count} Slides`); setSlides(item.data); setActiveSlide(0); setShowHistory(false);
@@ -269,7 +293,7 @@ export function PptGeneratorView() {
               </div>
               <div className="w-full max-w-lg grid grid-cols-3 gap-3">
                 {stages.map((step, idx) => {
-                  const stageIdx = stages.indexOf(statusMsg);
+                  const stageIdx = progress === 0 ? -1 : Math.min(Math.floor((progress / 100) * (stages.length - 1)), stages.length - 1);
                   const isActive = idx <= stageIdx;
                   return (
                     <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
@@ -364,7 +388,14 @@ export function PptGeneratorView() {
                     <span style={{ color: c.amber }} className="shrink-0"><Copy size={13} /></span> Copy Slides
                   </motion.button>
                   <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => toast.success("Presentation exported successfully.")}
+                    onClick={() => {
+                      const txt = slides.map((s, i) => `# Slide ${i + 1}: ${s.title}\n${s.bullets.map(b => `- ${b}`).join("\n")}\n\nSpeaker Notes: ${s.notes}`).join("\n\n---\n\n");
+                      const blob = new Blob([txt], { type: "text/markdown" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a"); a.href = url; a.download = `${topic.replace(/\s+/g, "_")}_slides.md`; a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success("Slides exported as Markdown!");
+                    }}
                     className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}>
                     <span style={{ color: c.amber }} className="shrink-0"><FileDown size={13} /></span> Export PPTX
                   </motion.button>
