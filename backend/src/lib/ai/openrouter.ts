@@ -32,7 +32,11 @@ async function callAIRobust(
   // 2. Add Groq if key exists
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
-    if (options.model?.includes("mini") || options.model?.includes("fast") || options.model?.includes("cheap")) {
+    const modelLower = options.model?.toLowerCase() ?? "";
+    const isMiniOrFast = (modelLower.includes("mini") && !modelLower.includes("gemini")) ||
+                         modelLower.includes("fast") ||
+                         modelLower.includes("cheap");
+    if (isMiniOrFast) {
       groqModel = "llama-3.1-8b-instant";
     }
     providers.push({
@@ -45,9 +49,9 @@ async function callAIRobust(
 
   // 3. Add Google Gemini if key exists
   if (env.geminiApiKey) {
-    let geminiModel = "gemini-1.5-flash";
-    if (options.model?.includes("powerful") || options.model?.includes("pro")) {
-      geminiModel = "gemini-1.5-pro";
+    let geminiModel = "gemini-2.5-flash";
+    if (options.model?.includes("gemini")) {
+      geminiModel = options.model.split("/").pop() || "gemini-2.5-flash";
     }
     providers.push({
       name: "Gemini",

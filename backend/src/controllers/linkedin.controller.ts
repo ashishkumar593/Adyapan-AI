@@ -48,7 +48,7 @@ export async function analyzeLinkedIn(req: Request, res: Response, next: NextFun
 export async function generateHeadline(req: Request, res: Response, next: NextFunction) {
   try {
     const { targetRole, skills } = req.body;
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `
       Write a compelling LinkedIn Headline for a professional seeking a "${targetRole || "Software Developer"}" role.
       Skills / Keywords: ${skills || "Web Development, TypeScript, React"}
@@ -72,7 +72,7 @@ export async function generateHeadline(req: Request, res: Response, next: NextFu
 export async function generateAbout(req: Request, res: Response, next: NextFunction) {
   try {
     const { targetRole, experience, skills } = req.body;
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `
       Write a professional and engaging "About" section for a LinkedIn profile.
       Target Role: ${targetRole || "Software Developer"}

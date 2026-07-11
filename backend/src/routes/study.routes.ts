@@ -139,7 +139,7 @@ Important instructions:
     let analysis: any = await generateJSON(
       "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations and practice questions.",
       prompt,
-      { model: "google/gemini-2.5-flash", maxTokens: 16000 },
+      { model: "google/gemini-2.5-flash", maxTokens: 8000 },
       null
     );
 
@@ -147,7 +147,7 @@ Important instructions:
       analysis = await generateJSON(
         "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations and practice questions.",
         prompt,
-        { model: MODELS.FAST, maxTokens: 16000 },
+        { model: MODELS.FAST, maxTokens: 8000 },
         null
       );
     }
@@ -158,7 +158,7 @@ Important instructions:
         stats: { pages: 1, words: documentText.split(/\s+/).length, topicsFound: 3, readingTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, summaryLength: "Complete" },
         insights: { mainSubject: "Study Material", difficultyLevel: "Intermediate", estimatedStudyTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, importantChapters: ["Chapter 1"], repeatedTopics: [] },
         topics: [
-          { name: "Main Content", overview: documentText.slice(0, 1500) + "...", keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples provided"], importantPoints: ["Read through each section carefully", "Take notes on important definitions", "Review examples and case studies"], questions: ["What are the main themes covered in this document?", "Explain the key concepts in your own words.", "How do the different sections relate to each other?", "What practical applications can you derive from the content?", "Summarize the document in 3-5 sentences."], quickRevision: "This document covers important academic content. Review each section systematically and practice with the provided questions to reinforce understanding.", keywords: documentText.split(/\s+/).filter((_, i, a) => a.indexOf(_) === i).slice(0, 20) }
+          { name: "Main Content", overview: documentText.slice(0, 1500) + "...", keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples provided"], importantPoints: ["Read through each section carefully", "Take notes on important definitions", "Review examples and case studies"], questions: ["What are the main themes covered in this document?", "Explain the key concepts in your own words.", "How do the different sections relate to each other?", "What practical applications can you derive from the content?", "Summarize the document in 3-5 sentences."], quickRevision: "This document covers important academic content. Review each section systematically and practice with the provided questions to reinforce understanding.", keywords: documentText.split(/\s+/).filter(w => w.length > 1 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 20) }
         ]
       };
     }

@@ -33,7 +33,11 @@ export async function streamChat(
   // 2. Add Groq if key exists
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
-    if (model.includes("mini") || model.includes("haiku") || model.includes("flash")) {
+    const modelLower = model.toLowerCase();
+    const isMiniOrFast = (modelLower.includes("mini") && !modelLower.includes("gemini")) ||
+                         modelLower.includes("haiku") ||
+                         modelLower.includes("flash");
+    if (isMiniOrFast) {
       groqModel = "llama-3.1-8b-instant";
     }
     providers.push({
@@ -46,9 +50,9 @@ export async function streamChat(
 
   // 3. Add Google Gemini if key exists
   if (env.geminiApiKey) {
-    let geminiModel = "gemini-1.5-flash";
-    if (model.includes("pro") || model.includes("powerful") || model.includes("large") || model.includes("gpt-4o")) {
-      geminiModel = "gemini-1.5-pro";
+    let geminiModel = "gemini-2.5-flash";
+    if (model.includes("gemini")) {
+      geminiModel = model.split("/").pop() || "gemini-2.5-flash";
     }
     providers.push({
       name: "Gemini",

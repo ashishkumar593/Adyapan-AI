@@ -1,3 +1,5 @@
+jest.mock("dotenv/config", () => {});
+
 describe("env config", () => {
   const ORIGINAL_ENV = process.env;
 
@@ -49,12 +51,14 @@ describe("env config", () => {
   it("throws in production when JWT_SECRET is left as the default", () => {
     process.env.NODE_ENV = "production";
     delete process.env.JWT_SECRET;
+    process.env.ADMIN_REGISTER_SECRET = "some-admin-secret";
     expect(() => require("../../src/config/env")).toThrow(/JWT_SECRET must be set/);
   });
 
   it("does not throw in production when JWT_SECRET is set", () => {
     process.env.NODE_ENV = "production";
     process.env.JWT_SECRET = "a-real-secret";
+    process.env.ADMIN_REGISTER_SECRET = "some-admin-secret";
     expect(() => require("../../src/config/env")).not.toThrow();
   });
 

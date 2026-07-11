@@ -1,5 +1,15 @@
 const ORIGINAL_ENV = process.env;
 
+jest.mock("../../../src/config/env", () => ({
+  env: {
+    get openrouterApiKey() { return process.env.OPENROUTER_API_KEY ?? ""; },
+    get groqApiKey() { return process.env.GROQ_API_KEY ?? ""; },
+    get geminiApiKey() { return process.env.GEMINI_API_KEY ?? ""; },
+    get jwtSecret() { return process.env.JWT_SECRET ?? "replace-this-local-secret-before-production"; },
+    get nodeEnv() { return process.env.NODE_ENV ?? "development"; }
+  }
+}));
+
 function loadModule() {
   return require("../../../src/lib/ai/openrouter");
 }
