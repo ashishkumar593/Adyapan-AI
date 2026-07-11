@@ -1512,7 +1512,13 @@ function UserDashboardContent() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<ResumeHubViewType>("dashboard");
+  const [activeView, setActiveView] = useState<ResumeHubViewType>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("dashboard-active-view") as ResumeHubViewType | null;
+      if (saved) return saved;
+    }
+    return "dashboard";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: any; duration: string; level: string } | null>(null);
   const selectedTemplate = "ATS Modern";
@@ -1520,6 +1526,10 @@ function UserDashboardContent() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("dashboard-active-view", activeView);
+  }, [activeView]);
 
   // ─── Fetch notifications from API ──────────────────────────────
   const fetchNotifications = useCallback(async () => {
