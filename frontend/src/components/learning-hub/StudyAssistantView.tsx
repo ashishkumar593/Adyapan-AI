@@ -70,8 +70,12 @@ const mkColors = (theme: string) => {
 };
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
+interface SubTopic {
+  name: string;
+  content: string;
+}
 interface TopicSummary {
-  name: string; overview: string; keyConcepts: string[];
+  name: string; overview: string; subtopics?: SubTopic[]; keyConcepts: string[];
   importantPoints: string[]; questions?: string[]; quickRevision: string; keywords: string[];
 }
 interface DocStats {
@@ -1998,6 +2002,25 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
                                   <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>Overview</span>
                                   <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{t.overview}</p>
                                 </div>
+
+                                {/* Subtopics */}
+                                {t.subtopics && t.subtopics.length > 0 && (
+                                  <div className="space-y-3">
+                                    <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>Subtopics</span>
+                                    <div className="space-y-4 pl-4 border-l-2" style={{ borderColor: c.border }}>
+                                      {t.subtopics.map((sub, sIdx) => (
+                                        <div key={sIdx} className="space-y-1">
+                                          <h4 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
+                                            {sub.name}
+                                          </h4>
+                                          <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>
+                                            {sub.content}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
                                 {/* Key Concepts + Important Points */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -120,6 +120,12 @@ Return a JSON object with this exact structure:
     {
       "name": string,
       "overview": string (very detailed, at least 300-500 words covering all key points in this topic),
+      "subtopics": [
+        {
+          "name": string,
+          "content": string (detailed overview of this subtopic, at least 150-250 words)
+        }
+      ] (at least 3-5 subtopics covering detailed components of the main topic),
       "keyConcepts": [string] (at least 5-8 concepts, each explained in 1-2 sentences),
       "importantPoints": [string] (at least 5-10 important points),
       "questions": [string] (at least 5 important exam-style questions based on the topic),
@@ -132,12 +138,13 @@ Return a JSON object with this exact structure:
 Important instructions:
 - Extract 5-8 major topics from the document. Be thorough and educational.
 - Each overview MUST be detailed — at least 300-500 words. Do NOT be brief.
+- For each topic, extract at least 3-5 detailed subtopics and explain them thoroughly.
 - Each topic MUST have at least 5 important exam-style questions that test understanding of that topic.
 - Each topic should have detailed keyConcepts (at least 5) and importantPoints (at least 5).
 - Return ONLY valid JSON. No markdown, no code fences.`;
 
     let analysis: any = await generateJSON(
-      "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations and practice questions.",
+      "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations, detailed subtopics, and practice questions.",
       prompt,
       { model: "google/gemini-2.5-flash", maxTokens: 8000 },
       null
@@ -145,7 +152,7 @@ Important instructions:
 
     if (!analysis) {
       analysis = await generateJSON(
-        "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations and practice questions.",
+        "You are an expert academic tutor. Analyze the document and return a detailed structured JSON summary with many topics, each containing thorough explanations, detailed subtopics, and practice questions.",
         prompt,
         { model: MODELS.FAST, maxTokens: 8000 },
         null
@@ -158,7 +165,19 @@ Important instructions:
         stats: { pages: 1, words: documentText.split(/\s+/).length, topicsFound: 3, readingTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, summaryLength: "Complete" },
         insights: { mainSubject: "Study Material", difficultyLevel: "Intermediate", estimatedStudyTime: `${Math.max(1, Math.round(documentText.split(/\s+/).length / 200))} min`, importantChapters: ["Chapter 1"], repeatedTopics: [] },
         topics: [
-          { name: "Main Content", overview: documentText.slice(0, 1500) + "...", keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples provided"], importantPoints: ["Read through each section carefully", "Take notes on important definitions", "Review examples and case studies"], questions: ["What are the main themes covered in this document?", "Explain the key concepts in your own words.", "How do the different sections relate to each other?", "What practical applications can you derive from the content?", "Summarize the document in 3-5 sentences."], quickRevision: "This document covers important academic content. Review each section systematically and practice with the provided questions to reinforce understanding.", keywords: documentText.split(/\s+/).filter(w => w.length > 1 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 20) }
+          { 
+            name: "Main Content", 
+            overview: documentText.slice(0, 1500) + "...", 
+            subtopics: [
+              { name: "Document Overview", content: "General contents and structural layout extracted from the document." },
+              { name: "Key Sections", content: "Key educational units and chapters identified for studying." }
+            ],
+            keyConcepts: ["Review the document content thoroughly", "Focus on key definitions and examples provided"], 
+            importantPoints: ["Read through each section carefully", "Take notes on important definitions", "Review examples and case studies"], 
+            questions: ["What are the main themes covered in this document?", "Explain the key concepts in your own words.", "How do the different sections relate to each other?", "What practical applications can you derive from the content?", "Summarize the document in 3-5 sentences."], 
+            quickRevision: "This document covers important academic content. Review each section systematically and practice with the provided questions to reinforce understanding.", 
+            keywords: documentText.split(/\s+/).filter(w => w.length > 1 && /^[a-zA-Z0-9]+$/.test(w)).filter((_, i, a) => a.indexOf(_) === i).slice(0, 20) 
+          }
         ]
       };
     }
