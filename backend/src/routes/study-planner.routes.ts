@@ -4,6 +4,7 @@ import { getUserPrismaFromRequest } from "../utils/prisma";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { StreakService } from "../services/streak.service";
 import { handleRouteError } from "../utils/routeError";
+import { getTimezone } from "../utils/request";
 
 export const studyPlannerRouter = Router();
 
@@ -182,7 +183,7 @@ Return a JSON object with this exact structure (no markdown wrapper, no other te
       "study_planner",
       newPlan.id,
       30, // 30 points
-      (req.headers["x-timezone"] as string) || "UTC",
+      getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
@@ -409,7 +410,7 @@ studyPlannerRouter.post("/task/complete", async (req: any, res: any) => {
         "study_planner",
         task.id,
         task.estimatedTime || 15,
-        (req.headers["x-timezone"] as string) || "UTC",
+        getTimezone(req),
         userPrisma
       ).catch(err => console.error("Streak tracking error:", err));
 
