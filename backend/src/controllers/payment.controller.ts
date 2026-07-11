@@ -6,6 +6,7 @@ import { httpError } from "../utils/httpError";
 import { emitNotification } from "../lib/notificationEmitter";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { requireUserId } from "../utils/request";
 
 let razorpay: any = null;
 try {
@@ -30,8 +31,7 @@ const PLAN_PRICES: Record<string, { amount: number; label: string }> = {
 
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { plan } = req.body;
     if (!plan || !PLAN_PRICES[plan]) throw httpError(400, "Invalid plan. Choose pro_monthly or pro_yearly.");
@@ -82,8 +82,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
 
 export async function verifyPayment(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const { orderId, paymentId, signature } = req.body;
     if (!orderId || !paymentId || !signature) {
@@ -163,8 +162,7 @@ export async function verifyPayment(req: Request, res: Response, next: NextFunct
 
 export async function getStatus(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -198,8 +196,7 @@ export async function getStatus(req: Request, res: Response, next: NextFunction)
 
 export async function cancelSubscription(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId;
-    if (!userId) throw httpError(401, "Unauthorized");
+    const userId = requireUserId(req);
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw httpError(404, "User not found");
