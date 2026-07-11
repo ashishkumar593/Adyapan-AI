@@ -142,7 +142,7 @@ interviewRouter.post("/:sessionId/verify-identity", async (req, res) => {
 // ─── Phase 5: System compatibility check ──────────────────────────────────
 interviewRouter.get("/system-check/:sessionId", async (req, res) => {
   try {
-    const systemCheck = performSystemCheck();
+    const systemCheck = await performSystemCheck();
     res.json({ success: true, systemCheck });
   } catch (error: any) {
     res.status(500).json({ error: "System check failed" });
@@ -529,7 +529,7 @@ interviewRouter.get("/:sessionId", async (req, res) => {
       return;
     }
 
-    const state = getSessionState(sessionId, p);
+    const state = await getSessionState(sessionId, p);
     const violationReport = generateViolationReport(
       sessionId,
       (session.violations || []).reverse().map((e: any) => ({

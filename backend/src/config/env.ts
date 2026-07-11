@@ -33,5 +33,3 @@ if (env.nodeEnv === "production" && env.jwtSecret === "replace-this-local-secret
   throw new Error("JWT_SECRET must be set in production");
 }
 
-// Trigger restart to load latest environment variables
-
