@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { marked, Renderer } from "marked";
 
 function escapeHtml(text: string): string {
   return text
@@ -33,26 +33,20 @@ function cleanMarkdown(raw: string): string {
   return cleaned;
 }
 
-// Configure marked to produce clean HTML
-marked.setOptions({
-  gfm: true,
-  breaks: false,
-});
+// Configure marked with custom renderer at module init
+const renderer = new Renderer();
 
-// Override renderer for better code blocks and tables
-const renderer = new marked.Renderer();
-
-renderer.code = function (code: string, language: string | undefined): string {
+renderer.code = function (code: string, language: string | undefined, isEscaped: boolean): string {
   const langClass = language ? ` class="language-${language}"` : "";
-  const escapedCode = escapeHtml(code);
-  return `<pre class="code-block"><code${langClass}>${escapedCode}</code></pre>`;
+  const displayCode = isEscaped ? code : escapeHtml(code);
+  return `<pre class="code-block"><code${langClass}>${displayCode}</code></pre>`;
 };
 
 renderer.table = function (header: string, body: string): string {
   return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
 };
 
-marked.setOptions({ renderer });
+marked.use({ renderer, gfm: true, breaks: false });
 
 /**
  * Convert raw AI-generated markdown into clean, styled HTML.
@@ -329,58 +323,6 @@ export function formatNotesHtml(
  */
 export function formatNotesBodyHtml(markdown: string): string {
   const cleaned = cleanMarkdown(markdown);
-  return marked.parse(cleaned) as string;
-}
-
-/**
- * Parse markdown into structured sections for frontend accordion display.
- * Returns an array of section objects with title, content, and bullet points.
- */
-export function parseMarkdownToSections(markdown: string): Array<{
-  title: string;
-  content: string;
-  bulletPoints: string[];
-}> {
-  const sections: Array<{ title: string; content: string; bulletPoints: string[] }> = [];
-  const lines = markdown.split("\n");
-  let currentSection: { title: string; content: string; bulletPoints: string[] } | null = null;
-
-  for (const line of lines) {
-    const headingMatch = line.match(/^#{1,4}\s+(.+)/);
-    if (headingMatch) {
-      if (currentSection) sections.push(currentSection);
-      currentSection = {
-        title: headingMatch[1].replace(/\*+/g, "").trim(),
-        content: "",
-        bulletPoints: [],
-      };
-    } else if (currentSection) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-        currentSection.bulletPoints.push(trimmed.replace(/^[-*]\s+/, ""));
-      } else if (trimmed.startsWith("|")) {
-        // Skip table formatting lines (|---|, etc.)
-        if (!trimmed.match(/^\|[\s\-:|]+\|$/)) {
-          currentSection.content += trimmed + "\n";
-        }
-      } else if (trimmed) {
-        currentSection.content += trimmed + "\n";
-      }
-    }
-  }
-
-  if (currentSection) sections.push(currentSection);
-
-  // Clean up content
-  for (const section of sections) {
-    section.content = section.content.trim();
-    // Remove multiple blank lines
-    section.content = section.content.replace(/\n{3,}/g, "\n\n");
-  }
-
-  if (sections.length === 0) {
-    return [{ title: "Generated Notes", content: markdown, bulletPoints: [] }];
-  }
-
-  return sections;
+  const result = marked.parse(cleaned);
+  return typeof result === "string" ? result : "";
 }

@@ -13,6 +13,7 @@ import {
 } from "./ai/gemini";
 import type { QuizGenerationResult, AssignmentResult, PptSlide, MindMapResult } from "./ai/gemini";
 import { formatNotesBodyHtml } from "../services/notes-formatter.service";
+import { StreakService } from "../services/streak.service";
 import { analyzeProctoringEvent, generateViolationReport } from "./ai/proctoring";
 import { logProctoringEvent } from "../services/interview-session.service";
 import { generateInterviewQuestion } from "./ai/gemini";
@@ -181,6 +182,19 @@ export function initSocketServer(server: HttpServer) {
             });
 
             emitProgress("Finalizing and saving notes...");
+
+            // Track Streak Activity (mirrors HTTP route behavior)
+            const timezone = socket.handshake.headers["x-timezone"] as string || "UTC";
+            StreakService.trackActivity(
+              userId,
+              "GENERATE_NOTES",
+              "notes_generator",
+              note.id,
+              15,
+              timezone,
+              userPrisma
+            ).catch((err: any) => console.error("Streak tracking error:", err));
+
             socket.emit("generate:complete", { content, formattedContent, noteId: note.id });
             break;
           }

@@ -5,7 +5,7 @@ import { getUserPrismaFromRequest } from "../utils/prisma";
 import { StreakService } from "../services/streak.service";
 import { handleRouteError } from "../utils/routeError";
 import { getTimezone } from "../utils/request";
-import { formatNotesHtml, formatNotesBodyHtml } from "../services/notes-formatter.service";
+import { formatNotesBodyHtml } from "../services/notes-formatter.service";
 
 export const notesRouter = Router();
 
@@ -13,7 +13,10 @@ notesRouter.use(requireAuth);
 
 notesRouter.post("/generate", async (req, res) => {
   try {
-    const { topic, difficulty, type } = req.body;
+    const topic = req.body.topic || "General";
+    const difficulty = req.body.difficulty || "Intermediate";
+    const type = req.body.type || "Detailed Notes";
+
     const content = await generateNotes(topic, difficulty, type);
     const userPrisma = await getUserPrismaFromRequest(req);
 
@@ -37,12 +40,12 @@ notesRouter.post("/generate", async (req, res) => {
       "GENERATE_NOTES",
       "notes_generator",
       note.id,
-      15, // 15 points
+      15,
       getTimezone(req),
       userPrisma
     ).catch(err => console.error("Streak tracking error:", err));
 
-    res.json({ success: true, note: { ...note, formattedContent } });
+    res.json({ success: true, note });
   } catch (error) {
     handleRouteError(res, error, "Notes.generate", "Note generation failed");
   }

@@ -83,7 +83,7 @@ export function NotesGeneratorView() {
     for (const line of lines) {
       if (line.startsWith("## ") || line.startsWith("### ") || line.startsWith("# ")) {
         if (currentSection) sections.push(currentSection);
-        currentSection = { title: line.replace(/^#+\s+/, ""), content: "", bulletPoints: [] };
+        currentSection = { title: line.replace(/^#+\s+/, "").replace(/\*+/g, "").trim(), content: "", bulletPoints: [] };
       } else if (currentSection) {
         if (line.trim().startsWith("-") || line.trim().startsWith("*")) currentSection.bulletPoints.push(line.replace(/^[-*]\s+/, ""));
         else currentSection.content += line + "\n";
@@ -601,7 +601,7 @@ export function NotesGeneratorView() {
 
                 {/* Accordion sections */}
                 <div className="space-y-3 pb-4">
-                  {(searchQuery ? filteredSections : filteredSections.slice(0, filteredSections.length)).map((s, idx) => {
+                  {filteredSections.map((s, idx) => {
                     const isOpen = activeSection === s.title;
                     return (
                       <motion.div key={s.title} id={`section-${s.title.replace(/\s+/g, "-")}`} custom={idx} variants={scaleIn} initial="hidden" animate="visible"
