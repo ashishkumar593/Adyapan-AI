@@ -311,6 +311,9 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
     setStatus("ready"); setSummaryData(item.analysis); setRevealedTopics(0);
     if (item.analysis.topics?.length > 0) setActiveTopic(item.analysis.topics[0].name);
     setShowHistory(false);
+    setTimeout(() => {
+      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 300);
   };
 
   // ── Learn Module Handlers ──
