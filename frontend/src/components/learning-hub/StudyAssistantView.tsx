@@ -72,7 +72,7 @@ const mkColors = (theme: string) => {
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 interface TopicSummary {
   name: string; overview: string; keyConcepts: string[];
-  importantPoints: string[]; quickRevision: string; keywords: string[];
+  importantPoints: string[]; questions?: string[]; quickRevision: string; keywords: string[];
 }
 interface DocStats {
   pages: number; words: number; topicsFound: number; readingTime: string; summaryLength: string;
@@ -298,7 +298,9 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
 
   const handleCopySummary = () => {
     if (!summaryData) return;
-    const txt = summaryData.topics.map(t => `${t.name}\n\n${t.overview}\n\nKey Concepts:\n${t.keyConcepts.map(k => `- ${k}`).join("\n")}`).join("\n\n---\n\n");
+    const txt = summaryData.topics.map(t =>
+      `${t.name}\n\n${t.overview}\n\nKey Concepts:\n${t.keyConcepts.map(k => `- ${k}`).join("\n")}\n\nImportant Points:\n${t.importantPoints.map(p => `- ${p}`).join("\n")}${t.questions && t.questions.length > 0 ? `\n\nPractice Questions:\n${t.questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}` : ""}\n\nQuick Revision:\n${t.quickRevision}`
+    ).join("\n\n---\n\n");
     navigator.clipboard.writeText(txt);
     toast.success("Summary copied to clipboard!");
   };
@@ -1919,6 +1921,23 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
                                     </ul>
                                   </div>
                                 </div>
+
+                                {/* Questions */}
+                                {t.questions && t.questions.length > 0 && (
+                                  <div className="p-4 rounded-xl" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
+                                    <span className="text-[10px] uppercase tracking-widest font-black block mb-3 flex items-center gap-1.5" style={{ color: c.amber }}>
+                                      <Brain size={12} /> Practice Questions
+                                    </span>
+                                    <ul className="space-y-3">
+                                      {t.questions.map((q, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-[14px] leading-snug" style={{ color: c.textSec }}>
+                                          <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold" style={{ background: c.amberBg, color: c.amber }}>{i + 1}</span>
+                                          <span>{q}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
 
                                 {/* Quick Revision */}
                                 <div className="p-4 rounded-xl relative overflow-hidden" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}` }}>
