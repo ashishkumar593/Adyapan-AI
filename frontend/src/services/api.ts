@@ -12,6 +12,10 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Inject local timezone
+    try {
+      config.headers["x-timezone"] = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata";
+    } catch {}
   }
   return config;
 });
