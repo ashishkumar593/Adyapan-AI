@@ -313,7 +313,7 @@ Rules:
   return geminiJsonCall<TopicDetail>(
     `You are an expert academic tutor analyzing the topic "${topicName}" from a document about ${mainSubject}. Provide detailed, specific analysis. Return ONLY valid JSON.`,
     prompt,
-    8192
+    5000
   );
 }
 
@@ -372,47 +372,40 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
 
     console.log(`[Study Analyze] Phase 1 complete: "${structure.title}" with ${structure.topics.length} topics`);
 
-    // ── Phase 2: Generate detailed analysis for each topic (3 at a time) ──
-    console.log("[Study Analyze] Phase 2: Generating detailed topic analysis...");
+    // ── Phase 2: Generate detailed analysis for ALL topics concurrently ──
+    console.log("[Study Analyze] Phase 2: Generating detailed topic analysis (concurrent)...");
     const mainSubject = structure.insights?.mainSubject || structure.title;
-    const maxTopics = Math.min(structure.topics.length, 6);
+    const maxTopics = Math.min(structure.topics.length, 5); // cap at 5 for speed
     const topicsToAnalyze = structure.topics.slice(0, maxTopics);
-    const concurrency = 3;
 
-    const detailedTopics: TopicDetail[] = [];
-    for (let i = 0; i < topicsToAnalyze.length; i += concurrency) {
-      const batch = topicsToAnalyze.slice(i, i + concurrency);
-      const results = await Promise.all(
-        batch.map(t => analyzeTopicDetail(documentText, t.name, t.summary, mainSubject).catch(err => {
+    const rawResults = await Promise.all(
+      topicsToAnalyze.map(t =>
+        analyzeTopicDetail(documentText, t.name, t.summary, mainSubject).catch(err => {
           console.error(`[Study Analyze] Phase 2 failed for topic "${t.name}":`, err);
           return null;
-        }))
-      );
+        })
+      )
+    );
 
-      for (let j = 0; j < results.length; j++) {
-        if (results[j]) {
-          detailedTopics.push(results[j]!);
-        } else {
-          const t = batch[j];
-          // Try to extract relevant text for this topic from the document
-          const excerpt = findRelevantExcerpt(documentText, t.name, t.summary);
-          const topicParagraphs = excerpt.split(/\n\s*\n/).filter(p => p.trim().length > 30);
-          detailedTopics.push({
-            name: t.name,
-            overview: t.summary + "\n\n" + topicParagraphs.slice(0, 3).join("\n\n").slice(0, 2000),
-            subtopics: topicParagraphs.slice(0, 3).map((p, i) => ({
-              name: `Section ${i + 1}`,
-              content: p.trim().slice(0, 500),
-            })).filter(s => s.content.length > 20),
-            keyConcepts: [],
-            importantPoints: [],
-            questions: [],
-            quickRevision: t.summary,
-            keywords: [],
-          });
-        }
-      }
-    }
+    const detailedTopics: TopicDetail[] = rawResults.map((result, j) => {
+      if (result) return result;
+      const t = topicsToAnalyze[j];
+      const excerpt = findRelevantExcerpt(documentText, t.name, t.summary);
+      const topicParagraphs = excerpt.split(/\n\s*\n/).filter(p => p.trim().length > 30);
+      return {
+        name: t.name,
+        overview: t.summary + "\n\n" + topicParagraphs.slice(0, 3).join("\n\n").slice(0, 2000),
+        subtopics: topicParagraphs.slice(0, 3).map((p, i) => ({
+          name: `Section ${i + 1}`,
+          content: p.trim().slice(0, 500),
+        })).filter(s => s.content.length > 20),
+        keyConcepts: [],
+        importantPoints: [],
+        questions: [],
+        quickRevision: t.summary,
+        keywords: [],
+      };
+    });
 
     console.log(`[Study Analyze] Phase 2 complete: ${detailedTopics.length} topics analyzed`);
 

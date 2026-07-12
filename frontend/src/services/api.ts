@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api",
+  timeout: 120000, // 2 minutes for long AI operations like document analysis
 });
 
 // Attach JWT token to every request if present (check both storages)

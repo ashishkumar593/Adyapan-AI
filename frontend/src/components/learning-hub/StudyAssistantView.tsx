@@ -235,16 +235,25 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
 
   useEffect(() => {
     if (status !== "uploading") return;
-    const stages = ["Upload", "Extract Text", "Analyze Content", "Identify Topics", "Generate Summary"];
+    const stages = [
+      "📤 Uploading document...",
+      "📖 Extracting text content...",
+      "🔍 Analyzing document structure...",
+      "🧠 Identifying main topics...",
+      "✍️ Generating detailed summaries...",
+      "💡 Creating key concepts...",
+      "📝 Finalizing topic analysis...",
+      "⚡ Almost ready...",
+    ];
     let idx = 0;
     setCurrentStage(stages[0]);
     const timer = setInterval(() => {
-      idx += 1;
-      if (idx < stages.length) setCurrentStage(stages[idx]);
-      else clearInterval(timer);
-    }, 600);
+      idx = (idx + 1) % stages.length;
+      setCurrentStage(stages[idx]);
+    }, 6000); // cycle every 6s — analysis takes ~30-60s
     return () => clearInterval(timer);
   }, [status]);
+
 
   useEffect(() => {
     if (status !== "ready" || !summaryData) return;
@@ -256,7 +265,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
 
   const handleFileDrop = async (droppedFile: File) => {
     setFile(droppedFile);
-    setFileDetails({ name: droppedFile.name, size: (droppedFile.size / (1024 * 1024)).toFixed(1) + " MB", pages: Math.floor(Math.random() * 80) + 15, language: "English", time: "20 seconds" });
+    setFileDetails({ name: droppedFile.name, size: (droppedFile.size / (1024 * 1024)).toFixed(1) + " MB", pages: Math.floor(Math.random() * 80) + 15, language: "English", time: "30-60 seconds" });
     setStatus("uploading");
     try {
       const isBinary = /\.(pdf|docx|doc|pptx|ppt)$/i.test(droppedFile.name);
@@ -264,14 +273,17 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
       if (isBinary) {
         const formData = new FormData();
         formData.append("file", droppedFile);
-        res = await api.post("/study/analyze", formData);
+        res = await api.post("/study/analyze", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 120000,
+        });
       } else {
         const reader = new FileReader();
         const fileText = await new Promise<string>((resolve) => {
           reader.onload = (e) => resolve(e.target?.result as string || "");
           reader.readAsText(droppedFile);
         });
-        res = await api.post("/study/analyze", { documentText: fileText });
+        res = await api.post("/study/analyze", { documentText: fileText }, { timeout: 120000 });
       }
       if (res.data?.success && res.data?.analysis) {
         const a = res.data.analysis;
@@ -284,11 +296,16 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
         setHistory(updated);
         localStorage.setItem("adyapan-study-history", JSON.stringify(updated));
       } else throw new Error("Invalid response");
-    } catch {
+    } catch (err: any) {
       setStatus("empty");
-      toast.error("Failed to analyze document. Please try again.");
+      if (err?.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+        toast.error("Analysis is taking too long. Please try with a shorter document or try again.");
+      } else {
+        toast.error("Failed to analyze document. Please try again.");
+      }
     }
   };
+
 
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = () => setIsDragging(false);
