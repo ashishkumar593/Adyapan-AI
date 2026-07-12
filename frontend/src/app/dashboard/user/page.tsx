@@ -1823,6 +1823,291 @@ function SettingsView({ user, onViewDashboard }: { user: AdyapanUser | null; onV
   );
 }
 
+// ─── AI Recommendation Components ──────────────────────────────────────────────
+
+function RecommendationLoadingProgress() {
+  const steps = [
+    "Analyzing Learning Behavior",
+    "Detecting Weak Areas",
+    "Evaluating Retention",
+    "Generating Recommendations",
+    "Prioritizing Actions",
+    "Building Study Plan",
+    "Complete"
+  ];
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const intervals = [800, 1000, 900, 1100, 900, 800, 600];
+    let step = 0;
+    const run = () => {
+      if (step < steps.length - 1) {
+        const timer = setTimeout(() => {
+          step++;
+          setCurrentStep(step);
+          run();
+        }, intervals[step]);
+        return () => clearTimeout(timer);
+      }
+    };
+    run();
+  }, []);
+
+  return (
+    <div style={{
+      background: "var(--bg-card)",
+      border: "1px solid var(--border-color)",
+      borderRadius: "16px",
+      padding: "2rem",
+      display: "flex",
+      flexDirection: "column",
+      gap: "1rem",
+      maxWidth: "500px",
+      margin: "2rem auto",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+      backdropFilter: "var(--glass-blur)"
+    }}>
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <Wand2 className="text-amber-500 animate-pulse" size={20} />
+        Personalizing Your Recommendations
+      </h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        {steps.map((text, idx) => {
+          const isDone = idx < currentStep;
+          const isCurrent = idx === currentStep;
+          return (
+            <motion.div
+              key={text}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, delay: idx * 0.05 }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                color: isDone ? "#10b981" : isCurrent ? "var(--primary)" : "var(--text-muted)",
+                fontWeight: isCurrent || isDone ? 600 : 400,
+                fontSize: "0.9rem"
+              }}
+            >
+              {isDone ? (
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ color: "#10b981", display: "flex", fontWeight: "bold" }}>
+                  ✓
+                </motion.span>
+              ) : isCurrent ? (
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.2 }}
+                  style={{ display: "flex", width: 14, height: 14, borderRadius: "50%", background: "var(--primary)" }}
+                />
+              ) : (
+                <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: "50%", border: "2px solid var(--border-color)" }} />
+              )}
+              {text}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AIDailyBriefing({ brief }: { brief: any }) {
+  const [typedText, setTypedText] = useState("");
+  const fullText = brief?.text || "";
+
+  useEffect(() => {
+    let index = 0;
+    setTypedText("");
+    const timer = setInterval(() => {
+      setTypedText((prev) => prev + (fullText[index] || ""));
+      index++;
+      if (index >= fullText.length) {
+        clearInterval(timer);
+      }
+    }, 20);
+    return () => clearInterval(timer);
+  }, [fullText]);
+
+  if (!brief) return null;
+
+  return (
+    <div style={{
+      background: "var(--bg-card)",
+      border: "1px solid rgba(245, 158, 11, 0.25)",
+      borderRadius: "16px",
+      padding: "1.2rem",
+      marginBottom: "1.5rem",
+      boxShadow: "0 4px 20px rgba(245,158,11,0.05)",
+      backdropFilter: "var(--glass-blur)"
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+        <div style={{ flex: 1, minWidth: "280px" }}>
+          <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
+            <Zap size={16} className="animate-pulse" />
+            AI Daily Briefing
+          </h4>
+          <p style={{ fontSize: "0.88rem", color: "var(--text-primary)", fontWeight: 500, lineHeight: 1.5 }}>
+            {typedText}
+          </p>
+        </div>
+        
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
+            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Score Change</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#10b981" }}>{brief.metrics.scoreChange}</div>
+          </div>
+          <div style={{ background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
+            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Strongest Area</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#3b82f6" }}>{brief.metrics.strongestArea}</div>
+          </div>
+          <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
+            <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Urgent Revise</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#ef4444" }}>{brief.metrics.urgentRevision}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { recommendations: any[]; onSelectAction: (type: string) => void; onRegenerate: () => void }) {
+  return (
+    <div style={{ marginBottom: "1.8rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
+        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-primary)" }}>
+          <Award size={18} className="text-amber-500" />
+          Recommended Today
+        </h3>
+        <button
+          onClick={onRegenerate}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid var(--border-color)",
+            padding: "5px 12px",
+            borderRadius: "8px",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--text-secondary)",
+            transition: "var(--transition)"
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.color = "var(--primary)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+        >
+          <RefreshCw size={11} />
+          Refresh Recommendations
+        </button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "0.85rem" }}>
+        {recommendations.map((rec, idx) => {
+          const priorityColors = {
+            Critical: { text: "#ef4444", bg: "rgba(239, 68, 68, 0.08)", border: "rgba(239, 68, 68, 0.2)" },
+            High: { text: "#f59e0b", bg: "rgba(245, 158, 11, 0.08)", border: "rgba(245, 158, 11, 0.2)" },
+            Medium: { text: "#3b82f6", bg: "rgba(59, 130, 246, 0.08)", border: "rgba(59, 130, 246, 0.2)" },
+            Low: { text: "#10b981", bg: "rgba(16, 185, 129, 0.08)", border: "rgba(16, 185, 129, 0.2)" },
+          };
+          const themeColors = priorityColors[rec.priority as keyof typeof priorityColors] || priorityColors.Medium;
+          
+          const typeLabels = {
+            study_next: "Study Next",
+            revision: "Revise",
+            practice: "Practice",
+            weak_recovery: "Weak Topic",
+            exam_prep: "Exam Prep",
+            interview_prep: "Interview",
+            retention_recovery: "Retention Recovery",
+            productivity: "Habit",
+            habit: "Consistency"
+          };
+          const label = typeLabels[rec.recommendationType as keyof typeof typeLabels] || "Recommendation";
+          
+          return (
+            <motion.div
+              key={rec.id || idx}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.05 }}
+              whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
+              style={{
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-color)",
+                borderRadius: "14px",
+                padding: "1.1rem",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "0.75rem",
+                transition: "border-color 0.2s ease"
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                    {label}
+                  </span>
+                  <span style={{
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    color: themeColors.text,
+                    background: themeColors.bg,
+                    border: `1px solid ${themeColors.border}`,
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: themeColors.text }} />
+                    {rec.priority}
+                  </span>
+                </div>
+                <h4 style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.3rem" }}>
+                  {rec.topicName}
+                </h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.4, margin: 0 }}>
+                  {rec.reason}
+                </p>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.4rem", borderTop: "1px solid var(--border-color)", paddingTop: "0.6rem" }}>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
+                    Impact: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{rec.impactScore}%</span>
+                  </div>
+                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
+                    Urgency: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{rec.urgencyScore}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onSelectAction(rec.recommendationType)}
+                  style={{
+                    background: "var(--primary)",
+                    border: "none",
+                    color: "#17211c",
+                    padding: "4px 12px",
+                    borderRadius: "6px",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "var(--transition)"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                >
+                  Start
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
@@ -1854,6 +2139,31 @@ function UserDashboardContent() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
+
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [dailyBrief, setDailyBrief] = useState<any>(null);
+  const [coachInsight, setCoachInsight] = useState<any>(null);
+  const [learningPaths, setLearningPaths] = useState<any[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+
+  const fetchRecommendations = useCallback(async (forceGenerate = false) => {
+    setRecommendationsLoading(true);
+    try {
+      const url = forceGenerate ? "/recommendations/generate" : "/recommendations/dashboard";
+      const method = forceGenerate ? "POST" : "GET";
+      const res = await api({ method, url });
+      if (res.data.success) {
+        setRecommendations(res.data.recommendations || []);
+        setDailyBrief(res.data.dailyBrief || null);
+        setCoachInsight(res.data.coachInsight || null);
+        setLearningPaths(res.data.learningPaths || []);
+      }
+    } catch (err) {
+      console.error("Error loading recommendations:", err);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -2059,6 +2369,7 @@ function UserDashboardContent() {
     }
 
     fetchDashboardStats();
+    fetchRecommendations();
   }, [activeView]);
 
   const handleThemeToggle = () => {
@@ -2172,6 +2483,26 @@ function UserDashboardContent() {
                 onPracticeDsa={() => setActiveView("dsa-practice")}
               />
               <StatCardsGrid stats={dashboardStats} />
+              {recommendationsLoading ? (
+                <RecommendationLoadingProgress />
+              ) : (
+                <>
+                  <AIDailyBriefing brief={dailyBrief} />
+                  <RecommendedToday
+                    recommendations={recommendations}
+                    onRegenerate={() => fetchRecommendations(true)}
+                    onSelectAction={(type) => {
+                      if (type === "study_next" || type === "retention_recovery") setActiveView("study-assistant");
+                      else if (type === "revision") setActiveView("progress-hub");
+                      else if (type === "practice") setActiveView("dsa-practice");
+                      else if (type === "weak_recovery") setActiveView("weak-topics");
+                      else if (type === "exam_prep") setActiveView("study-planner");
+                      else if (type === "interview_prep") setActiveView("interview-hub");
+                      else setActiveView("study-assistant");
+                    }}
+                  />
+                </>
+              )}
               <PanelGrid stats={dashboardStats} onViewTool={setActiveView} />
             </>
           )

@@ -907,7 +907,7 @@ export function WeakTopicDetectionDashboard() {
         className="rounded-2xl p-5" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
         <div className="flex items-center gap-2 mb-5">
           <Sparkles size={16} className="text-amber-400" />
-          <h2 className="font-black text-sm text-white">AI Personalized Recommendations</h2>
+          <h2 className="font-black text-sm text-white">Recovery Recommendations</h2>
         </div>
 
         {/* Tab Bar */}

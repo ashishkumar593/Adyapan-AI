@@ -171,9 +171,16 @@ export function StudyPlannerDashboard() {
 
   const fetchRecommendations = async () => {
     try {
-      const res = await api.get("/study-planner/recommendations");
+      const res = await api.get("/recommendations/study");
       if (res.data.success) {
-        setRecommendations(res.data.recommendations);
+        const mapped = (res.data.recommendations || []).map((rec: any) => ({
+          type: rec.recommendationType === "study_next" ? "Study Next" : "Retention Warning",
+          title: rec.topicName,
+          reason: rec.reason,
+          priority: rec.priority,
+          action: "Start"
+        }));
+        setRecommendations(mapped);
       }
     } catch (e) {
       console.error(e);
@@ -720,11 +727,11 @@ export function StudyPlannerDashboard() {
                 </div>
               </motion.div>
 
-              {/* AI Recommendations */}
+              {/* AI Suggested Tasks */}
               <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}` }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles size={16} style={{ color: c.amber }} />
-                  <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Recommendations</h3>
+                  <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>AI Suggested Tasks</h3>
                 </div>
                 <div className="space-y-2">
                   {recommendations.map((rec, index) => (

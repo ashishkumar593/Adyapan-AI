@@ -719,6 +719,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
   const [analytics, setAnalytics] = useState<any>(null);
   const [trendData, setTrendData] = useState<any>(null);
   const [activeTrendTab, setActiveTrendTab] = useState<"7" | "30" | "90">("7");
+  const [coachInsight, setCoachInsight] = useState<any>(null);
 
   const [generateLoading, setGenerateLoading] = useState(false);
 
@@ -727,6 +728,11 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
       const res = await api.get("/analytics/dashboard");
       if (res.data.success) {
         setAnalytics(res.data.analytics);
+      }
+      
+      const recRes = await api.get("/recommendations/dashboard");
+      if (recRes.data.success) {
+        setCoachInsight(recRes.data.coachInsight || null);
       }
     } catch (err) {
       console.error("Fetch dashboard data error:", err);
@@ -1062,6 +1068,32 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
           <KnowledgeSkillTree distribution={insightsJson?.knowledgeDistribution} />
         </div>
       </div>
+
+      {coachInsight && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-5 border border-amber-500/20 rounded-2xl mb-6 bg-gradient-to-r from-amber-500/[0.04] to-violet-500/[0.04]"
+        >
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Zap className="text-amber-500 animate-pulse" size={18} />
+              <h4 className="text-sm font-black uppercase text-white tracking-wider">AI Coach: Improvement Opportunities</h4>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold text-white/50 bg-white/5 px-2.5 py-0.5 rounded-full">
+                Study Efficiency: {coachInsight.efficiency}%
+              </span>
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+                Impact: +{coachInsight.impactEstimate}% Readiness
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-white/80 leading-relaxed font-semibold">
+            {coachInsight.text}
+          </p>
+        </motion.div>
+      )}
 
       {/* ─── AI SUGGESTIONS & RECOMMENDATIONS ──────────────────────────────── */}
       <div className="p-5 border border-amber-500/10 rounded-2xl bg-amber-500/[0.02] backdrop-blur-md relative overflow-hidden">

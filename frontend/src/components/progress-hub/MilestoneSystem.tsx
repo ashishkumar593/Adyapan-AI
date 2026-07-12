@@ -61,9 +61,36 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
   if (milestones.length === 0) return null;
 
   const unlockedCount = milestones.filter((m) => m.unlocked).length;
+  const nextMilestone = milestones.find((m) => !m.unlocked);
 
   return (
     <div className="space-y-4">
+      {/* Next Milestone Widget */}
+      {nextMilestone && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-500/[0.06] to-fuchsia-500/[0.04] backdrop-blur-sm flex items-center justify-between flex-wrap gap-4"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl p-2 rounded-xl bg-violet-500/10 flex items-center justify-center">
+              {nextMilestone.icon || "🎯"}
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">Next Milestone</span>
+                <span className="text-[10px] font-bold text-white/50">Locked</span>
+              </div>
+              <h4 className="text-sm font-extrabold text-white mt-1">{nextMilestone.title}</h4>
+              <p className="text-xs text-white/60 mt-0.5">{nextMilestone.description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/40 font-medium">Goal Focus: Increase concept coverage & practice</span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header stats */}
       <div className="flex items-center gap-3 mb-2">
         <Trophy size={18} className="text-amber-400" />

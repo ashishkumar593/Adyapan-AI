@@ -722,6 +722,23 @@ model RevisionQueue {
   @@map("revision_queue")
 }
 
+model Recommendation {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  recommendationType String   @map("recommendation_type")
+  topicName          String   @map("topic_name")
+  priority           String
+  impactScore        Int      @map("impact_score")
+  urgencyScore       Int      @map("urgency_score")
+  relevanceScore     Int      @map("relevance_score")
+  reason             String
+  status             String   @default("pending")
+  generatedAt        DateTime @default(now()) @map("generated_at")
+  expiresAt          DateTime @map("expires_at")
+
+  @@map("recommendations")
+}
+
 // Master database models mapped in user database schema to prevent Prisma dropping tables/columns in local dev
 model User {
   id        String   @id @default(cuid())
