@@ -187,7 +187,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTopic, setActiveTopic] = useState("");
   const [revealedTopics, setRevealedTopics] = useState<number>(0);
-  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: Record<string, unknown> }>>([]);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: Record<string, any> }>>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [topicHistory, setTopicHistory] = useState<Array<{ topic: string; date: string; duration: string; level: string; lesson: UnifiedLesson }>>([]);

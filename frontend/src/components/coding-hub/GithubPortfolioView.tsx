@@ -26,7 +26,7 @@ export function GithubPortfolioView() {
   const [loading, setLoading] = useState(false);
   
   // Results
-  const [analysis, setAnalysis] = useState<Record<string, unknown> | null>(null);
+  const [analysis, setAnalysis] = useState<Record<string, any> | null>(null);
   const [readme, setReadme] = useState<string | null>(null);
   const [portfolio, setPortfolio] = useState<{ aboutSection: string; projectsToHighlight: Array<{ title: string; tech: string; summary: string }> } | null>(null);
 
@@ -386,3 +386,4 @@ export function GithubPortfolioView() {
     </motion.div>
   );
 }
+
