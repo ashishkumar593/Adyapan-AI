@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { generateStudyResponse, generateLearnLesson } from "../lib/ai/gemini";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
 const pdfParse = require("pdf-parse");
@@ -25,9 +25,6 @@ function escapeXml(text: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
-
-const genAI = new GoogleGenerativeAI(env.geminiApiKey);
-
 /** Clean garbled PDF text: fix broken words, collapse whitespace, remove artifacts */
 function cleanExtractedText(text: string): string {
   let cleaned = text
@@ -47,44 +44,6 @@ function cleanExtractedText(text: string): string {
   return cleaned;
 }
 
-async function geminiJsonCall<T>(systemPrompt: string, userPrompt: string, maxOutputTokens: number, retries = 2): Promise<T | null> {
-  if (!env.geminiApiKey) {
-    console.error("[Gemini JSON Call] GEMINI_API_KEY is not configured");
-    return null;
-  }
-
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`[Gemini JSON Call] Attempt ${attempt}/${retries}, maxTokens=${maxOutputTokens}`);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: systemPrompt,
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
-          maxOutputTokens,
-        },
-      });
-      const result = await model.generateContent(userPrompt);
-      const text = result.response.text();
-      if (!text || text.trim().length === 0) {
-        throw new Error("Gemini returned empty response");
-      }
-      const parsed = JSON.parse(text) as T;
-      console.log(`[Gemini JSON Call] Success on attempt ${attempt}`);
-      return parsed;
-    } catch (err: any) {
-      lastError = err;
-      console.error(`[Gemini JSON Call] Attempt ${attempt} failed:`, err?.message || err);
-      if (attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000 * attempt));
-      }
-    }
-  }
-  console.error(`[Gemini JSON Call] All ${retries} attempts failed. Last error:`, lastError?.message);
-  return null;
-}
 
 export const studyRouter = Router();
 
@@ -259,11 +218,18 @@ Rules:
 - title should be specific to the document content, not generic
 - Return ONLY valid JSON`;
 
-  return geminiJsonCall(
+  const result = await generateJSON(
     "You are an expert document analyst. Extract document structure and identify major topics. Return ONLY valid JSON.",
     prompt,
-    4096
-  );
+    { model: MODELS.BALANCED, maxTokens: 4096, responseFormat: { type: "json_object" } },
+    null
+  ) as {
+    title: string;
+    stats: { pages: number; words: number; topicsFound: number; readingTime: string; summaryLength: string };
+    insights: { mainSubject: string; difficultyLevel: string; estimatedStudyTime: string; importantChapters: string[]; repeatedTopics: string[] };
+    topics: TopicSummary[];
+  } | null;
+  return result;
 }
 
 /** Phase 2: Analyze a single topic in detail using a relevant document excerpt */
@@ -310,11 +276,13 @@ Rules:
 - Write everything in context of the document's main subject: ${mainSubject}
 - Return ONLY valid JSON`;
 
-  return geminiJsonCall<TopicDetail>(
+  const result = await generateJSON<TopicDetail | null>(
     `You are an expert academic tutor analyzing the topic "${topicName}" from a document about ${mainSubject}. Provide detailed, specific analysis. Return ONLY valid JSON.`,
     prompt,
-    5000
+    { model: MODELS.BALANCED, maxTokens: 5000, responseFormat: { type: "json_object" } },
+    null
   );
+  return result;
 }
 
 // Analyze uploaded document — two-phase approach for reliable, detailed summaries
