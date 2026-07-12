@@ -9,7 +9,7 @@ import {
   FileDown, Layers, History, Plus, Sparkles, Brain,
   Zap, Star, X, Hash, GraduationCap, Clock, Edit3,
   Terminal, Lightbulb, AlertTriangle, Award, Check, RotateCcw,
-  Play, BookOpenCheck, Cpu, ChevronDown, CheckCircle
+  Play, BookOpenCheck, Cpu, ChevronDown, CheckCircle, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
@@ -219,6 +219,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [playgroundOutput, setPlaygroundOutput] = useState<string | null>(null);
   const [isRunningPlayground, setIsRunningPlayground] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -307,6 +308,32 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
     ).join("\n\n---\n\n");
     navigator.clipboard.writeText(txt);
     toast.success("Summary copied to clipboard!");
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!summaryData) {
+      toast.error("No analysis data available for PDF export.");
+      return;
+    }
+    setDownloadingPdf(true);
+    try {
+      const res = await api.post("/study/export/pdf", { analysis: summaryData }, { responseType: "blob" });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(summaryData.title || "Document_Analysis").replace(/\s+/g, "_")}_AdyapanAI.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully!");
+    } catch (err: any) {
+      console.error("PDF download error:", err);
+      toast.error(err?.response?.data?.error || "Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   const loadHistoryItem = (item: typeof history[0]) => {
@@ -1871,15 +1898,16 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
                   <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: c.textMuted }}>Actions</span>
                   {[
                     { icon: <Copy size={13} />, label: "Copy Summary", fn: handleCopySummary },
-                    { icon: <FileDown size={13} />, label: "Download PDF", fn: () => {} },
+                    { icon: downloadingPdf ? <Loader2 size={13} className="animate-spin" /> : <FileDown size={13} />, label: downloadingPdf ? "Generating PDF..." : "Download PDF", fn: handleDownloadPdf, disabled: downloadingPdf },
                   ].map((action) => (
                     <motion.button
                       key={action.label}
-                      whileHover={{ x: 2 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileHover={!action.disabled ? { x: 2 } : undefined}
+                      whileTap={!action.disabled ? { scale: 0.97 } : undefined}
                       onClick={action.fn}
+                      disabled={action.disabled}
                       className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all text-left"
-                      style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textSec }}
+                      style={{ background: c.surface, border: `1px solid ${c.border}`, color: action.disabled ? c.textMuted : c.textSec, opacity: action.disabled ? 0.6 : 1, cursor: action.disabled ? "not-allowed" : "pointer" }}
                     >
                       <span style={{ color: c.amber }} className="shrink-0">{action.icon}</span>
                       {action.label}
