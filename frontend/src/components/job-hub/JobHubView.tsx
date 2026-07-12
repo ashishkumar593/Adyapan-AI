@@ -9,6 +9,7 @@ import {
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle, Check, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
+import type { ResumeHubViewType } from "@/types/resume";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -66,7 +67,7 @@ interface ChatMessage {
 }
 
 interface JobHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: ResumeHubViewType) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -110,7 +111,12 @@ export function JobHubView({ setView, activeModule = "job-hub", theme = "dark" }
   // Resume vs JD Analyzer state
   const [jdText, setJdText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [matchReport, setMatchReport] = useState<any | null>(null);
+  const [matchReport, setMatchReport] = useState<{
+    overallScore: number; skillsMatch: number; experienceMatch: number;
+    educationMatch: number; atsCompatibility: number;
+    keywordsFound: string[]; keywordsMissing: string[]; keywordsSuggested: string[];
+    suggestions: string[];
+  } | null>(null);
 
   // Referrals state
   const [referrals, setReferrals] = useState<Referral[]>([]);

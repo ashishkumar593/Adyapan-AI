@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { TrendingUp } from "lucide-react";
 
-interface GrowthDataPoint {
+export interface GrowthDataPoint {
   period: string;
   conceptsLearned: number;
   questionsPracticed: number;
@@ -30,7 +30,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
   const maxVal = Math.max(
     1,
     ...data.flatMap((d) =>
-      metrics.map((m) => (d as any)[m.key] as number)
+      metrics.map((m) => d[m.key as keyof GrowthDataPoint] as number)
     )
   );
 
@@ -66,7 +66,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
                 onMouseLeave={() => setTooltip(null)}
               >
                 {metrics.map((m, mi) => {
-                  const val = (item as any)[m.key] as number;
+                  const val = item[m.key as keyof GrowthDataPoint] as number;
                   const h = maxVal > 0 ? (val / maxVal) * 100 : 0;
                   return (
                     <motion.div
@@ -108,7 +108,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
             <div key={m.key} className="flex items-center gap-2 mb-1">
               <div className="w-2 h-2 rounded-full" style={{ background: m.color }} />
               <span className="text-white/60">{m.label}:</span>
-              <span className="text-white font-bold">{(tooltip.item as any)[m.key]}</span>
+              <span className="text-white font-bold">{tooltip.item[m.key as keyof GrowthDataPoint]}</span>
             </div>
           ))}
         </motion.div>
@@ -182,7 +182,7 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-3 pt-2">
         {METRICS.map((m) => {
-          const total = data.reduce((s, d) => s + ((d as any)[m.key] as number), 0);
+          const total = data.reduce((s, d) => s + (d[m.key as keyof GrowthDataPoint] as number), 0);
           const isActive = activeMetrics.has(m.key);
           return (
             <div

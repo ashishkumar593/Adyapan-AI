@@ -16,11 +16,11 @@ const scaleIn = {
 
 export function DsaPracticeView() {
   const [view, setView] = useState<"dashboard" | "problem">("dashboard");
-  const [activeProblem, setActiveProblem] = useState<Record<string, any> | null>(null);
-  const [problems, setProblems] = useState<Record<string, any>[]>([]);
+  const [activeProblem, setActiveProblem] = useState<Record<string, string> | null>(null);
+  const [problems, setProblems] = useState<Record<string, string>[]>([]);
   const [code, setCode] = useState("");
-  const [aiReview, setAiReview] = useState<Record<string, any> | null>(null);
-  const [hint, setHint] = useState<Record<string, any> | null>(null);
+  const [aiReview, setAiReview] = useState<{ timeComplexity: string; spaceComplexity: string; optimizationTips: string[] } | null>(null);
+  const [hint, setHint] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function DsaPracticeView() {
 
   const categories = ["Arrays", "Strings", "Linked List", "Stack", "Queue", "Trees", "Graphs", "DP", "Greedy"];
   
-  const handleOpenProblem = (p: Record<string, any>) => {
+  const handleOpenProblem = (p: Record<string, string>) => {
     setActiveProblem(p);
     setCode("// Write your solution here\\n\\nfunction solve() {\\n\\n}");
     setAiReview(null);

@@ -168,19 +168,49 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState<string | null>(null);
 
   // Data
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    users?: { total?: number; premium?: number; free?: number; newToday?: number; admin?: number };
+    totalAiRequests?: number;
+    revenue?: { month?: number; total?: number; successfulPayments?: number; failedPayments?: number };
+    modules?: {
+      resume?: { resumes?: number; atsReports?: number; coverLetters?: number };
+      learning?: { studySessions?: number; notes?: number; quizzes?: number };
+      coding?: { sessions?: number; submissions?: number };
+      interview?: { sessions?: number };
+      chat?: { sessions?: number };
+    };
+  } | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [userPagination, setUserPagination] = useState<any>(null);
+  const [users, setUsers] = useState<Array<{
+    id: string; name: string; email: string; plan: string;
+    subscriptionStatus: string; role: string; createdAt: string;
+    _count?: { resumes?: number; chatSessions?: number; interviewSessions?: number };
+  }>>([]);
+  const [userPagination, setUserPagination] = useState<{ page: number; limit: number; total: number; pages: number } | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(1);
-  const [aiAnalytics, setAiAnalytics] = useState<any>(null);
-  const [revenueData, setRevenueData] = useState<any>(null);
-  const [moduleData, setModuleData] = useState<any>(null);
-  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [aiAnalytics, setAiAnalytics] = useState<{
+    totalRequests?: number;
+    modules?: {
+      resumeHub?: { resumes?: number; atsReports?: number; coverLetters?: number; linkedinReports?: number };
+      learningHub?: { studySessions?: number; notes?: number; quizzes?: number; assignments?: number; ppts?: number; mindmaps?: number };
+      codingHub?: { sessions?: number; submissions?: number };
+      interviewHub?: { sessions?: number };
+    };
+  } | null>(null);
+  const [revenueData, setRevenueData] = useState<{
+    total?: number; month?: number; premiumUsers?: number; averageOrderValue?: number;
+  } | null>(null);
+  const [moduleData, setModuleData] = useState<{
+    resumeHub?: Record<string, unknown>;
+    learningHub?: Record<string, unknown>;
+    codingHub?: Record<string, unknown>;
+    interviewHub?: Record<string, unknown>;
+  } | null>(null);
+  const [systemHealth, setSystemHealth] = useState<{ uptime?: number; memory?: { used?: number; total?: number; rss?: number }; platform?: string; nodeVersion?: string } | null>(null);
   const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTimeout, setSearchTimeout] = useState<any>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Theme
   const [theme, setTheme] = useState("dark");
@@ -244,7 +274,7 @@ export default function AdminDashboard() {
   const handleUserSearch = (val: string) => {
     setUserSearch(val);
     setUserPage(1);
-    clearTimeout(searchTimeout);
+    clearTimeout(searchTimeout ?? undefined);
     setSearchTimeout(setTimeout(() => loadUsers(1, val), 400));
   };
 
@@ -254,8 +284,8 @@ export default function AdminDashboard() {
       await api.post(`/admin/users/${userId}/action`, { action, plan });
       loadUsers(userPage, userSearch);
       setToast(action === "delete" ? "User deleted" : action === "suspend" ? "User suspended" : "Action completed");
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Action failed");
+    } catch (err) {
+      alert((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Action failed");
     } finally {
       setUserActionLoading(null);
     }
@@ -571,7 +601,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y" style={{ borderColor: "var(--border-color)" }}>
-                    {users.map((u: any) => (
+                    {users.map((u) => (
                       <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
@@ -721,7 +751,7 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <div className="font-extrabold text-sm">{mod.label}</div>
-                        <div className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{mod.data?.total ?? 0} total actions</div>
+                        <div className="text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{String((mod.data as Record<string, unknown>)?.total ?? 0)} total actions</div>
                       </div>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90" style={{ color: "var(--text-muted)" }} />
@@ -755,7 +785,7 @@ export default function AdminDashboard() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {moduleData?.[activeSection === "resume" ? "resumeHub" : activeSection === "learning" ? "learningHub" : activeSection === "coding" ? "codingHub" : "interviewHub"] && 
-                Object.entries(moduleData[activeSection === "resume" ? "resumeHub" : activeSection === "learning" ? "learningHub" : activeSection === "coding" ? "codingHub" : "interviewHub"])
+                Object.entries(moduleData[activeSection === "resume" ? "resumeHub" : activeSection === "learning" ? "learningHub" : activeSection === "coding" ? "codingHub" : "interviewHub"]!)
                   .filter(([k]) => k !== "templates" && k !== "byType")
                   .map(([key, val]) => (
                     <StatCard key={key} icon={<BarChart3 className="w-5 h-5" />}

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, AlertCircle, TrendingUp, Brain } from "lucide-react";
 
-interface TopicProgressItem {
+export interface TopicProgressItem {
   topicName: string;
   progressPercentage: number;
   masteryScore: number;

@@ -60,7 +60,7 @@ export function AssignmentGeneratorView() {
   const [activeSection, setActiveSection] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
-  const [history, setHistory] = useState<Array<{ name: string; date: string; level: string; words: string; data: any }>>([]);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; level: string; words: string; data: AssignmentContent }>>([]);
 
   const { socket, isConnected } = useSocket();
   const userIdRef = useRef<string>("");
@@ -113,8 +113,9 @@ export function AssignmentGeneratorView() {
           setResult(assignment); setActiveSection("Introduction");
           addToHistory(assignment);
         } else throw new Error("Invalid response");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.error || "Failed to generate assignment via API.");
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        toast.error(e?.response?.data?.error || "Failed to generate assignment via API.");
       } finally {
         setGenerating(false);
       }
@@ -311,7 +312,7 @@ export function AssignmentGeneratorView() {
                         <label className="text-xs font-semibold" style={{ color: c.textSec }}>Academic Level</label>
                         <select value={level} onChange={e => setLevel(e.target.value)}
                           className="w-full rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none appearance-none" style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}>
-                          <option>High School</option><option>Undergraduate</option><option>Master's</option>
+                          <option>High School</option><option>Undergraduate</option><option>Master&apos;s</option>
                         </select>
                       </div>
                       <div className="space-y-1">

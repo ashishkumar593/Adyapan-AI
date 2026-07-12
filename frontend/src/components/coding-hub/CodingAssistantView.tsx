@@ -27,7 +27,7 @@ export function CodingAssistantView() {
   const [input, setInput] = useState("");
   const [secondaryInput, setSecondaryInput] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<Record<string, any> | null>(null);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
 
   const canSubmit = input.trim().length > 0 && (mode !== "debug" || secondaryInput.trim().length > 0);
 
@@ -53,8 +53,9 @@ export function CodingAssistantView() {
       } else {
         throw new Error("Unexpected response format");
       }
-    } catch (error: any) {
-      const msg = error?.response?.data?.message || error?.message || "Something went wrong. Please try again.";
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = e?.response?.data?.message || e?.message || "Something went wrong. Please try again.";
       toast.error(msg);
     } finally {
       setGenerating(false);

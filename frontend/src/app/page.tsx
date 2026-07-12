@@ -1251,7 +1251,7 @@ export default function LandingPage() {
             <motion.div
               key={i}
               className="absolute rounded-full bg-amber-500"
-              style={{ top: p.top, left: p.left, right: p.right as any, width: p.w * 4, height: p.h * 4 }}
+              style={{ top: p.top, left: p.left, right: p.right as string, width: p.w * 4, height: p.h * 4 }}
               animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
               transition={{ duration: 6, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
             />

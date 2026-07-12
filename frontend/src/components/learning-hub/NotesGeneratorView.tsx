@@ -63,7 +63,7 @@ export function NotesGeneratorView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
-  const [history, setHistory] = useState<Array<{ name: string; date: string; type: string; sections: number; data: any }>>([]);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; type: string; sections: number; data: { topic: string; sections: NoteSection[]; wordCount: number; studyTime: string; difficulty: string; rawContent?: string; formattedHtml?: string } }>>([]);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const { socket, isConnected } = useSocket();
@@ -94,7 +94,7 @@ export function NotesGeneratorView() {
     return sections;
   }
 
-  const addToHistory = useCallback((newNotes: any, content: string, parsedSections: NoteSection[]) => {
+  const addToHistory = useCallback((newNotes: { topic: string; sections: NoteSection[]; wordCount: number; studyTime: string; difficulty: string; rawContent?: string; formattedHtml?: string }, content: string, parsedSections: NoteSection[]) => {
     setHistory(prev => {
       const newItem = { name: topicRef.current, date: "Just now", type: noteTypeRef.current, sections: parsedSections.length, data: newNotes };
       const updated = [newItem, ...prev.filter(h => h.name !== topicRef.current)].slice(0, 10);
@@ -143,8 +143,9 @@ export function NotesGeneratorView() {
           if (parsedSections.length > 0) setActiveSection(parsedSections[0].title);
           addToHistory(newNotes, content, parsedSections);
         } else throw new Error("Invalid response");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.error || "Failed to generate notes via API.");
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        toast.error(e?.response?.data?.error || "Failed to generate notes via API.");
       } finally {
         setGenerating(false);
       }
@@ -179,9 +180,10 @@ export function NotesGeneratorView() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success("PDF downloaded successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
       console.error("PDF download error:", err);
-      toast.error(err?.response?.data?.error || "Failed to generate PDF. Please try again.");
+      toast.error(e?.response?.data?.error || "Failed to generate PDF. Please try again.");
     } finally {
       setDownloadingPdf(false);
     }

@@ -9,6 +9,7 @@ import {
   ChevronRight, AlertCircle, FileText, UserCheck, Play, PlusCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import type { ResumeHubViewType } from "@/types/resume";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -58,7 +59,7 @@ interface ChatMessage {
 }
 
 interface InternshipHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: ResumeHubViewType) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -780,7 +781,7 @@ export function InternshipHubView({ setView, activeModule = "internship-hub", th
                 <label className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: c.textSec }}>Current Status</label>
                 <select
                   value={newAppStatus}
-                  onChange={(e) => setNewAppStatus(e.target.value as any)}
+                  onChange={(e) => setNewAppStatus(e.target.value as Application["status"])}
                   className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#f59e0b] focus:outline-none rounded-lg p-2 text-xs"
                   style={{ background: c.inputBg, color: c.text, borderColor: c.border }}
                 >

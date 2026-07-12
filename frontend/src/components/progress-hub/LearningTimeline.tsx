@@ -4,7 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { FileText, Clock, HelpCircle, RotateCcw, Layers, Map } from "lucide-react";
 
-interface TimelineEvent {
+export interface TimelineEvent {
   date: string;
   displayDate: string;
   title: string;

@@ -36,7 +36,7 @@ interface ChatMessage {
 }
 
 interface ProductivityHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: string) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -397,7 +397,7 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                       >
                         <option value="Study Abroad">Study Abroad</option>
                         <option value="University Admission">University Admission</option>
-                        <option value="Master's Program">Master's Program</option>
+                        <option value="Master's Program">Master&apos;s Program</option>
                         <option value="Scholarship Application">Scholarship Application</option>
                       </select>
                     </div>

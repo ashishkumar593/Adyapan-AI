@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import {
@@ -10,8 +10,51 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
+interface InsightsJson {
+  status?: string;
+  grade?: string;
+  examReadinessBreakdown?: {
+    level?: string;
+    factors?: { coverage: number; revisions: number; practice_questions: number; ai_interactions: number };
+  };
+  knowledgeDistribution?: { beginner: string[]; intermediate: string[]; advanced: string[] };
+  insights?: string[];
+}
+
+interface LearningAnalyticsData {
+  studyTimeMinutes: number;
+  documentsCount: number;
+  toolUsageJson: Record<string, number>;
+  conceptsLearned: number;
+  learningScore: number;
+  currentStreak: number;
+  longestStreak: number;
+  examReadiness: number;
+  recommendationsJson?: { recommendation: string; reason: string; action: string }[];
+  topicAnalyticsJson?: { topic: string; studyFrequency: number; completionRate: number }[];
+  insightsJson?: InsightsJson;
+}
+
+interface TrendDataPoint {
+  studyTimeMinutes: number;
+  displayDate: string;
+  createdAt?: string;
+}
+
+interface TrendData {
+  last7Days?: TrendDataPoint[];
+  last30Days?: TrendDataPoint[];
+  last90Days?: TrendDataPoint[];
+}
+
+interface CoachInsight {
+  efficiency: number;
+  impactEstimate: number;
+  text: string;
+}
+
 interface LearningAnalyticsDashboardProps {
-  setView?: (v: any) => void;
+  setView?: (v: string) => void;
   theme?: string;
 }
 
@@ -93,6 +136,16 @@ function TypingRecommendation({ text, delay = 15 }: { text: string; delay?: numb
 // ─── Floating Books Animation Component ────────────────────────────────────────
 function EmptyState({ onPopulateDemo }: { onPopulateDemo: () => void }) {
   const [loading, setLoading] = useState(false);
+  const [particles] = useState(() =>
+    Array.from({ length: 12 }, () => ({
+      w: Math.random() * 20 + 8,
+      h: Math.random() * 20 + 8,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      dur: Math.random() * 6 + 4,
+      delay: Math.random() * 2,
+    }))
+  );
 
   const handleDemo = async () => {
     setLoading(true);
@@ -104,25 +157,25 @@ function EmptyState({ onPopulateDemo }: { onPopulateDemo: () => void }) {
     <div className="flex flex-col items-center justify-center min-h-[500px] p-8 text-center relative overflow-hidden">
       {/* Floating particles background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(12)].map((_, i) => (
+        {particles.map((p, i) => (
           <motion.div
             key={i}
             className="absolute bg-amber-500/10 rounded-full"
             style={{
-              width: Math.random() * 20 + 8,
-              height: Math.random() * 20 + 8,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`
+              width: p.w,
+              height: p.h,
+              left: p.left,
+              top: p.top
             }}
             animate={{
               y: [-20, -120],
               opacity: [0, 0.7, 0]
             }}
             transition={{
-              duration: Math.random() * 6 + 4,
+              duration: p.dur,
               repeat: Infinity,
               ease: "linear",
-              delay: Math.random() * 2
+              delay: p.delay
             }}
           />
         ))}
@@ -171,7 +224,7 @@ function EmptyState({ onPopulateDemo }: { onPopulateDemo: () => void }) {
 }
 
 // ─── Heatmap Component ────────────────────────────────────────────────────────
-function GitHubHeatmap({ events }: { events: any[] }) {
+function GitHubHeatmap({ events }: { events: { createdAt?: string }[] }) {
   // Generates past 365 days cells
   const cols = 53;
   const rows = 7;
@@ -265,7 +318,9 @@ function GitHubHeatmap({ events }: { events: any[] }) {
 }
 
 // ─── Custom SVG Line/Area Trend Chart ──────────────────────────────────────────
-function TrendsChart({ trendData }: { trendData: any[] }) {
+function TrendsChart({ trendData }: { trendData: TrendDataPoint[] }) {
+  const [activePoint, setActivePoint] = useState<{ x: number; y: number; val: number; date: string } | null>(null);
+
   if (!trendData || trendData.length === 0) return null;
 
   const w = 500;
@@ -291,8 +346,6 @@ function TrendsChart({ trendData }: { trendData: any[] }) {
 
   // SVG Closed path string for area gradient
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${h - padding} L ${points[0].x} ${h - padding} Z`;
-
-  const [activePoint, setActivePoint] = useState<{ x: number; y: number; val: number; date: string } | null>(null);
 
   return (
     <div className="relative">
@@ -524,33 +577,34 @@ function ToolUsageDonut({ toolUsage }: { toolUsage: Record<string, number> }) {
 }
 
 // ─── Custom SVG Bubble Component ─────────────────────────────────────────────
-function TopicBubbleChart({ topics }: { topics: any[] }) {
+function TopicBubbleChart({ topics }: { topics: { topic: string; studyFrequency: number; completionRate: number }[] }) {
+  type BubblePoint = { topic: string; studyFrequency: number; completionRate: number; x: number; y: number; radius: number };
+  const [activeBubble, setActiveBubble] = useState<BubblePoint | null>(null);
+  const [jitter] = useState(() => topics.map(() => ({
+    dx: Math.random() * 10 - 5,
+    dy: Math.random() * 8 - 4,
+  })));
+
   if (!topics || topics.length === 0) return null;
 
-  // Render bubble chart on SVG
   const width = 450;
   const height = 180;
 
-  // Formulate coordinates for bubbles
   const bubblePoints = topics.map((t, idx) => {
-    // Spread bubble coordinate centers nicely inside bounding box
     const columns = Math.ceil(Math.sqrt(topics.length));
     const colIdx = idx % columns;
     const rowIdx = Math.floor(idx / columns);
     const spacingX = width / (columns + 1);
     const spacingY = height / (Math.ceil(topics.length / columns) + 1);
 
-    const x = spacingX * (colIdx + 1) + (Math.random() * 10 - 5);
-    const y = spacingY * (rowIdx + 1) + (Math.random() * 8 - 4);
-    // Radius based on study frequency (max frequency determines size)
+    const x = spacingX * (colIdx + 1) + (jitter[idx]?.dx ?? 0);
+    const y = spacingY * (rowIdx + 1) + (jitter[idx]?.dy ?? 0);
     const baseRadius = 22;
     const maxFreq = Math.max(...topics.map(o => o.studyFrequency), 1);
     const radius = baseRadius + (t.studyFrequency / maxFreq) * 18;
 
     return { ...t, x, y, radius };
   });
-
-  const [activeBubble, setActiveBubble] = useState<any>(null);
 
   return (
     <div className="relative">
@@ -662,7 +716,7 @@ function KnowledgeSkillTree({ distribution }: { distribution: { beginner: string
           <motion.div
             key={b.id}
             whileHover={{ scale: 1.02 }}
-            onClick={() => setActiveBranch(activeBranch === b.id ? null : (b.id as any))}
+            onClick={() => setActiveBranch(activeBranch === b.id ? null : (b.id as "beginner" | "intermediate" | "advanced"))}
             className={`p-4 border rounded-2xl cursor-pointer bg-gradient-to-br ${b.color} ${b.border} flex flex-col justify-between h-28 relative overflow-hidden`}
           >
             <div className="absolute right-2 top-2 bg-white/5 w-6 h-6 flex items-center justify-center rounded-full">
@@ -716,10 +770,10 @@ function KnowledgeSkillTree({ distribution }: { distribution: { beginner: string
 // ─── Main Analytics Dashboard Component ──────────────────────────────────────────
 export function LearningAnalyticsDashboard({ setView, theme = "dark" }: LearningAnalyticsDashboardProps) {
   const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [trendData, setTrendData] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<LearningAnalyticsData | null>(null);
+  const [trendData, setTrendData] = useState<TrendData | null>(null);
   const [activeTrendTab, setActiveTrendTab] = useState<"7" | "30" | "90">("7");
-  const [coachInsight, setCoachInsight] = useState<any>(null);
+  const [coachInsight, setCoachInsight] = useState<CoachInsight | null>(null);
 
   const [generateLoading, setGenerateLoading] = useState(false);
 
@@ -803,7 +857,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
       : trendData?.last90Days;
 
   // Breakdown metrics for score accordion
-  const insightsJson = analytics?.insightsJson as any;
+  const insightsJson = analytics?.insightsJson as InsightsJson;
   const breakdown = insightsJson?.examReadinessBreakdown?.factors || {
     coverage: 0,
     revisions: 0,
@@ -1027,7 +1081,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
               {["7", "30", "90"].map(t => (
                 <button
                   key={t}
-                  onClick={() => setActiveTrendTab(t as any)}
+                  onClick={() => setActiveTrendTab(t as "7" | "30" | "90")}
                   className={`px-2 py-0.5 rounded transition-all cursor-pointer ${activeTrendTab === t ? "bg-amber-500 text-[#080710] font-black" : "hover:text-white"}`}
                 >
                   {t}d
@@ -1043,7 +1097,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
           <h4 className="text-xs font-bold uppercase tracking-wider text-white/80 mb-4 flex items-center gap-1.5">
             <Layers size={14} className="text-amber-500" /> AI Tool Usage Distribution
           </h4>
-          {analytics.toolUsageJson && <ToolUsageDonut toolUsage={analytics.toolUsageJson as any} />}
+          {analytics.toolUsageJson && <ToolUsageDonut toolUsage={analytics.toolUsageJson as Record<string, number>} />}
         </div>
       </div>
 
@@ -1057,7 +1111,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
           <h4 className="text-xs font-bold uppercase tracking-wider text-white/80 mb-4 flex items-center gap-1.5">
             <Layers size={14} className="text-amber-500" /> Topic Study Frequency
           </h4>
-          {analytics.topicAnalyticsJson && <TopicBubbleChart topics={analytics.topicAnalyticsJson as any} />}
+          {analytics.topicAnalyticsJson && <TopicBubbleChart topics={analytics.topicAnalyticsJson as { topic: string; studyFrequency: number; completionRate: number }[]} />}
         </div>
 
         {/* Skill Tree distribution */}
@@ -1123,7 +1177,7 @@ export function LearningAnalyticsDashboard({ setView, theme = "dark" }: Learning
           <div className="space-y-3">
             <h5 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Personalised Action Checklist</h5>
             <div className="space-y-2.5">
-              {analytics.recommendationsJson?.map((rec: any, idx: number) => (
+              {analytics.recommendationsJson?.map((rec: { recommendation: string; reason: string; action: string }, idx: number) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, x: 20 }}

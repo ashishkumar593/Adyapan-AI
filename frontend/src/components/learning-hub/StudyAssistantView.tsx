@@ -91,7 +91,7 @@ interface UnifiedConcept { title: string; content: string; sub_concepts?: string
 interface UnifiedExample { title: string; scenario: string; code_or_data?: string; explanation?: string; }
 interface UnifiedPractice { question: string; guidance?: string; expected_answer?: string; red_flag?: string; }
 interface UnifiedQuizQuestion { question: string; options: string[]; answer: string; explanation: string; }
-interface UnifiedLesson {
+export interface UnifiedLesson {
   learning_goal?: string; estimated_completion_time?: string; lesson_structure?: string[];
   overview: string; why_matters?: string; simple_explanation?: string; real_life_analogy?: string;
   example?: string; key_takeaways?: string[]; mini_quiz?: UnifiedQuizQuestion[];
@@ -187,7 +187,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTopic, setActiveTopic] = useState("");
   const [revealedTopics, setRevealedTopics] = useState<number>(0);
-  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: any }>>([]);
+  const [history, setHistory] = useState<Array<{ name: string; date: string; pages: number; topics: number; analysis: Record<string, unknown> }>>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [topicHistory, setTopicHistory] = useState<Array<{ topic: string; date: string; duration: string; level: string; lesson: UnifiedLesson }>>([]);
@@ -296,9 +296,10 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
         setHistory(updated);
         localStorage.setItem("adyapan-study-history", JSON.stringify(updated));
       } else throw new Error("Invalid response");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { code?: string; message?: string; response?: { data?: { error?: string } } };
       setStatus("empty");
-      if (err?.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+      if (e?.code === "ECONNABORTED" || e?.message?.includes("timeout")) {
         toast.error("Analysis is taking too long. Please try with a shorter document or try again.");
       } else {
         toast.error("Failed to analyze document. Please try again.");
@@ -345,9 +346,10 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success("PDF downloaded successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
       console.error("PDF download error:", err);
-      toast.error(err?.response?.data?.error || "Failed to generate PDF. Please try again.");
+      toast.error(e?.response?.data?.error || "Failed to generate PDF. Please try again.");
     } finally {
       setDownloadingPdf(false);
     }
@@ -1234,7 +1236,7 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
       `}</style>
       {/* Viewer mode — back button + lesson content */}
       <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
-        <button onClick={() => onViewLesson?.(null as any)}
+        <button onClick={() => onViewLesson?.(null as unknown as { topic: string; lesson: UnifiedLesson; duration: string; level: string })}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer"
           style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}>
           <ChevronRight size={14} className="rotate-180" /> Back to Study Assistant

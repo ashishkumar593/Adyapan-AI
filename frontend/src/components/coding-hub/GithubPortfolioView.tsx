@@ -26,9 +26,9 @@ export function GithubPortfolioView() {
   const [loading, setLoading] = useState(false);
   
   // Results
-  const [analysis, setAnalysis] = useState<Record<string, any> | null>(null);
+  const [analysis, setAnalysis] = useState<Record<string, unknown> | null>(null);
   const [readme, setReadme] = useState<string | null>(null);
-  const [portfolio, setPortfolio] = useState<Record<string, any> | null>(null);
+  const [portfolio, setPortfolio] = useState<{ aboutSection: string; projectsToHighlight: Array<{ title: string; tech: string; summary: string }> } | null>(null);
 
   const handleAnalyze = async () => {
     if (!username) return;
@@ -369,7 +369,7 @@ export function GithubPortfolioView() {
                     </motion.div>
                     <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" className="bg-black/40 p-4 rounded-lg">
                       <span className="text-xs text-gray-500 uppercase font-bold block mb-2">Featured Projects</span>
-                      {portfolio.projectsToHighlight.map((p: any, j: number) => (
+                      {portfolio.projectsToHighlight.map((p, j) => (
                         <div key={j} className="mb-2 last:mb-0">
                           <strong className="text-amber-500">{p.title}</strong> - <span className="text-sm text-gray-400">{p.tech}</span>
                           <p className="text-sm text-gray-300">{p.summary}</p>

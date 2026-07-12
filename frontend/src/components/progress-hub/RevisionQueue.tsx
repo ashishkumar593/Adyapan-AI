@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { AlertTriangle, Clock, ChevronRight, RotateCcw } from "lucide-react";
 
-interface RevisionQueueItem {
+export interface RevisionQueueItem {
   topicName: string;
   lastRevised: string;
   daysSince: number;

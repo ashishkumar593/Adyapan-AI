@@ -36,7 +36,7 @@ interface ChatMessage {
 }
 
 interface ResearchHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: string) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -75,7 +75,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
   // Plagiarism state
   const [plagiarismText, setPlagiarismText] = useState("");
   const [checkingPlagiarism, setCheckingPlagiarism] = useState(false);
-  const [plagiarismResult, setPlagiarismResult] = useState<any | null>(null);
+  const [plagiarismResult, setPlagiarismResult] = useState<{ similarity: number; sources: { title: string; url: string; match: number }[] } | null>(null);
 
   // AI Assistant panel state
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -359,7 +359,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
 
                       <div className="space-y-2">
                         <span className="text-[9px] uppercase tracking-wider font-bold block" style={{ color: c.textSec }}>Sources Matched</span>
-                        {plagiarismResult.sources.map((s: any, i: number) => (
+                        {plagiarismResult.sources.map((s: { title: string; url: string; match: number }, i: number) => (
                           <motion.div
                             key={i}
                             variants={fadeUp}

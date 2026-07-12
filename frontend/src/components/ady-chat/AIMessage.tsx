@@ -109,7 +109,7 @@ function renderMarkdown(content: string, isDark: boolean): React.ReactNode {
     // Ordered list
     if (line.match(/^\d+\. /)) {
       const items: string[] = [];
-      let num = 1;
+      const num = 1;
       while (i < lines.length && lines[i].match(/^\d+\. /)) {
         items.push(lines[i].replace(/^\d+\. /, ""));
         i++;

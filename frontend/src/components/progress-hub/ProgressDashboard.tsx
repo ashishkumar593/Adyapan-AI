@@ -4,13 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import { HeroProgressSection } from "./HeroProgressSection";
-import { TopicProgressTracker } from "./TopicProgressTracker";
-import { ConceptMasteryMap } from "./ConceptMasteryMap";
-import { LearningTimeline } from "./LearningTimeline";
-import { MilestoneSystem } from "./MilestoneSystem";
-import { RevisionQueue } from "./RevisionQueue";
-import { KnowledgeGrowthChart } from "./KnowledgeGrowthChart";
-import { AIInsightsPanel } from "./AIInsightsPanel";
+import { TopicProgressTracker, type TopicProgressItem } from "./TopicProgressTracker";
+import { ConceptMasteryMap, type ConceptMasteryItem } from "./ConceptMasteryMap";
+import { LearningTimeline, type TimelineEvent } from "./LearningTimeline";
+import { MilestoneSystem, type MilestoneItem } from "./MilestoneSystem";
+import { RevisionQueue, type RevisionQueueItem } from "./RevisionQueue";
+import { KnowledgeGrowthChart, type GrowthDataPoint } from "./KnowledgeGrowthChart";
+import { AIInsightsPanel, type RecommendationItem } from "./AIInsightsPanel";
 import {
   TrendingUp, Brain, BookOpen, Trophy, RotateCcw,
   BarChart3, Sparkles, Clock, CheckSquare, RefreshCw,
@@ -30,14 +30,14 @@ interface ProgressData {
   studySessions: number;
   currentStreak: number;
   status: string;
-  topicProgress: any[];
-  conceptMastery: any[];
-  milestones: any[];
-  revisionQueue: any[];
-  timeline: any[];
+  topicProgress: TopicProgressItem[];
+  conceptMastery: ConceptMasteryItem[];
+  milestones: MilestoneItem[];
+  revisionQueue: RevisionQueueItem[];
+  timeline: TimelineEvent[];
   insights: string[];
-  recommendations: any[];
-  knowledgeGrowth: any[];
+  recommendations: RecommendationItem[];
+  knowledgeGrowth: GrowthDataPoint[];
 }
 
 // ─── Loading Screen ──────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ function Section({
   title, icon: Icon, iconColor, children, id,
 }: {
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   iconColor: string;
   children: React.ReactNode;
   id?: string;
@@ -206,9 +206,9 @@ export function ProgressDashboard() {
       if (res.data.success) {
         setData(res.data.data);
       }
-    } catch (err: any) {
+    } catch (err) {
       // If no data exists yet, show empty state
-      if (err?.response?.status === 404) {
+      if ((err as { response?: { status?: number } })?.response?.status === 404) {
         setData(null);
       } else {
         setError("Failed to load progress data.");
@@ -226,7 +226,7 @@ export function ProgressDashboard() {
       if (res.data.success) {
         setData(res.data.data);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError("Failed to calculate progress. Please try again.");
     } finally {
       setCalculating(false);

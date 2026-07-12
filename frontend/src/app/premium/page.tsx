@@ -82,7 +82,7 @@ export default function PremiumPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
@@ -102,7 +102,7 @@ export default function PremiumPage() {
     }).catch(() => {}).finally(() => setLoading(false));
 
     // Load Razorpay script
-    if (!(window as any).Razorpay) {
+    if (!(window as unknown as Record<string, unknown>).Razorpay) {
       const script = document.createElement("script");
       script.src = RAZORPAY_SCRIPT;
       script.onload = () => setRazorpayLoaded(true);
@@ -130,7 +130,7 @@ export default function PremiumPage() {
          name: "Adyapan AI",
          description: `${planId === "pro_monthly" ? "Pro Monthly" : "Pro Yearly"} Subscription`,
          order_id: order.id,
-         handler: async function (response: any) {
+          handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
            try {
              const verifyRes = await api.post("/payment/verify", {
                orderId: response.razorpay_order_id,
@@ -160,10 +160,10 @@ export default function PremiumPage() {
          },
        };
 
-       const rzp = new (window as any).Razorpay(options);
-       rzp.open();
-     } catch (err: any) {
-       toast.error(err?.response?.data?.message || "Failed to initiate payment");
+        const rzp = new (window as unknown as { Razorpay: new (options: unknown) => { open: () => void } }).Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to initiate payment");
        setProcessing(null);
      }
    };

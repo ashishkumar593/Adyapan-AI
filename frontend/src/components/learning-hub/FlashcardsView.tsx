@@ -271,8 +271,9 @@ export function FlashcardsView() {
       } else {
         throw new Error("No flashcard data returned from AI.");
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to generate flashcards.";
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || "Failed to generate flashcards.";
       setError(msg);
     } finally {
       setIsGenerating(false);
@@ -920,7 +921,7 @@ function CardFace({
   const upOpacity = useTransform(y, [-120, 0], [1, 0]);
   const downOpacity = useTransform(y, [0, 120], [0, 1]);
 
-  const handleDragEnd = (_: any, info: any) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number }; velocity: { x: number; y: number } }) => {
     if (!isActive) return;
     const threshold = 120;
     const { offset } = info;

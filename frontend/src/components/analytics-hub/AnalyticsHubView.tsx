@@ -17,6 +17,7 @@ const fadeUp = {
 
 import { LearningAnalyticsDashboard } from "./LearningAnalyticsDashboard";
 import { api } from "@/services/api";
+import type { ResumeHubViewType } from "@/types/resume";
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
@@ -38,7 +39,7 @@ interface ChatMessage {
 }
 
 interface AnalyticsHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: ResumeHubViewType) => void;
   activeModule?: string;
   theme?: string;
 }

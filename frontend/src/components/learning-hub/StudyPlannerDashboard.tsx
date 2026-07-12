@@ -112,8 +112,8 @@ export function StudyPlannerDashboard() {
   const [tasks, setTasks] = useState<StudyTask[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [todayTasks, setTodayTasks] = useState<StudyTask[]>([]);
-  const [todayRevisions, setTodayRevisions] = useState<any[]>([]);
-  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [todayRevisions, setTodayRevisions] = useState<{ id: string; topicName: string; revisionType: string }[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<{ id: string; date: string; type: string; title: string; status: string }[]>([]);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -129,9 +129,46 @@ export function StudyPlannerDashboard() {
     "Study Plan Ready!"
   ];
 
-  useEffect(() => {
-    fetchActivePlan();
-  }, []);
+  const fetchTodaySchedule = async () => {
+    try {
+      const res = await api.get("/study-planner/today");
+      if (res.data.success) {
+        setTodayTasks(res.data.tasks);
+        setTodayRevisions(res.data.revisions);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const res = await api.get("/recommendations/study");
+      if (res.data.success) {
+        const mapped = (res.data.recommendations || []).map((rec: { recommendationType: string; topicName: string; reason: string; priority: string }) => ({
+          type: rec.recommendationType === "study_next" ? "Study Next" : "Retention Warning",
+          title: rec.topicName,
+          reason: rec.reason,
+          priority: rec.priority,
+          action: "Start"
+        }));
+        setRecommendations(mapped);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchCalendarEvents = async () => {
+    try {
+      const res = await api.get("/study-planner/calendar");
+      if (res.data.success) {
+        setCalendarEvents(res.data.events);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchActivePlan = async () => {
     setLoadingPlan(true);
@@ -157,46 +194,9 @@ export function StudyPlannerDashboard() {
     }
   };
 
-  const fetchTodaySchedule = async () => {
-    try {
-      const res = await api.get("/study-planner/today");
-      if (res.data.success) {
-        setTodayTasks(res.data.tasks);
-        setTodayRevisions(res.data.revisions);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchRecommendations = async () => {
-    try {
-      const res = await api.get("/recommendations/study");
-      if (res.data.success) {
-        const mapped = (res.data.recommendations || []).map((rec: any) => ({
-          type: rec.recommendationType === "study_next" ? "Study Next" : "Retention Warning",
-          title: rec.topicName,
-          reason: rec.reason,
-          priority: rec.priority,
-          action: "Start"
-        }));
-        setRecommendations(mapped);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchCalendarEvents = async () => {
-    try {
-      const res = await api.get("/study-planner/calendar");
-      if (res.data.success) {
-        setCalendarEvents(res.data.events);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  useEffect(() => {
+    fetchActivePlan();
+  }, []);
 
   const handleReschedule = async () => {
     setRescheduling(true);
@@ -577,7 +577,7 @@ export function StudyPlannerDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <ListTodo size={16} style={{ color: c.amber }} />
-                    <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Today's Tasks</h3>
+                    <h3 className="text-sm font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>Today&apos;s Tasks</h3>
                   </div>
                   <span className="text-[10px] font-semibold" style={{ color: c.textMuted }}>{todayTasks.length} tasks</span>
                 </div>

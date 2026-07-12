@@ -152,10 +152,10 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
         setScreen("editor");
         loadHistory();
       }
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(stepInterval);
       console.error(err);
-      const msg = err?.response?.data?.message || err?.message || "Please try again.";
+      const msg = err instanceof Error ? err.message : "Please try again.";
       alert(`Failed to generate cover letter. ${msg}`);
       setScreen("job");
     } finally { setLoading(false); }

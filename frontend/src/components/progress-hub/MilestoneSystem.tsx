@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { Trophy, Lock } from "lucide-react";
 
-interface MilestoneItem {
+export interface MilestoneItem {
   id: string;
   title: string;
   description: string;

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Brain } from "lucide-react";
 
-interface ConceptMasteryItem {
+export interface ConceptMasteryItem {
   conceptName: string;
   topicName: string | null;
   masteryScore: number;

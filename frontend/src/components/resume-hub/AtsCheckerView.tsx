@@ -185,7 +185,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [analysis, setAnalysis] = useState<ATSDeepAnalysis | null>(null);
-  const [analysisRaw, setAnalysisRaw] = useState<any>(null);
+  const [analysisRaw, setAnalysisRaw] = useState<ATSDeepAnalysis | null>(null);
   const [suggestions, setSuggestions] = useState<ATSSuggestion[]>([]);
   const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set());
   const [updatedScore, setUpdatedScore] = useState(0);
@@ -276,17 +276,17 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
 
       // Generate suggestions in background
       generateSuggestions(res.data.analysis);
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(stepInterval);
       console.error(err);
-      const msg = err?.response?.data?.message || err?.message || "Please try again.";
+      const msg = err instanceof Error ? err.message : "Please try again.";
       alert(`Failed to analyze resume. ${msg}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateSuggestions = async (analysisData?: any) => {
+  const generateSuggestions = async (analysisData?: ATSDeepAnalysis) => {
     try {
       const res = await api.post("/ats/suggestions", {
         targetRole,

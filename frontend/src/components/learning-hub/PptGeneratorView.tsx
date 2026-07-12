@@ -109,8 +109,9 @@ export function PptGeneratorView() {
           setSlides(slideList); setActiveSlide(0);
           addToHistory(slideList);
         } else throw new Error("Invalid response");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.error || "Failed to generate presentation via API.");
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        toast.error(e?.response?.data?.error || "Failed to generate presentation via API.");
       } finally {
         setGenerating(false);
       }
@@ -506,7 +507,7 @@ export function PptGeneratorView() {
                     {slides[activeSlide]?.notes && (
                       <div className="p-3 rounded-xl" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
                         <span className="text-[10px] uppercase tracking-widest font-black block mb-1" style={{ color: c.amber }}>Speaker Notes</span>
-                        <p className="text-xs italic" style={{ color: c.textMuted }}>"{slides[activeSlide]?.notes}"</p>
+                        <p className="text-xs italic" style={{ color: c.textMuted }}>&quot;{slides[activeSlide]?.notes}&quot;</p>
                       </div>
                     )}
                   </motion.div>

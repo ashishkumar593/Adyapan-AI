@@ -65,6 +65,18 @@ const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ op
 
 const col = "#f59e0b";
 
+function ToastBar({ toastMsg, isDark, text }: { toastMsg: string | null; isDark: boolean; text: string }) {
+  return (
+    <AnimatePresence>
+      {toastMsg && (
+        <motion.div initial={{ opacity: 0, y: -16, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -16, scale: 0.95 }} style={{ position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: isDark ? "#1a1a2e" : "#fff", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "0.55rem 1.1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600, color: text }}>
+          <Sparkles size={14} style={{ color: col }} /> {toastMsg}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderViewProps) {
   const theme = useTheme();
   const c = mkColors(theme);
@@ -101,6 +113,7 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
   const [languages, setLanguages] = useState<string[]>([""]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const accumulatedTextRef = useRef("");
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
   const showToast = useCallback((msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2500); }, []);
@@ -133,8 +146,8 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
       const res = await fetch(`${api.defaults.baseURL}/resume/ai-chat/stream`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ resumeData: resumeJSON, message }) });
       if (!res.ok) throw new Error("Stream failed");
       const reader = res.body?.getReader(); if (!reader) throw new Error("No reader");
-      const decoder = new TextDecoder(); let buffer = ""; let accumulatedText = "";
-      while (true) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split("\n"); buffer = lines.pop() || ""; for (const line of lines) { const trimmed = line.trim(); if (!trimmed.startsWith("data: ")) continue; try { const data = JSON.parse(trimmed.slice(6)); if (data.type === "chunk") { accumulatedText += data.text; setChatMessages((prev) => { const n = [...prev]; n[n.length - 1] = { role: "ai", text: accumulatedText }; return n; }); } else if (data.type === "result") { if (data.summary) setSummary(data.summary); if (data.experience) setExperience(data.experience); if (data.projects) setProjects(data.projects); if (data.skills) setSkills(data.skills); const updated = Object.keys({ summary: data.summary, experience: data.experience, projects: data.projects, skills: data.skills }).filter(k => data[k]).join(", "); if (updated) { accumulatedText += `\n\nUpdated: ${updated}`; setChatMessages((prev) => { const n = [...prev]; n[n.length - 1] = { role: "ai", text: accumulatedText }; return n; }); } } else if (data.type === "error") throw new Error(data.message); } catch {} } }
+      const decoder = new TextDecoder(); let buffer = ""; accumulatedTextRef.current = "";
+      while (true) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split("\n"); buffer = lines.pop() || ""; for (const line of lines) { const trimmed = line.trim(); if (!trimmed.startsWith("data: ")) continue; try { const data = JSON.parse(trimmed.slice(6)); if (data.type === "chunk") { accumulatedTextRef.current += data.text; setChatMessages((prev) => { const n = [...prev]; n[n.length - 1] = { role: "ai", text: accumulatedTextRef.current }; return n; }); } else if (data.type === "result") { if (data.summary) setSummary(data.summary); if (data.experience) setExperience(data.experience); if (data.projects) setProjects(data.projects); if (data.skills) setSkills(data.skills); const updated = Object.keys({ summary: data.summary, experience: data.experience, projects: data.projects, skills: data.skills }).filter(k => data[k]).join(", "); if (updated) { accumulatedTextRef.current += `\n\nUpdated: ${updated}`; setChatMessages((prev) => { const n = [...prev]; n[n.length - 1] = { role: "ai", text: accumulatedTextRef.current }; return n; }); } } else if (data.type === "error") throw new Error(data.message); } catch {} } }
     } catch { setChatMessages((prev) => { const n = [...prev]; n[n.length - 1] = { role: "ai", text: "Something went wrong. Try again." }; return n; }); } finally { setChatLoading(false); }
   };
   const handleGenerate = async () => {
@@ -166,16 +179,16 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
 
   const addEdu = () => setEducation([...education, { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", grade: "" }]);
   const removeEdu = (i: number) => setEducation(education.filter((_, idx) => idx !== i));
-  const updateEdu = (i: number, k: string, v: string) => { const u = [...education]; (u[i] as any)[k] = v; setEducation(u); };
+  const updateEdu = (i: number, k: string, v: string) => { const u = [...education]; (u[i] as Record<string, string>)[k] = v; setEducation(u); };
   const addExp = () => setExperience([...experience, { company: "", role: "", startDate: "", endDate: "", description: "" }]);
   const removeExp = (i: number) => setExperience(experience.filter((_, idx) => idx !== i));
-  const updateExp = (i: number, k: string, v: string) => { const u = [...experience]; (u[i] as any)[k] = v; setExperience(u); };
+  const updateExp = (i: number, k: string, v: string) => { const u = [...experience]; (u[i] as Record<string, string>)[k] = v; setExperience(u); };
   const addProj = () => setProjects([...projects, { name: "", techStack: "", description: "" }]);
   const removeProj = (i: number) => setProjects(projects.filter((_, idx) => idx !== i));
-  const updateProj = (i: number, k: string, v: string) => { const u = [...projects]; (u[i] as any)[k] = v; setProjects(u); };
+  const updateProj = (i: number, k: string, v: string) => { const u = [...projects]; (u[i] as Record<string, string>)[k] = v; setProjects(u); };
   const addCert = () => setCertifications([...certifications, { name: "", issuer: "", date: "" }]);
   const removeCert = (i: number) => setCertifications(certifications.filter((_, idx) => idx !== i));
-  const updateCert = (i: number, k: string, v: string) => { const u = [...certifications]; (u[i] as any)[k] = v; setCertifications(u); };
+  const updateCert = (i: number, k: string, v: string) => { const u = [...certifications]; (u[i] as Record<string, string>)[k] = v; setCertifications(u); };
   const addAchievement = () => setAchievements([...achievements, ""]);
   const removeAchievement = (i: number) => setAchievements(achievements.filter((_, idx) => idx !== i));
   const updateAchievement = (i: number, v: string) => { const u = [...achievements]; u[i] = v; setAchievements(u); };
@@ -188,22 +201,11 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
 
   const inputSx: React.CSSProperties = { width: "100%", background: c.inputBg, border: `1px solid ${c.border}`, borderRadius: 10, padding: "0.6rem 0.85rem", fontSize: "0.82rem", color: c.text, outline: "none", boxSizing: "border-box" as const, transition: "border-color 0.15s, box-shadow 0.15s" };
 
-  // ─── Toast ──────────────────────────────────────────────────────────────────
-  const ToastBar = () => (
-    <AnimatePresence>
-      {toastMsg && (
-        <motion.div initial={{ opacity: 0, y: -16, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -16, scale: 0.95 }} style={{ position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: c.isDark ? "#1a1a2e" : "#fff", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, padding: "0.55rem 1.1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", fontWeight: 600, color: c.text }}>
-          <Sparkles size={14} style={{ color: col }} /> {toastMsg}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-
 
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text, background: c.bg }}>
-      <ToastBar />
+      <ToastBar toastMsg={toastMsg} isDark={c.isDark} text={c.text} />
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}
@@ -575,17 +577,17 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
 
                     {/* Quick edit sections */}
                     {[
-                      { label: "Experience", data: experience, setData: setExperience as (d: any[]) => void, fields: ["company", "role"] },
-                      { label: "Projects", data: projects, setData: setProjects as (d: any[]) => void, fields: ["name", "techStack"] },
-                      { label: "Education", data: education, setData: setEducation as (d: any[]) => void, fields: ["degree", "institution"] },
+                      { label: "Experience", data: experience, setData: setExperience as (d: Array<Record<string, string>>) => void, fields: ["company", "role"] },
+                      { label: "Projects", data: projects, setData: setProjects as (d: Array<Record<string, string>>) => void, fields: ["name", "techStack"] },
+                      { label: "Education", data: education, setData: setEducation as (d: Array<Record<string, string>>) => void, fields: ["degree", "institution"] },
                     ].map((section) => (
                       <div key={section.label} style={{ marginBottom: "0.65rem" }}>
                         <h4 style={{ fontSize: "0.65rem", fontWeight: 700, color: c.textSecondary, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.03em" }}>{section.label}</h4>
-                        {(section.data as any[]).map((item, idx) => (
+                        {(section.data as Array<Record<string, string>>).map((item, idx) => (
                           <div key={idx} style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 8, padding: "0.45rem", marginBottom: 4 }}>
                             {section.fields.map((f) => (
                               <input key={f} placeholder={f.charAt(0).toUpperCase() + f.slice(1)} value={item[f] || ""}
-                                onChange={e => { const u = [...section.data]; (u[idx] as any)[f] = e.target.value; section.setData(u); }}
+                                onChange={e => { const u = [...section.data]; (u[idx] as Record<string, string>)[f] = e.target.value; section.setData(u); }}
                                 style={{ ...inputSx, fontSize: "0.68rem", padding: "0.3rem 0.5rem", marginBottom: 3 }}
                               />
                             ))}
@@ -825,7 +827,7 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
 
 // ─── Collapsible Section ──────────────────────────────────────────────────────
 function CollapsibleSection({ title, icon, children, onAdd, t: c, color }: {
-  title: string; icon: React.ReactNode; children: React.ReactNode; onAdd?: () => void; t: any; color: string;
+  title: string; icon: React.ReactNode; children: React.ReactNode; onAdd?: () => void; t: ReturnType<typeof mkColors>; color: string;
 }) {
   const [open, setOpen] = useState(true);
   return (
@@ -857,8 +859,8 @@ function CollapsibleSection({ title, icon, children, onAdd, t: c, color }: {
 
 // ─── Preview Template ─────────────────────────────────────────────────────────
 function ResumePreviewTemplate({ personalInfo, summary, education, experience, projects, skills, certifications, achievements, languages, template }: {
-  personalInfo: any; summary: string; education: any[]; experience: any[]; projects: any[];
-  skills: string[]; certifications: any[]; achievements: string[]; languages: string[]; template: string;
+  personalInfo: { fullName: string; email: string; phone: string; location: string; linkedin: string; github: string; portfolio: string }; summary: string; education: Array<Record<string, string>>; experience: Array<Record<string, string>>; projects: Array<Record<string, string>>;
+  skills: string[]; certifications: Array<Record<string, string>>; achievements: string[]; languages: string[]; template: string;
 }) {
   return (
     <div className="text-[10px] text-gray-800 leading-relaxed space-y-4">
@@ -884,11 +886,11 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
         </div>
       )}
 
-      {experience.some((e: any) => e.role || e.company) && (
+      {experience.some((e: Record<string, string>) => e.role || e.company) && (
         <div className="space-y-2">
           <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Work Experience</div>
           <div className="h-px bg-gray-200 w-full mb-1" />
-          {experience.map((item: any, idx: number) => (
+          {experience.map((item: Record<string, string>, idx: number) => (
             <div key={idx} className="space-y-1">
               <div className="flex justify-between font-bold text-black text-[9.5px]">
                 <span>{item.role || "Role"} @ {item.company || "Company"}</span>
@@ -900,11 +902,11 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
         </div>
       )}
 
-      {projects.some((p: any) => p.name || p.techStack) && (
+      {projects.some((p: Record<string, string>) => p.name || p.techStack) && (
         <div className="space-y-2">
           <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Projects</div>
           <div className="h-px bg-gray-200 w-full mb-1" />
-          {projects.map((item: any, idx: number) => (
+          {projects.map((item: Record<string, string>, idx: number) => (
             <div key={idx} className="space-y-0.5">
               <div className="font-bold text-black text-[9.5px]">{item.name || "Project Title"}</div>
               {item.techStack && <div className="text-[8px] text-amber-700 italic">Tech Stack: {item.techStack}</div>}
@@ -914,11 +916,11 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
         </div>
       )}
 
-      {education.some((e: any) => e.institution || e.degree) && (
+      {education.some((e: Record<string, string>) => e.institution || e.degree) && (
         <div className="space-y-2">
           <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Education</div>
           <div className="h-px bg-gray-200 w-full mb-1" />
-          {education.map((item: any, idx: number) => (
+          {education.map((item: Record<string, string>, idx: number) => (
             <div key={idx} className="space-y-0.5">
               <div className="flex justify-between font-bold text-black">
                 <span>{item.degree || "Degree"} in {item.fieldOfStudy || "Specialization"}</span>
@@ -939,12 +941,12 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
         </div>
       )}
 
-      {certifications.some((c: any) => c.name || c.issuer) && (
+      {certifications.some((c: Record<string, string>) => c.name || c.issuer) && (
         <div className="space-y-1">
           <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Certifications</div>
           <div className="h-px bg-gray-200 w-full mb-1" />
           <ul className="list-disc pl-3 text-[9px] text-gray-700 space-y-0.5">
-            {certifications.map((c: any, idx: number) => <li key={idx}>{c.name}{c.issuer && ` by ${c.issuer}`}{c.date && ` (${c.date})`}</li>)}
+            {certifications.map((c: Record<string, string>, idx: number) => <li key={idx}>{c.name}{c.issuer && ` by ${c.issuer}`}{c.date && ` (${c.date})`}</li>)}
           </ul>
         </div>
       )}

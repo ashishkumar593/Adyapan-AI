@@ -47,6 +47,7 @@ const AdyChatView = dynamic(() => import("@/components/ady-chat/AdyChatView").th
 const StudyAssistantView = dynamic(() => import("@/components/learning-hub/StudyAssistantView").then(m => m.StudyAssistantView), {
   loading: () => <DashboardWidgetSkeleton title="Study Assistant" />
 });
+import type { UnifiedLesson } from "@/components/learning-hub/StudyAssistantView";
 const StudyPlannerDashboard = dynamic(() => import("@/components/learning-hub/StudyPlannerDashboard").then(m => m.StudyPlannerDashboard), {
   loading: () => <DashboardWidgetSkeleton title="Study Planner" />
 });
@@ -263,7 +264,7 @@ function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewToo
   onComingSoon: () => void;
   activeView: string;
   onViewDashboard: () => void;
-  onViewTool: (tool: any) => void;
+  onViewTool: (tool: string) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }) {
@@ -443,12 +444,12 @@ function DashboardTopNav({
   onComingSoon: () => void;
   onViewProfile: () => void;
   onAdyChat: () => void;
-  onViewTool: (tool: any) => void;
+  onViewTool: (tool: string) => void;
   onMenuToggle: () => void;
-  notifications: any[];
+  notifications: Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>;
   onPremium?: () => void;
   onViewSettings?: () => void;
-  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
+  setNotifications: React.Dispatch<React.SetStateAction<Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>>>;
   unreadCount: number;
   onMarkAllRead: () => void;
   onClearAll: () => void;
@@ -755,7 +756,7 @@ function DashboardTopNav({
 }
 
 // ─── Profile Dropdown ─────────────────────────────────────────────────────────
-function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: any) => void }) {
+function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1063,7 +1064,7 @@ function WelcomeBanner({
 }
 
 // ─── Stat Cards Grid ──────────────────────────────────────────────────────────
-function StatCardsGrid({ stats }: { stats: any }) {
+function StatCardsGrid({ stats }: { stats: { avgAtsScore: number; resumesCount: number; avgLinkedinScore: number; dsaSolved: number; dsaStreak: number; studySessionsCount: number; notesCount: number; quizzesCount: number; dsaAccuracy: number; assignmentsCount: number; pptsCount: number; mindmapsCount: number } }) {
   return (
     <div style={{
       display: "grid",
@@ -1080,7 +1081,7 @@ function StatCardsGrid({ stats }: { stats: any }) {
   );
 }
 // ─── 3-Column Panel Grid ──────────────────────────────────────────────────────
-function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => void }) {
+function PanelGrid({ stats, onViewTool }: { stats: { avgAtsScore: number; resumesCount: number; avgLinkedinScore: number; dsaSolved: number; dsaStreak: number; studySessionsCount: number; notesCount: number; quizzesCount: number; coverLettersCount: number; codingSessionsCount: number; challengesCount: number; profileCompletion: number; targetRole: string; dsaAccuracy: number; assignmentsCount: number; pptsCount: number; mindmapsCount: number }; onViewTool: (v: string) => void }) {
   const router = useRouter();
   const quickActions = [
     { label: "Study Assistant", icon: <GraduationCap size={16} />, color: "#8b5cf6", target: "study-assistant", href: null },
@@ -1155,7 +1156,7 @@ function PanelGrid({ stats, onViewTool }: { stats: any; onViewTool: (v: any) => 
                 key={action.label}
                 onClick={() => {
                   if (action.href) router.push(action.href);
-                  else onViewTool(action.target as any);
+                  else onViewTool(action.target);
                 }}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.5rem",
@@ -1620,8 +1621,8 @@ function NotificationsView({
   onMarkAllRead,
   onClearAll,
 }: {
-  notifications: any[];
-  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
+  notifications: Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>;
+  setNotifications: React.Dispatch<React.SetStateAction<Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>>>;
   onViewDashboard: () => void;
   onMarkAllRead: () => void;
   onClearAll: () => void;
@@ -1987,7 +1988,7 @@ function RecommendationLoadingProgress() {
   );
 }
 
-function AIDailyBriefing({ brief }: { brief: any }) {
+function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreChange?: string; strongestArea?: string; urgentRevision?: string } } | null }) {
   const [typedText, setTypedText] = useState("");
   const fullText = (brief?.text || "").replace(/^God morning/i, "Good morning");
 
@@ -2030,15 +2031,15 @@ function AIDailyBriefing({ brief }: { brief: any }) {
         <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
           <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
             <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Score Change</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#10b981" }}>{brief.metrics.scoreChange}</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#10b981" }}>{brief.metrics?.scoreChange}</div>
           </div>
           <div style={{ background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
             <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Strongest Area</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#3b82f6" }}>{brief.metrics.strongestArea}</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#3b82f6" }}>{brief.metrics?.strongestArea}</div>
           </div>
           <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.15)", borderRadius: "8px", padding: "6px 12px", textAlign: "center", minWidth: "90px" }}>
             <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Urgent Revise</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#ef4444" }}>{brief.metrics.urgentRevision}</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#ef4444" }}>{brief.metrics?.urgentRevision}</div>
           </div>
         </div>
       </div>
@@ -2046,7 +2047,7 @@ function AIDailyBriefing({ brief }: { brief: any }) {
   );
 }
 
-function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { recommendations: any[]; onSelectAction: (type: string) => void; onRegenerate: () => void }) {
+function RecommendedToday({ recommendations, onSelectAction, onRegenerate }: { recommendations: Array<{ id?: string; priority: string; recommendationType: string; topicName?: string; reason?: string; impactScore?: number; urgencyScore?: number }>; onSelectAction: (type: string) => void; onRegenerate: () => void }) {
   return (
     <div style={{ marginBottom: "1.8rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -2198,7 +2199,7 @@ function UserDashboardContent() {
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState(false);
-  const [activeView, setActiveView] = useState<any>(() => {
+  const [activeView, setActiveView] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("dashboard-active-view");
@@ -2208,17 +2209,17 @@ function UserDashboardContent() {
     return "dashboard";
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: any; duration: string; level: string } | null>(null);
+  const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: UnifiedLesson; duration: string; level: string } | null>(null);
   const selectedTemplate = "ATS Modern";
   const { socket, isConnected } = useSocket();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
 
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [dailyBrief, setDailyBrief] = useState<any>(null);
-  const [coachInsight, setCoachInsight] = useState<any>(null);
-  const [learningPaths, setLearningPaths] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<Array<{ id?: string; priority: string; recommendationType: string; topicName?: string; reason?: string; impactScore?: number; urgencyScore?: number }>>([]);
+  const [dailyBrief, setDailyBrief] = useState<{ text?: string } | null>(null);
+  const [coachInsight, setCoachInsight] = useState<Record<string, unknown> | null>(null);
+  const [learningPaths, setLearningPaths] = useState<Record<string, unknown>[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 
   const fetchRecommendations = useCallback(async (forceGenerate = false) => {
@@ -2285,7 +2286,7 @@ function UserDashboardContent() {
       socket.emit("join_user", userId);
     }
 
-    const handler = (notification: any) => {
+    const handler = (notification: { id: string; title: string; message: string; read: boolean; createdAt: string }) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(c => c + 1);
     };
@@ -2410,11 +2411,11 @@ function UserDashboardContent() {
         const challenges = challengesRes.status === "fulfilled" ? (challengesRes.value.data || []) : [];
 
         const avgAtsScore = atsReports.length
-          ? Math.round(atsReports.reduce((sum: number, r: any) => sum + r.score, 0) / atsReports.length)
+          ? Math.round(atsReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / atsReports.length)
           : 0;
 
         const avgLinkedinScore = linkedinReports.length
-          ? Math.round(linkedinReports.reduce((sum: number, r: any) => sum + r.score, 0) / linkedinReports.length)
+          ? Math.round(linkedinReports.reduce((sum: number, r: { score: number }) => sum + r.score, 0) / linkedinReports.length)
           : 0;
 
         setDashboardStats({

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, BookOpen, RotateCcw, Brain, Target, ArrowRight, Lightbulb } from "lucide-react";
 
-interface RecommendationItem {
+export interface RecommendationItem {
   type: "study" | "revise" | "practice" | "improve";
   title: string;
   recommendation: string;

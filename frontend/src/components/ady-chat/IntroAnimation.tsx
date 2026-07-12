@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 //   4s+:  Everything morphs into chat interface
 
 interface IntroAnimationProps {
+  isDark: boolean;
   onComplete: () => void;
 }
 
@@ -21,7 +22,7 @@ const TYPING_PHRASES = [
   "Ready when you are.",
 ];
 
-export function IntroAnimation({ onComplete }: IntroAnimationProps) {
+export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
   const [phase, setPhase] = useState(0); // 0=logo, 1=orb, 2=particles, 3=typing, 4=done
   const [typedText, setTypedText] = useState("");
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -112,7 +113,9 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
           className="absolute inset-0 flex flex-col items-center justify-center"
           style={{
             zIndex: 1000,
-            background: "linear-gradient(135deg, #040412 0%, #080820 50%, #050512 100%)",
+            background: isDark
+              ? "linear-gradient(135deg, #040412 0%, #080820 50%, #050512 100%)"
+              : "linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f8faff 100%)",
           }}
           exit={{
             opacity: 0,
@@ -123,12 +126,18 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
         >
           {/* Background gradient mesh */}
           <div
-            className="absolute inset-0 opacity-50"
+            className="absolute inset-0"
             style={{
-              background: `
-                radial-gradient(ellipse 80% 60% at 30% 30%, rgba(245,158,11,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 70% 70%, rgba(59,130,246,0.08) 0%, transparent 60%)
-              `,
+              opacity: isDark ? 0.5 : 0.4,
+              background: isDark
+                ? `
+                  radial-gradient(ellipse 80% 60% at 30% 30%, rgba(245,158,11,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 70% 70%, rgba(59,130,246,0.08) 0%, transparent 60%)
+                `
+                : `
+                  radial-gradient(ellipse 80% 60% at 30% 30%, rgba(245,158,11,0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 70% 70%, rgba(59,130,246,0.04) 0%, transparent 60%)
+                `,
             }}
           />
 
@@ -138,7 +147,9 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
             style={{
               width: 700,
               height: 700,
-              background: "conic-gradient(from 0deg, transparent 70%, rgba(245,158,11,0.15) 85%, transparent 100%)",
+              background: isDark
+                ? "conic-gradient(from 0deg, transparent 70%, rgba(245,158,11,0.15) 85%, transparent 100%)"
+                : "conic-gradient(from 0deg, transparent 70%, rgba(245,158,11,0.06) 85%, transparent 100%)",
               filter: "blur(40px)",
             }}
             animate={{ rotate: 360 }}
@@ -156,11 +167,13 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
                   height: p.size,
                   left: `${p.x}%`,
                   top: `${p.y}%`,
-                  background: i % 3 === 0 ? "rgba(245,158,11,0.7)" : i % 3 === 1 ? "rgba(59,130,246,0.6)" : "rgba(139,92,246,0.6)",
+                  background: isDark
+                    ? (i % 3 === 0 ? "rgba(245,158,11,0.7)" : i % 3 === 1 ? "rgba(59,130,246,0.6)" : "rgba(139,92,246,0.6)")
+                    : (i % 3 === 0 ? "rgba(245,158,11,0.3)" : i % 3 === 1 ? "rgba(59,130,246,0.25)" : "rgba(139,92,246,0.25)"),
                 }}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{
-                  opacity: [0.3, 0.7, 0.3],
+                  opacity: isDark ? [0.3, 0.7, 0.3] : [0.15, 0.35, 0.15],
                   scale: [1, 1.4, 1],
                   y: [0, -20, 0],
                 }}
@@ -178,7 +191,9 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
           <motion.div
             className="absolute rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(245,158,11,0.4) 0%, rgba(245,158,11,0.1) 40%, transparent 70%)",
+              background: isDark
+                ? "radial-gradient(circle, rgba(245,158,11,0.4) 0%, rgba(245,158,11,0.1) 40%, transparent 70%)"
+                : "radial-gradient(circle, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.04) 40%, transparent 70%)",
               filter: "blur(2px)",
             }}
             initial={{ width: 0, height: 0, opacity: 0 }}
@@ -193,7 +208,7 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
           {/* Outer orb ring */}
           <motion.div
             className="absolute rounded-full border"
-            style={{ borderColor: "rgba(245,158,11,0.2)" }}
+            style={{ borderColor: isDark ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.1)" }}
             initial={{ width: 0, height: 0, opacity: 0 }}
             animate={
               phase >= 1
@@ -247,7 +262,7 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
                   style={{
                     width: 70,
                     height: 8,
-                    background: "rgba(0, 0, 0, 0.6)",
+                    background: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.15)",
                     filter: "blur(6px)",
                     bottom: -8,
                     zIndex: -1,
@@ -269,7 +284,9 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
                 <h1
                   className="text-5xl font-black tracking-tight"
                   style={{
-                    background: "linear-gradient(135deg, #ffffff 0%, rgba(245,158,11,0.9) 50%, #ffffff 100%)",
+                    background: isDark
+                      ? "linear-gradient(135deg, #ffffff 0%, rgba(245,158,11,0.9) 50%, #ffffff 100%)"
+                      : "linear-gradient(135deg, #1e293b 0%, rgba(245,158,11,0.9) 50%, #1e293b 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -295,14 +312,18 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
                 >
                   <span
                     className="text-lg font-medium"
-                    style={{ color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.01em" }}
+                    style={{
+                      color: isDark ? "rgba(255,255,255,0.65)" : "rgba(30,41,59,0.6)",
+                      fontFamily: "'Outfit', sans-serif",
+                      letterSpacing: "0.01em",
+                    }}
                   >
                     {typedText}
                   </span>
                   <span
                     className="inline-block w-0.5 h-5 ml-0.5 align-middle"
                     style={{
-                      background: "rgba(245,158,11,0.8)",
+                      background: isDark ? "rgba(245,158,11,0.8)" : "rgba(245,158,11,0.7)",
                       opacity: showCursor ? 1 : 0,
                       transition: "opacity 0.1s",
                     }}
@@ -321,7 +342,10 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
           >
             <span
               className="text-xs tracking-widest uppercase"
-              style={{ color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em" }}
+              style={{
+                color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,41,59,0.35)",
+                letterSpacing: "0.2em",
+              }}
             >
               Powered by Adyapan AI
             </span>

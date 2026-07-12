@@ -19,7 +19,7 @@ import { ADY_MODELS, type ChatSession, type ChatMessage } from "./types";
 
 function useVoiceRecognition(onResult: (text: string) => void) {
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const toggle = useCallback(() => {
     if (listening) {
@@ -27,8 +27,8 @@ function useVoiceRecognition(onResult: (text: string) => void) {
       setListening(false);
       return;
     }
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const w = window as unknown as { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition };
+    const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice input is not supported in this browser.");
       return;
@@ -37,7 +37,7 @@ function useVoiceRecognition(onResult: (text: string) => void) {
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = false;
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[event.results.length - 1][0].transcript;
       onResult(transcript);
       setListening(false);
@@ -322,7 +322,7 @@ export function AdyChatView({ setView }: AdyChatViewProps) {
       {/* Intro animation — absolute, stays within this container */}
       <AnimatePresence>
         {!introComplete && (
-          <IntroAnimation onComplete={() => setIntroComplete(true)} />
+          <IntroAnimation isDark={isDark} onComplete={() => setIntroComplete(true)} />
         )}
       </AnimatePresence>
 

@@ -17,7 +17,7 @@ import type {
 } from "./InterviewTypes";
 
 interface InterviewHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: string) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -55,7 +55,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
   const [screen, setScreen] = useState<AppScreen>("dashboard");
   const [activeSession, setActiveSession] = useState<InterviewSession | null>(null);
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<InterviewSession[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   // Loading / error
@@ -107,8 +107,20 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
   const proctorIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Phase 11: Details
-  const [viewingHistoryItem, setViewingHistoryItem] = useState<any>(null);
+  const [viewingHistoryItem, setViewingHistoryItem] = useState<InterviewSession | null>(null);
   const [violationReport, setViolationReport] = useState<ViolationReport | null>(null);
+
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await api.get("/interview/history");
+      if (res.data.success) {
+        setHistory(res.data.sessions || []);
+      }
+    } catch { /* ignore */ } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,18 +152,6 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
       setConfig(p => ({ ...p, type: "general" }));
     }
   }, [activeModule]);
-
-  const loadHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await api.get("/interview/history");
-      if (res.data.success) {
-        setHistory(res.data.sessions || []);
-      }
-    } catch { /* ignore */ } finally {
-      setHistoryLoading(false);
-    }
-  };
 
   // ═══════════════════════════════════════════════════════════════════
   // Phase 3: Start interview (go to config first)
@@ -189,8 +189,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
         setMessages(res.data.messages || []);
         setScreen("identity");
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to start interview");
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to start interview");
     } finally {
       setLoading(false);
     }
@@ -236,8 +236,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
           setScreen("system-check");
         }
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Identity verification failed");
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Identity verification failed");
     }
   };
 
@@ -256,7 +256,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     screen: `${window.screen.width}x${window.screen.height}`,
     camera: "default",
     microphone: "default",
-    connection: (navigator as any).connection?.effectiveType || "unknown",
+    connection: (navigator as { connection?: { effectiveType?: string } }).connection?.effectiveType || "unknown",
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -367,8 +367,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
       if (res.data.success) {
         setEnvScanResult(res.data.scanResult);
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Environment scan failed");
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Environment scan failed");
     } finally {
       setEnvScanning(false);
     }
@@ -393,8 +393,8 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
         startProctoringPolling();
         activateFullscreen();
       }, 2000);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to accept rules");
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to accept rules");
     } finally {
       setLoading(false);
     }
@@ -487,14 +487,15 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     if (!activeSession) return;
     try {
       // For now, use browser's SpeechRecognition
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+      const SpeechRecognitionClass = (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).SpeechRecognition
+        ?? (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).webkitSpeechRecognition;
+      if (SpeechRecognitionClass) {
+        const recognition = new SpeechRecognitionClass();
         recognition.lang = config.language === "hindi" ? "hi-IN" : "en-US";
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
-        recognition.onresult = async (event: any) => {
+        recognition.onresult = async (event) => {
           const text = event.results[0][0].transcript;
           if (text.trim()) {
             const res = await api.post(`/interview/${activeSession.id}/voice`, { text, duration: 0 });
@@ -580,7 +581,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
     stopProctoringPolling();
   };
 
-  const viewHistorySession = async (session: any) => {
+  const viewHistorySession = async (session: InterviewSession) => {
     try {
       const res = await api.get(`/interview/${session.id}`);
       if (res.data.success) {
@@ -700,7 +701,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {history.map((h: any) => (
+                  {history.map((h: InterviewSession) => (
                     <div key={h.id} onClick={() => viewHistorySession(h)}
                       className="p-4 border rounded-xl flex items-center justify-between cursor-pointer hover:shadow-md transition-all"
                       style={{ background: c.cardBg, borderColor: c.border }}>
@@ -776,7 +777,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Difficulty</label>
-                  <select value={config.difficulty} onChange={e => setConfig(p => ({ ...p, difficulty: e.target.value as any }))}
+                    <select value={config.difficulty} onChange={e => setConfig(p => ({ ...p, difficulty: e.target.value as InterviewConfig["difficulty"] }))}
                     className="w-full border rounded-lg p-2 text-xs mt-1" style={{ background: c.inputBg, color: c.text, borderColor: c.border }}>
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>

@@ -54,7 +54,7 @@ interface ChatMessage {
 }
 
 interface PlacementHubViewProps {
-  setView: (v: any) => void;
+  setView: (v: string) => void;
   activeModule?: string;
   theme?: string;
 }
@@ -124,7 +124,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   const [activeTest, setActiveTest] = useState<MockTest | null>(null);
   const [testTimeRemaining, setTestTimeRemaining] = useState(0);
   const [testAnswers, setTestAnswers] = useState<Record<string, number>>({});
-  const [testCompletedReport, setTestCompletedReport] = useState<any | null>(null);
+  const [testCompletedReport, setTestCompletedReport] = useState<{ score: number; correct: number; total: number; sections: Record<string, number>; accuracy: number } | null>(null);
 
   // Stats / History
   const [completedMocksCount, setCompletedMocksCount] = useState(0);
@@ -152,6 +152,45 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
   }, [activeModule]);
 
   // Mock test countdown timer
+  const handleEndMockTest = (auto = false) => {
+    if (!activeTest) return;
+    if (!auto && !confirm("Are you sure you want to submit your mock test?")) return;
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    // Calculate score
+    let correctCount = 0;
+    let totalQuestions = 0;
+    const sectionScores: Record<string, number> = {};
+
+    activeTest.sections.forEach(sec => {
+      let secCorrect = 0;
+      sec.questions.forEach(q => {
+        totalQuestions += 1;
+        const selected = testAnswers[q.id];
+        if (selected === q.correctIdx) {
+          correctCount += 1;
+          secCorrect += 1;
+        }
+      });
+      sectionScores[sec.name] = secCorrect;
+    });
+
+    const finalPercent = Math.round((correctCount / totalQuestions) * 100);
+
+    setTestCompletedReport({
+      score: finalPercent,
+      correct: correctCount,
+      total: totalQuestions,
+      sections: sectionScores,
+      accuracy: finalPercent
+    });
+
+    setCompletedMocksCount(prev => prev + 1);
+    setAvgAccuracy(prev => Math.round((prev + finalPercent) / 2));
+    setActiveTest(null);
+  };
+
   useEffect(() => {
     if (activeTest && testTimeRemaining > 0) {
       timerRef.current = setInterval(() => {
@@ -225,45 +264,6 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
 
   const handleSelectMockAnswer = (qId: string, optIdx: number) => {
     setTestAnswers(prev => ({ ...prev, [qId]: optIdx }));
-  };
-
-  const handleEndMockTest = (auto = false) => {
-    if (!activeTest) return;
-    if (!auto && !confirm("Are you sure you want to submit your mock test?")) return;
-
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    // Calculate score
-    let correctCount = 0;
-    let totalQuestions = 0;
-    const sectionScores: Record<string, number> = {};
-
-    activeTest.sections.forEach(sec => {
-      let secCorrect = 0;
-      sec.questions.forEach(q => {
-        totalQuestions += 1;
-        const selected = testAnswers[q.id];
-        if (selected === q.correctIdx) {
-          correctCount += 1;
-          secCorrect += 1;
-        }
-      });
-      sectionScores[sec.name] = secCorrect;
-    });
-
-    const finalPercent = Math.round((correctCount / totalQuestions) * 100);
-
-    setTestCompletedReport({
-      score: finalPercent,
-      correct: correctCount,
-      total: totalQuestions,
-      sections: sectionScores,
-      accuracy: finalPercent
-    });
-
-    setCompletedMocksCount(prev => prev + 1);
-    setAvgAccuracy(prev => Math.round((prev + finalPercent) / 2));
-    setActiveTest(null);
   };
 
   const handleAssistantSend = async () => {

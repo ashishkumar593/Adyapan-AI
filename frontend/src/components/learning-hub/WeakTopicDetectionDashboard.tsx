@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { api } from "@/services/api";
 import CountUp from "react-countup";
 import {
@@ -121,18 +121,15 @@ interface DashboardData {
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const fadeUp: any = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.45, ease: "easeOut" } }),
 };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const scaleIn: any = {
+const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.06, duration: 0.4 } }),
 };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const slideRight: any = {
+const slideRight: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: (i = 0) => ({ opacity: 1, x: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
@@ -202,21 +199,31 @@ function StrengthRing({ score, size = 60 }: { score: number; size?: number }) {
 // ─── Floating Particles ───────────────────────────────────────────────────────
 
 function FloatingParticles() {
+  const [particles] = React.useState(() => Array.from({ length: 18 }, (_, i) => ({
+    width: Math.random() * 4 + 1,
+    height: Math.random() * 4 + 1,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    duration: 5 + Math.random() * 8,
+    delay: Math.random() * 5,
+    color: i % 3 === 0 ? "rgba(244,63,94,0.35)" : i % 3 === 1 ? "rgba(245,158,11,0.3)" : "rgba(139,92,246,0.3)",
+  })));
+
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {Array.from({ length: 18 }).map((_, i) => (
+      {particles.map((p, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full"
           style={{
-            width: Math.random() * 4 + 1,
-            height: Math.random() * 4 + 1,
-            background: i % 3 === 0 ? "rgba(244,63,94,0.35)" : i % 3 === 1 ? "rgba(245,158,11,0.3)" : "rgba(139,92,246,0.3)",
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
+            width: p.width,
+            height: p.height,
+            background: p.color,
+            left: `${p.left}%`,
+            top: `${p.top}%`,
           }}
           animate={{ y: [0, -40, 0], opacity: [0.2, 0.8, 0.2] }}
-          transition={{ duration: 5 + Math.random() * 8, repeat: Infinity, delay: Math.random() * 5, ease: "easeInOut" }}
+          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
         />
       ))}
     </div>

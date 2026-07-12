@@ -71,6 +71,17 @@ type MindMapNodeData = Record<string, unknown> & {
   interviewTip: string;
 };
 
+interface RawMindMapNode {
+  id: string;
+  label: string;
+  type?: string;
+  definition?: string;
+  whyItMatters?: string;
+  realExample?: string;
+  commonMistakes?: string;
+  interviewTip?: string;
+}
+
 type LearningMode = "beginner" | "intermediate" | "interview" | "revision";
 
 type LayoutType = "radial" | "tree" | "graph";
@@ -84,7 +95,7 @@ const slideRight = { hidden: { opacity: 0, x: -24 }, visible: (i = 0) => ({ opac
 function layoutNodes(nodes: Node[], edges: Edge[], layoutType: LayoutType): Node[] {
   if (nodes.length === 0) return [];
   const layouted = nodes.map(n => ({ ...n, position: { x: 0, y: 0 } }));
-  const rootNode = layouted.find(n => (n.data as any)?.type === "root") || layouted[0];
+  const rootNode = layouted.find(n => (n.data as MindMapNodeData)?.type === "root") || layouted[0];
   const rootId = rootNode.id;
 
   const adj: Record<string, string[]> = {};
@@ -569,7 +580,7 @@ export function MindMapsView() {
       const rawNodes = data.mindmap.nodes;
       const rawEdges = data.mindmap.edges || [];
 
-      const flowNodes: Node[] = rawNodes.map((n: any) => ({
+      const flowNodes: Node[] = rawNodes.map((n: RawMindMapNode) => ({
         id: n.id,
         type: "mindmapNode",
         position: { x: 0, y: 0 },
@@ -584,7 +595,7 @@ export function MindMapsView() {
         },
       }));
 
-      const flowEdges: Edge[] = rawEdges.map((e: any) => ({
+      const flowEdges: Edge[] = rawEdges.map((e: { source: string; target: string }) => ({
         id: `e-${e.source}-${e.target}`,
         source: e.source,
         target: e.target,
@@ -606,9 +617,10 @@ export function MindMapsView() {
       localStorage.setItem("adyapan-map-history", JSON.stringify(updated));
 
       toast.success(`Mind map for "${targetTopic}" generated!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
       console.error("[MindMapsView] generate failed:", err);
-      setError(err?.response?.data?.error || err.message || "An unexpected error occurred.");
+      setError(e?.response?.data?.error || e?.message || "An unexpected error occurred.");
       setIsGenerating(false);
     }
   };
@@ -626,8 +638,8 @@ export function MindMapsView() {
 
       const res = await api.post("/mindmap/expand", {
         nodeId: selectedNodeId,
-        conceptLabel: (targetNode.data as any).label,
-        conceptType: (targetNode.data as any).type,
+        conceptLabel: (targetNode.data as MindMapNodeData).label,
+        conceptType: (targetNode.data as MindMapNodeData).type,
         mode: selectedMode,
         existingLabels,
       });
@@ -641,17 +653,17 @@ export function MindMapsView() {
       const newRawEdges = data.expansion.edges || [];
 
       const uniqueNewNodes = newRaw.filter(
-        (nn: any) => !nodes.some(en => en.id === nn.id || (en.data as any).label === nn.label)
+        (nn: RawMindMapNode) => !nodes.some(en => en.id === nn.id || (en.data as MindMapNodeData).label === nn.label)
       );
       const uniqueNewEdges = newRawEdges.filter(
-        (ne: any) => !edges.some(ee => (ee.source === ne.source && ee.target === ne.target) || (ee.source === ne.target && ee.target === ne.source))
+        (ne: { source: string; target: string }) => !edges.some(ee => (ee.source === ne.source && ee.target === ne.target) || (ee.source === ne.target && ee.target === ne.source))
       );
 
       if (uniqueNewNodes.length === 0) {
         throw new Error("The AI did not find any new sub-concepts for this node.");
       }
 
-      const flowNewNodes: Node[] = uniqueNewNodes.map((n: any) => ({
+      const flowNewNodes: Node[] = uniqueNewNodes.map((n: RawMindMapNode) => ({
         id: n.id,
         type: "mindmapNode",
         position: {
@@ -669,7 +681,7 @@ export function MindMapsView() {
         },
       }));
 
-      const flowNewEdges: Edge[] = uniqueNewEdges.map((e: any) => ({
+      const flowNewEdges: Edge[] = uniqueNewEdges.map((e: { source: string; target: string }) => ({
         id: `e-${e.source}-${e.target}`,
         source: e.source,
         target: e.target,
@@ -685,10 +697,11 @@ export function MindMapsView() {
       setNodes(positioned);
       setEdges(combinedEdges);
       setIsExpanding(false);
-      toast.success(`Expanded "${(targetNode.data as any).label}" with ${flowNewNodes.length} new concepts.`);
-    } catch (err: any) {
+      toast.success(`Expanded "${(targetNode.data as MindMapNodeData).label}" with ${flowNewNodes.length} new concepts.`);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
       console.error("[MindMapsView] expand failed:", err);
-      setError(err?.response?.data?.error || err.message || "Failed to expand node.");
+      setError(e?.response?.data?.error || e?.message || "Failed to expand node.");
       setIsExpanding(false);
     }
   };
@@ -1038,7 +1051,7 @@ export function MindMapsView() {
                     <MiniMap
                       style={{ background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: "12px", overflow: "hidden" }}
                       nodeColor={(node) => {
-                        const nd = node.data as any;
+                        const nd = node.data as MindMapNodeData;
                         const t = nd?.type as string;
                         if (t === "root") return "#f59e0b";
                         if (t === "concept") return "#d97706";
