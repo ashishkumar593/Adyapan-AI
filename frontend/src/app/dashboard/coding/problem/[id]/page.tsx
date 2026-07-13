@@ -27,6 +27,7 @@ import {
   DashboardTopNav,
   AdyapanUser
 } from "../../../user/page";
+import { renderMarkdown } from "@/utils/renderMarkdown";
 
 // Checklists for loading experience
 const loadingSteps = [
@@ -1005,13 +1006,13 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       {msg.role === 'user' ? 'You' : 'Coach'}
                     </div>
                     <div 
-                      className={`p-3.5 rounded-2xl whitespace-pre-line leading-relaxed ${
+                      className={`p-3.5 rounded-2xl leading-relaxed ${
                         msg.role === 'user' 
-                          ? 'bg-amber-500 text-black font-semibold rounded-tr-none' 
+                          ? 'bg-amber-500 text-black font-semibold rounded-tr-none whitespace-pre-line' 
                           : 'bg-white/5 border border-[var(--border-color)] text-[var(--text-primary)] rounded-tl-none font-medium'
                       }`}
                     >
-                      {msg.content}
+                      {msg.role === 'user' ? msg.content : renderMarkdown(msg.content, theme === "dark")}
                     </div>
                   </motion.div>
                 ))}
