@@ -457,17 +457,6 @@ export default function CodingHubPage() {
               Select a topic, view guided hints and optimal approaches, and complete placements preparation!
             </p>
           </div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <PremiumButton
-              variant="primary"
-              onClick={handleSyncRepository}
-              loading={syncing}
-              icon={<RefreshCw size={14} />}
-            >
-              Sync Codeforces Repository
-            </PremiumButton>
-          </motion.div>
         </div>
 
         {/* Hero Statistics Panels */}
