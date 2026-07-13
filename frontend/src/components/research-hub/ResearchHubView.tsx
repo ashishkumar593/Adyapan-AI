@@ -528,13 +528,13 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
           <div className="flex gap-2">
             <motion.button onClick={handleCheckPlagiarism} disabled={!plagiarismText.trim() || checkingPlagiarism}
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              className="flex-1 py-2.5 rounded-lg bg-amber-500 text-black font-extrabold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors"
+              className="flex-1 py-2 rounded-lg bg-amber-500 text-black font-extrabold text-[10px] hover:bg-amber-400 disabled:opacity-50 transition-colors"
             >
               {checkingPlagiarism ? "Scanning..." : "Check Similarity"}
             </motion.button>
             <motion.button onClick={handleRephrase} disabled={!plagiarismText.trim() || generating}
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              className="py-2.5 px-4 rounded-lg border hover:bg-white/10 text-xs font-bold disabled:opacity-50 transition-colors"
+              className="py-2 px-3 rounded-lg border hover:bg-white/10 text-[10px] font-bold disabled:opacity-50 transition-colors"
               style={{ borderColor: c.border }}
             >
               AI Paraphraser
@@ -627,9 +627,9 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
         <motion.button onClick={handleStartGeneration} disabled={!topic.trim()}
           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(245,158,11,0.3)" }}
           whileTap={{ scale: 0.98 }}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black font-extrabold text-sm hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+          className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black font-extrabold text-xs hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
         >
-          <Sparkles size={16} /> Configure Research Paper <ArrowRight size={16} />
+          <Sparkles size={14} /> Configure Research Paper <ArrowRight size={14} />
         </motion.button>
       </motion.div>
 
@@ -833,9 +833,9 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
       <motion.button onClick={handleGeneratePaper} disabled={generating}
         whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(245,158,11,0.3)" }}
         whileTap={{ scale: 0.98 }}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black font-extrabold text-sm hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black font-extrabold text-xs hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
       >
-        <Zap size={18} /> Generate Research Paper
+        <Zap size={14} /> Generate Research Paper
       </motion.button>
     </motion.div>
   );
