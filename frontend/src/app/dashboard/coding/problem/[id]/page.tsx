@@ -358,8 +358,8 @@ export default function ProblemWorkspacePage() {
         setDiscussionInput("");
         toast.success("Comment posted!");
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to post message");
+    } catch (err) {
+      toast.error("Failed to post message");
     }
   };
 
@@ -384,8 +384,8 @@ export default function ProblemWorkspacePage() {
         ]);
         toast.success(`Hint ${hintIndex} unlocked!`);
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to unlock hint");
+    } catch (err) {
+      toast.error("Failed to unlock hint");
     } finally {
       setAiGenerating(false);
     }
@@ -403,16 +403,8 @@ export default function ProblemWorkspacePage() {
       if (res.data.success) {
         setMessages(prev => [...prev, { role: "assistant", content: res.data.explanation }]);
       }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || err.message || "AI Coach failed to generate analysis";
-      toast.error(errorMsg);
-      setMessages(prev => [
-        ...prev,
-        { 
-          role: "assistant", 
-          content: `❌ **AI Coach failed to generate analysis**\n\n*Error details:* ${errorMsg}\n\n*Suggestion:* Verify that your AI environment keys (\`GEMINI_API_KEY\`, \`OPENROUTER_API_KEY\`, or \`GROQ_API_KEY\`) are properly configured in your deployment service dashboard.`
-        }
-      ]);
+    } catch (err) {
+      toast.error("AI Coach failed to generate analysis");
     } finally {
       setAiGenerating(false);
     }
@@ -440,16 +432,8 @@ Answer the student's question based on the coding problem. Provide hints or feed
       if (res.data.success) {
         setMessages(prev => [...prev, { role: "assistant", content: res.data.explanation }]);
       }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || err.message || "AI Coach failed to reply";
-      toast.error(errorMsg);
-      setMessages(prev => [
-        ...prev,
-        { 
-          role: "assistant", 
-          content: `❌ **AI Coach failed to reply**\n\n*Error details:* ${errorMsg}\n\n*Suggestion:* Verify that your AI environment keys (\`GEMINI_API_KEY\`, \`OPENROUTER_API_KEY\`, or \`GROQ_API_KEY\`) are properly configured in your deployment service dashboard.`
-        }
-      ]);
+    } catch (err) {
+      toast.error("AI Coach failed to reply");
     } finally {
       setAiGenerating(false);
     }
