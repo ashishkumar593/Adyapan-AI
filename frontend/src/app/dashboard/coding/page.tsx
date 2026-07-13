@@ -361,53 +361,7 @@ export default function CodingHubPage() {
     return () => clearTimeout(delayDebounce);
   }, [searchQuery, topicFilter, difficultyFilter, statusFilter, bookmarkFilter, placementFilter, isLoading]);
 
-  // Rendering Loading Screen
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[var(--bg-dark)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
-        <FloatingOrbs />
-        <div className="relative z-10 w-full max-w-md p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6"
-          >
-            <Code2 size={32} className="text-black" />
-          </motion.div>
-          
-          <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-primary)]/70 bg-clip-text text-transparent">
-            Adyapan Coding Engine
-          </h2>
-          <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
-            Building DSA Intelligence Layer
-          </p>
 
-          <div className="w-full flex flex-col gap-3">
-            {loadingSteps.map((step, idx) => {
-              const isDone = idx < loadingIndex;
-              const isCurrent = idx === loadingIndex;
-              return (
-                <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
-                  <span className={isDone ? "text-[var(--text-primary)]/40 line-through" : isCurrent ? "text-amber-500" : "text-[var(--text-primary)]/20"}>
-                    {step}
-                  </span>
-                  <div>
-                    {isDone ? (
-                      <Check size={14} className="text-emerald-500" />
-                    ) : isCurrent ? (
-                      <RefreshCw size={12} className="animate-spin text-amber-500" />
-                    ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Active view layout shell
   return (
@@ -445,8 +399,51 @@ export default function CodingHubPage() {
 
       {/* Main workspace */}
       <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6">
-        
-        {/* Header Overview Hero */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 min-h-[50vh]">
+            <div className="relative w-full max-w-md p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6"
+              >
+                <Code2 size={32} className="text-black" />
+              </motion.div>
+              
+              <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-primary)]/70 bg-clip-text text-transparent">
+                Adyapan Coding Engine
+              </h2>
+              <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
+                Building DSA Intelligence Layer
+              </p>
+
+              <div className="w-full flex flex-col gap-3">
+                {loadingSteps.map((step, idx) => {
+                  const isDone = idx < loadingIndex;
+                  const isCurrent = idx === loadingIndex;
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
+                      <span className={isDone ? "text-[var(--text-primary)]/40 line-through" : isCurrent ? "text-amber-500" : "text-[var(--text-primary)]/20"}>
+                        {step}
+                      </span>
+                      <div>
+                        {isDone ? (
+                          <Check size={14} className="text-emerald-500" />
+                        ) : isCurrent ? (
+                          <RefreshCw size={12} className="animate-spin text-amber-500" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header Overview Hero */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
           <div>
 
@@ -834,6 +831,8 @@ export default function CodingHubPage() {
             )}
           </PremiumCard>
         </div>
+        </>
+        )}
       </main>
 
       {/* Slide-out Question Details Drawer */}

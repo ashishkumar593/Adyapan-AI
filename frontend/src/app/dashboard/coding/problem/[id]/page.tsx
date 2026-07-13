@@ -493,53 +493,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
     router.push("/dashboard/user");
   };
 
-  // Checklist Loader screen
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[var(--bg-dark)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
-        <FloatingOrbs />
-        <div className="relative z-10 w-full max-w-md p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6"
-          >
-            <Code2 size={32} className="text-black" />
-          </motion.div>
-          
-          <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-primary)]/70 bg-clip-text text-transparent">
-            AI Problem Workspace
-          </h2>
-          <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
-            Building Developer Sandbox
-          </p>
 
-          <div className="w-full flex flex-col gap-3">
-            {loadingSteps.map((step, idx) => {
-              const isDone = idx < loadingIndex;
-              const isCurrent = idx === loadingIndex;
-              return (
-                <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
-                  <span className={isDone ? "text-[var(--text-primary)]/40 line-through" : isCurrent ? "text-amber-500" : "text-[var(--text-primary)]/20"}>
-                    {step}
-                  </span>
-                  <div>
-                    {isDone ? (
-                      <CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" />
-                    ) : isCurrent ? (
-                      <RefreshCw size={12} className="animate-spin text-amber-500" />
-                    ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Active view layout shell
   return (
@@ -576,9 +530,52 @@ Answer the student's question based on the coding problem. Provide hints or feed
       />
 
       {/* Three panel workspace container */}
-      <main className="dash-main relative z-10 flex flex-col" style={{ height: "calc(100vh - 70px)", padding: 0 }}>
-        
-        {/* Workspace Toolbar (Header) */}
+      <main className="dash-main relative z-10 flex flex-col font-sans" style={{ height: "calc(100vh - 70px)", padding: 0 }}>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full min-h-[70vh]">
+            <div className="relative w-full max-w-md p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6"
+              >
+                <Code2 size={32} className="text-black" />
+              </motion.div>
+              
+              <h2 className="text-xl font-black mb-1 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-primary)]/70 bg-clip-text text-transparent">
+                AI Problem Workspace
+              </h2>
+              <p className="text-[10px] text-amber-500 uppercase tracking-widest font-black mb-6">
+                Building Developer Sandbox
+              </p>
+
+              <div className="w-full flex flex-col gap-3">
+                {loadingSteps.map((step, idx) => {
+                  const isDone = idx < loadingIndex;
+                  const isCurrent = idx === loadingIndex;
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-xs font-semibold py-1">
+                      <span className={isDone ? "text-[var(--text-primary)]/40 line-through" : isCurrent ? "text-amber-500" : "text-[var(--text-primary)]/20"}>
+                        {step}
+                      </span>
+                      <div>
+                        {isDone ? (
+                          <CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" />
+                        ) : isCurrent ? (
+                          <RefreshCw size={12} className="animate-spin text-amber-500" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)]" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Workspace Toolbar (Header) */}
         <div className="h-12 border-b border-[var(--border-color)] bg-black/35 backdrop-blur-md px-6 flex items-center justify-between z-20">
           <div className="flex items-center gap-4">
             <button 
@@ -1111,7 +1108,8 @@ Answer the student's question based on the coding problem. Provide hints or feed
           </div>
 
         </div>
-
+        </>
+        )}
       </main>
     </div>
   );
