@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { api } from "@/services/api";
+import * as pdfjsLib from "pdfjs-dist";
 import {
   ArrowLeft, Shield, Upload, FileText, Sparkles, Zap, Brain,
   CheckCircle2, XCircle, AlertCircle, Clock, Eye, Copy, Download,
@@ -14,6 +15,8 @@ import {
   ShieldX, Fingerprint, Type, BookMarked, Quote, Feather, BrainCircuit,
   Activity, Gauge, Sparkle, RotateCcw, ArrowRight,
 } from "lucide-react";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -197,17 +200,48 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
     return `${color}30`;
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      setDocumentText(text);
-      toast.success("Document loaded successfully!");
-    };
-    reader.onerror = () => toast.error("Failed to read file");
-    reader.readAsText(file);
+
+    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+      try {
+        toast.info("Extracting text from PDF...");
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const totalPages = pdf.numPages;
+        const textParts: string[] = [];
+
+        for (let i = 1; i <= totalPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items
+            .map((item: any) => item.str)
+            .join(" ");
+          textParts.push(pageText);
+        }
+
+        const extractedText = textParts.join("\n\n");
+        if (!extractedText.trim()) {
+          toast.error("Could not extract text from PDF. It may be a scanned/image PDF.");
+          return;
+        }
+        setDocumentText(extractedText);
+        toast.success(`PDF loaded: ${totalPages} page(s), ${extractedText.split(/\s+/).length} words`);
+      } catch (err: any) {
+        console.error("PDF extraction error:", err);
+        toast.error("Failed to parse PDF. Please try another file.");
+      }
+    } else {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        setDocumentText(text);
+        toast.success("Document loaded successfully!");
+      };
+      reader.onerror = () => toast.error("Failed to read file");
+      reader.readAsText(file);
+    }
     e.target.value = "";
   };
 
@@ -847,7 +881,7 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt,.md"
+              accept=".txt,.md,.pdf"
               onChange={handleFileUpload}
               className="hidden"
             />
