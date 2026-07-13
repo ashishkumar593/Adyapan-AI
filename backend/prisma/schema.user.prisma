@@ -320,6 +320,63 @@ model Submission {
   @@map("submissions")
 }
 
+model ProblemWorkspaceSession {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  questionId  String   @map("question_id")
+  language    String
+  codeContent String   @map("code_content")
+  status      String   @default("In Progress")
+  timeSpent   Int      @default(0) @map("time_spent")
+  lastOpened  DateTime @default(now()) @map("last_opened")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([questionId])
+  @@map("problem_workspace_sessions")
+}
+
+model ProblemNote {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  questionId  String   @map("question_id")
+  noteContent String   @map("note_content")
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([questionId])
+  @@map("problem_notes")
+}
+
+model ProblemBookmark {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  questionId String   @map("question_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([questionId])
+  @@map("problem_bookmarks")
+}
+
+model ProblemDiscussion {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  questionId String   @map("question_id")
+  message    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([createdAt])
+  @@map("problem_discussions")
+}
+
 model DSAProgress {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
