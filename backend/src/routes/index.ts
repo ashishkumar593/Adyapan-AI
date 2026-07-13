@@ -31,6 +31,7 @@ import { streakRouter } from "./streak.routes";
 import { weakTopicsRouter } from "./weak-topics.routes";
 import { recommendationRouter } from "./recommendation.routes";
 import { researchRouter } from "./research.routes";
+import { plagiarismRouter } from "./plagiarism.routes";
 
 export const apiRouter = Router();
 
@@ -70,6 +71,9 @@ apiRouter.use("/recommendations", recommendationRouter);
 
 // Research Hub Routes
 apiRouter.use("/research", researchRouter);
+
+// Plagiarism Checker Routes
+apiRouter.use("/plagiarism", plagiarismRouter);
 
 
 

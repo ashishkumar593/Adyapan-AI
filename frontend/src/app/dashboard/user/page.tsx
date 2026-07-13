@@ -135,6 +135,9 @@ const BillingView = dynamic(() => import("@/components/account-hub/BillingView")
 const ResearchHubView = dynamic(() => import("@/components/research-hub/ResearchHubView").then(m => m.ResearchHubView), {
   loading: () => <DashboardWidgetSkeleton title="Research Helper" />
 });
+const PlagiarismCheckerView = dynamic(() => import("@/components/research-hub/PlagiarismCheckerView").then(m => m.PlagiarismCheckerView), {
+  loading: () => <DashboardWidgetSkeleton title="Plagiarism Checker" />
+});
 import type { ResumeHubViewType } from "@/types/resume";
 import {
   Search, Crown, Bell, ChevronDown, Menu,
@@ -2421,8 +2424,10 @@ function UserDashboardContent() {
           <ErrorBoundary moduleName="Analytics Hub"><AnalyticsHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
         ) : activeView === "progress-hub" ? (
           <ErrorBoundary moduleName="Progress Tracking"><ProgressDashboard /></ErrorBoundary>
-        ) : activeView === "research-hub" || activeView === "research-paper-ai" || activeView === "research-plagiarism" ? (
+        ) : activeView === "research-hub" || activeView === "research-paper-ai" ? (
           <ErrorBoundary moduleName="Research Hub"><ResearchHubView setView={setActiveView} activeModule={activeView} theme={theme} /></ErrorBoundary>
+        ) : activeView === "research-plagiarism" ? (
+          <ErrorBoundary moduleName="Plagiarism Checker"><PlagiarismCheckerView setView={setActiveView} /></ErrorBoundary>
         ) : activeView === "github-portfolio" ? (
           <ErrorBoundary moduleName="Github Portfolio"><GithubPortfolioView /></ErrorBoundary>
         ) : activeView === "notifications" ? (
