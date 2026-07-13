@@ -595,7 +595,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
   // ── RENDER: TOPIC STEP ──────────────────────────────────────────────────
 
   const renderTopicStep = () => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto w-full space-y-8">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-8">
       {/* Hero */}
       <div className="text-center space-y-3">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
@@ -667,7 +667,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
   // ── RENDER: CONFIG STEP ─────────────────────────────────────────────────
 
   const renderConfigStep = () => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto w-full space-y-6">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-6">
       <div className="flex items-center gap-3">
         <motion.button onClick={() => setStep("topic")} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           className="p-2 rounded-lg border hover:bg-white/10" style={{ borderColor: c.border }}
@@ -843,7 +843,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
   // ── RENDER: PROGRESS STEP ───────────────────────────────────────────────
 
   const renderProgressStep = () => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto w-full space-y-6">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-6">
       <div className="text-center space-y-2">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="w-12 h-12 mx-auto rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center"

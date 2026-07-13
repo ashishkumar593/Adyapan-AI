@@ -2360,7 +2360,7 @@ function UserDashboardContent() {
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <main className={`dash-main relative z-10 resume-hub-theme ${activeView === "ady-chat" || activeView === "resume-hub" || activeView === "resume-builder" || activeView === "ats-checker" ? "!p-0 !overflow-hidden" : ""}`}>
+      <main className="dash-main relative z-10 resume-hub-theme">
 
         <ErrorBoundary moduleName="Dashboard">
         {activeView === "profile" ? (

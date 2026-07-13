@@ -760,7 +760,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
   );
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased min-h-[calc(100vh-120px)]" style={{ color: c.text }}>
       <div className="flex-shrink-0 flex items-center gap-2.5 pb-3 mb-3" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>

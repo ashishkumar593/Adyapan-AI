@@ -363,7 +363,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased h-full" style={{ color: c.text, background: c.bg, backgroundAttachment: "fixed", "--card-shadow": c.cardShadow } as React.CSSProperties}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased min-h-[calc(100vh-120px)]" style={{ color: c.text, background: c.bg, backgroundAttachment: "fixed", "--card-shadow": c.cardShadow } as React.CSSProperties}>
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
         {screen !== "home" && (
