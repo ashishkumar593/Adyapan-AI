@@ -6,7 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import { toast } from "sonner";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
+const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 import {
   Code2, Sparkles, BookMarked, MessageSquare, StickyNote,
   ChevronLeft, Play, Settings, AlertCircle, CheckCircle2,
@@ -138,10 +139,10 @@ export default function ProblemWorkspacePage() {
         setLoadingIndex(prev => prev + 1);
       }, 350);
       return () => clearTimeout(timer);
-    } else {
+    } else if (problemId && loading) {
       fetchWorkspaceData();
     }
-  }, [loadingIndex]);
+  }, [loadingIndex, problemId, loading]);
 
   // Keep track of time spent active on page
   useEffect(() => {
@@ -181,6 +182,7 @@ export default function ProblemWorkspacePage() {
 
       setLoading(false);
     } catch (err) {
+      console.error("Workspace load error:", err);
       toast.error("Failed to load problem workspace data");
       router.push("/dashboard/coding");
     }

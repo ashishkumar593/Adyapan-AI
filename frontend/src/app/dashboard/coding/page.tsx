@@ -797,13 +797,15 @@ export default function CodingHubPage() {
                               </span>
                             ))}
                           </td>
-                          <td className="py-4 px-2 text-right flex items-center justify-end gap-1.5">
-                            <PremiumButton variant="ghost" onClick={() => handleOpenQuestion(q)} className="p-1 px-2.5">
-                              Details
-                            </PremiumButton>
-                            <PremiumButton variant="primary" onClick={() => handleSolveQuestion(q)} className="p-1 px-3">
-                              Solve
-                            </PremiumButton>
+                          <td className="py-4 px-2 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <PremiumButton variant="ghost" onClick={() => handleOpenQuestion(q)} className="p-1 px-2.5">
+                                Details
+                              </PremiumButton>
+                              <PremiumButton variant="primary" onClick={() => handleSolveQuestion(q)} className="p-1 px-3">
+                                Solve
+                              </PremiumButton>
+                            </div>
                           </td>
                         </tr>
                       );
