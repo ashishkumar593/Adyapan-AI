@@ -439,19 +439,12 @@ export default function CodingHubPage() {
       />
 
       {/* Main workspace */}
-      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6 max-w-7xl mx-auto">
+      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6">
         
         {/* Header Overview Hero */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
           <div>
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 text-xs font-bold text-amber-500 tracking-wider uppercase mb-1.5"
-            >
-              <Sparkles size={14} className="text-amber-500" />
-              Day 11 · Coding Hub Foundation
-            </motion.div>
+
             <motion.h1
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
