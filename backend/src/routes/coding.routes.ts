@@ -544,13 +544,408 @@ router.get("/daily-challenge", async (req: any, res) => {
         }
       });
     }
-
+    
     res.json({
       challenge: daily ? daily.question : null,
       progress
     });
   } catch (error) {
     handleRouteError(res, error, "Coding.dailyChallenge", "Failed to fetch daily challenge");
+  }
+});
+
+// ─── Day 12 Problem Workspace API Endpoints ────────────────────────────────────
+
+// GET /api/coding/workspace/:id
+// Get Workspace: returns problem details, progress tracking stats, notes, bookmarks, active code session, and discussion logs.
+router.get("/workspace/:id", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+
+    // 1. Fetch coding question from master DB
+    const question = await masterPrisma.codingQuestion.findUnique({
+      where: { id: questionId },
+      include: { aiAnalyses: { take: 1, orderBy: { generatedAt: 'desc' } } }
+    });
+
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // 2. Mark viewed as true and update/upsert userQuestionProgress in user DB
+    const progress = await userPrisma.userQuestionProgress.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: { viewed: true },
+      create: { userId, questionId, viewed: true, status: "in_progress" }
+    });
+
+    // 3. Fetch active code session for this workspace
+    const session = await userPrisma.problemWorkspaceSession.findUnique({
+      where: { userId_questionId: { userId, questionId } }
+    });
+
+    // 4. Fetch notes for this question
+    const notes = await userPrisma.problemNote.findMany({
+      where: { userId, questionId },
+      orderBy: [
+        { pinned: 'desc' },
+        { updatedAt: 'desc' }
+      ]
+    });
+
+    // 5. Check if bookmarked in bookmarks table
+    const bookmarkRecord = await userPrisma.problemBookmark.findUnique({
+      where: { userId_questionId: { userId, questionId } }
+    });
+
+    // 6. Fetch discussions (comments)
+    const discussions = await userPrisma.problemDiscussion.findMany({
+      where: { questionId },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json({
+      question,
+      progress: {
+        status: progress.status,
+        viewed: progress.viewed,
+        attempted: progress.attempted,
+        solved: progress.solved,
+        bookmarked: !!bookmarkRecord || progress.bookmarked,
+        timeSpent: progress.timeSpent
+      },
+      session,
+      notes,
+      isBookmarked: !!bookmarkRecord,
+      discussions,
+      aiAnalysis: question.aiAnalyses[0] ? question.aiAnalyses[0].explanationJson : null
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace", "Failed to retrieve workspace details");
+  }
+});
+
+// POST /api/coding/workspace/:id/save
+// Save Code: auto-save session state (code_content, language, status, time_spent).
+router.post("/workspace/:id/save", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const { codeContent, language, status = "In Progress", timeSpent = 0 } = req.body;
+
+    if (codeContent === undefined || !language) {
+      return res.status(400).json({ error: "codeContent and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Update session
+    const session = await userPrisma.problemWorkspaceSession.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: {
+        codeContent,
+        language,
+        status,
+        timeSpent: { increment: timeSpent },
+        lastOpened: new Date()
+      },
+      create: {
+        userId,
+        questionId,
+        codeContent,
+        language,
+        status,
+        timeSpent,
+        lastOpened: new Date()
+      }
+    });
+
+    // Also update the UserQuestionProgress time spent and status
+    const currentProgress = await userPrisma.userQuestionProgress.findUnique({
+      where: { userId_questionId: { userId, questionId } }
+    });
+
+    // Keep "solved" status if already solved, otherwise update status
+    const nextStatus = currentProgress?.status === "solved" ? "solved" : status.toLowerCase() === "solved" ? "solved" : "attempted";
+
+    const progress = await userPrisma.userQuestionProgress.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: {
+        timeSpent: { increment: timeSpent },
+        status: nextStatus,
+        attempted: true
+      },
+      create: {
+        userId,
+        questionId,
+        timeSpent,
+        status: nextStatus,
+        attempted: true,
+        viewed: true
+      }
+    });
+
+    res.json({ success: true, session, progress });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.save", "Failed to save workspace session");
+  }
+});
+
+// POST /api/coding/workspace/:id/notes
+// Save Note: Create, Update, Pin, or Delete note.
+router.post("/workspace/:id/notes", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const { id, noteContent, pinned = false, action = "save" } = req.body;
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    if (action === "delete") {
+      if (!id) return res.status(400).json({ error: "Note ID is required for deletion" });
+      await userPrisma.problemNote.delete({
+        where: { id }
+      });
+      return res.json({ success: true, message: "Note deleted successfully" });
+    }
+
+    if (!noteContent) {
+      return res.status(400).json({ error: "noteContent is required" });
+    }
+
+    let note;
+    if (id) {
+      // Update existing note
+      note = await userPrisma.problemNote.update({
+        where: { id },
+        data: {
+          noteContent,
+          pinned
+        }
+      });
+    } else {
+      // Create new note
+      note = await userPrisma.problemNote.create({
+        data: {
+          userId,
+          questionId,
+          noteContent,
+          pinned
+        }
+      });
+    }
+
+    res.json({ success: true, note });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.notes", "Failed to modify notes");
+  }
+});
+
+// GET /api/coding/workspace/:id/notes
+// Get Notes: Fetch notes for this question
+router.get("/workspace/:id/notes", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const notes = await userPrisma.problemNote.findMany({
+      where: { userId, questionId },
+      orderBy: [
+        { pinned: 'desc' },
+        { updatedAt: 'desc' }
+      ]
+    });
+
+    res.json({ notes });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.getNotes", "Failed to retrieve notes");
+  }
+});
+
+// POST /api/coding/workspace/:id/bookmark
+// Toggle Bookmark: Bookmarks/unbookmarks a problem in the bookmarks table and progress
+router.post("/workspace/:id/bookmark", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const { bookmarked } = req.body; // true = bookmark, false = unbookmark
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    if (bookmarked) {
+      // Bookmark
+      await userPrisma.problemBookmark.upsert({
+        where: { userId_questionId: { userId, questionId } },
+        update: {},
+        create: { userId, questionId }
+      });
+    } else {
+      // Unbookmark
+      await userPrisma.problemBookmark.deleteMany({
+        where: { userId, questionId }
+      });
+    }
+
+    // Keep userQuestionProgress in sync
+    const progress = await userPrisma.userQuestionProgress.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: { bookmarked: !!bookmarked },
+      create: { userId, questionId, bookmarked: !!bookmarked }
+    });
+
+    res.json({ success: true, bookmarked, progress });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.bookmark", "Failed to toggle bookmark");
+  }
+});
+
+// POST /api/coding/workspace/:id/discussion
+// Post comment/discussion message
+router.post("/workspace/:id/discussion", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const { message } = req.body;
+
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ error: "Message content is required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const discussion = await userPrisma.problemDiscussion.create({
+      data: {
+        userId,
+        questionId,
+        message
+      }
+    });
+
+    res.json({ success: true, discussion });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.discussion", "Failed to post message");
+  }
+});
+
+// POST /api/coding/workspace/:id/explain
+// Explain Action: Explain constraints, example, edge cases, complexity, interview perspective
+router.post("/workspace/:id/explain", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const { type, codeSnippet = "" } = req.body; // type: "constraints" | "example" | "edge_cases" | "complexity" | "interview" | "placement" | "problem"
+
+    const question = await masterPrisma.codingQuestion.findUnique({
+      where: { id: questionId }
+    });
+
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    const systemPrompt = `You are an expert FAANG Interview Coach, Competitive Programming Mentor, and EdTech Platform Architect.
+Help the student learn. Provide helpful explanations in clear markdown. Maintain an instructional, supportive, and extremely clear tone.`;
+
+    let userPrompt = "";
+
+    if (type === "constraints") {
+      userPrompt = `Please explain the constraints of this problem in detail and what they imply for acceptable time/space complexities:
+Title: ${question.title}
+Topic: ${question.topic}
+Difficulty: ${question.difficulty}
+Tags: ${JSON.stringify(question.tagsJson)}
+
+Suggest what big-O complexity is expected based on the inputs size.`;
+    } else if (type === "example") {
+      userPrompt = `Please explain the examples for this problem, walking through the logic step-by-step to show how the input transforms to the output:
+Title: ${question.title}
+Topic: ${question.topic}
+Difficulty: ${question.difficulty}
+
+Detail why the transformation happens.`;
+    } else if (type === "edge_cases") {
+      userPrompt = `Please list and discuss the critical edge cases, boundary inputs, and special inputs the student must handle:
+Title: ${question.title}
+Topic: ${question.topic}
+
+Provide specific input examples and outputs for these edge cases.`;
+    } else if (type === "complexity") {
+      userPrompt = `Please perform a complexity analysis of the brute-force vs optimal approaches for this problem:
+Title: ${question.title}
+Topic: ${question.topic}
+
+If a code snippet is provided below, analyze its time and space complexity:
+Code snippet:
+\`\`\`
+${codeSnippet}
+\`\`\`
+
+State the Big-O notations clearly and explain why they hold.`;
+    } else if (type === "interview") {
+      userPrompt = `Please provide the FAANG Interview Perspective for this problem:
+Title: ${question.title}
+Topic: ${question.topic}
+
+Answer:
+- What core conceptual skills does this question test?
+- How should a student explain this in an interview?
+- What follow-up questions do interviewers typically ask?`;
+    } else if (type === "placement") {
+      userPrompt = `Please provide the Placement and Corporate Assessment Perspective for this problem:
+Title: ${question.title}
+Topic: ${question.topic}
+Placement Importance: ${question.placementImportance ? "High" : "Medium"}
+
+Discuss typical corporate online assessment formats, time pressure handling, and optimal test coverage.`;
+    } else {
+      userPrompt = `Provide a comprehensive walk-through explanation of the problem statement and approach strategy:
+Title: ${question.title}
+Topic: ${question.topic}
+Difficulty: ${question.difficulty}`;
+    }
+
+    const { generateText, MODELS } = require("../lib/ai/openrouter");
+    const explanation = await generateText(systemPrompt, userPrompt, { model: MODELS.CODE, temperature: 0.6 });
+
+    res.json({ success: true, explanation });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.explain", "Failed to generate AI explanation");
+  }
+});
+
+// POST /api/coding/workspace/:id/hint
+// Hint Action: Progressive Hints
+router.post("/workspace/:id/hint", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const { hintIndex } = req.body; // 1, 2, or 3
+
+    if (!hintIndex || hintIndex < 1 || hintIndex > 3) {
+      return res.status(400).json({ error: "hintIndex must be 1, 2, or 3" });
+    }
+
+    // Retrieve AI analysis Cache
+    const analysis = await AICodingService.getAnalysis(questionId);
+
+    let hint = "";
+    if (hintIndex === 1) {
+      hint = analysis.hint_1;
+    } else if (hintIndex === 2) {
+      hint = analysis.hint_2;
+    } else {
+      hint = analysis.hint_3;
+    }
+
+    res.json({
+      success: true,
+      hintIndex,
+      hint,
+      commonMistakes: hintIndex === 3 ? analysis.common_mistakes : undefined
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.hint", "Failed to generate hint");
   }
 });
 
