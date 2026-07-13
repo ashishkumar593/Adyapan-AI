@@ -272,7 +272,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") || sessionStorage.getItem("token") || "" : ""}`,
+          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token") || "" : ""}`,
         },
         body: JSON.stringify(config),
       });
@@ -474,7 +474,7 @@ export function ResearchHubView({ setView, activeModule = "research-hub", theme 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") || sessionStorage.getItem("token") || "" : ""}`,
+          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token") || "" : ""}`,
         },
         body: JSON.stringify({ paper }),
       });

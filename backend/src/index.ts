@@ -31,6 +31,8 @@ app.use((req, res, next) => {
 
 app.use(compression({
   filter: (req, res) => {
+    const contentType = res.getHeader("Content-Type");
+    if (typeof contentType === "string" && contentType.includes("text/event-stream")) return false;
     if (req.headers.accept === "text/event-stream") return false;
     return compression.filter(req, res);
   },
