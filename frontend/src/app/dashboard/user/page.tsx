@@ -842,7 +842,7 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
           background: "rgba(245,158,11,0.1)", cursor: "pointer", padding: 0,
           overflow: "hidden",
         }}>
-        <img src={getDiceBearUrl(user?.name || "User", 36)} alt="avatar" width={36} height={36} style={{ borderRadius: "50%", display: "block" }} />
+        <img src={getDiceBearUrl(user?.name || "User")} alt="avatar" width={36} height={36} style={{ borderRadius: "50%", display: "block" }} />
       </motion.button>
 
       {open && (
@@ -866,7 +866,7 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
               width: 44, height: 44, borderRadius: "50%", border: "2px solid var(--primary)",
               background: "rgba(245,158,11,0.1)", flexShrink: 0, overflow: "hidden",
             }}>
-              <img src={getDiceBearUrl(user?.name || "User", 44)} alt="avatar" width={44} height={44} style={{ borderRadius: "50%", display: "block" }} />
+              <img src={getDiceBearUrl(user?.name || "User")} alt="avatar" width={44} height={44} style={{ borderRadius: "50%", display: "block" }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.92rem", color: isDarkTheme ? "#fff" : "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1362,7 +1362,7 @@ function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }) {
           <div className="border rounded-3xl p-6 text-center shadow-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
             <div className="relative w-20 h-20 rounded-full border-4 shadow-md mb-4 mx-auto cursor-default overflow-hidden"
               style={{ borderColor: "var(--primary)", background: "var(--bg-card-alt)" }}>
-              <img src={getDiceBearUrl(displayName, 80)} alt="avatar" width={80} height={80} style={{ borderRadius: "50%", display: "block" }} />
+              <img src={getDiceBearUrl(displayName)} alt="avatar" width={80} height={80} style={{ borderRadius: "50%", display: "block" }} />
             </div>
             <h2 className="text-base font-extrabold" style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}>
               {displayName}

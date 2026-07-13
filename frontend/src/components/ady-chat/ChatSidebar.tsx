@@ -224,7 +224,7 @@ export function ChatSidebar({
                 className="w-7 h-7 rounded-full flex-shrink-0 overflow-hidden"
                 style={{ boxShadow: "0 0 10px rgba(245,158,11,0.25)" }}
               >
-                <img src={getDiceBearUrl(userName || "Ashish", 28)} alt="avatar" width={28} height={28} style={{ borderRadius: "50%", display: "block" }} />
+                <img src={getDiceBearUrl(userName || "Ashish")} alt="avatar" width={28} height={28} style={{ borderRadius: "50%", display: "block" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-semibold truncate" style={{ color: text }}>
