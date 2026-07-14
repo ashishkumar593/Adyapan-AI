@@ -474,18 +474,41 @@ Answer the student's question based on the coding problem. Provide hints or feed
     setIsRunning(true);
     setOutputTab(stdin ? "output" : "input");
     setOutput("");
+    setTestResults([]);
     setShowTerminal(true);
+
+    let effectiveStdin = stdin;
+    if (!effectiveStdin && problem?.examples) {
+      try {
+        const parsed = typeof problem.examples === 'string' ? JSON.parse(problem.examples) : problem.examples;
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].input) {
+          effectiveStdin = parsed[0].input;
+          setStdin(parsed[0].input);
+        }
+      } catch { /* ignore */ }
+    }
+
     try {
       const res = await api.post(`/coding/workspace/${problemId}/run`, {
         code,
         language,
-        stdin,
+        stdin: effectiveStdin,
       });
       const data = res.data;
       if (data.success) {
         setOutput(data.output || "(No output)");
       } else {
         setOutput(data.error || data.output || "Execution failed");
+      }
+      if (data.sampleResults && data.sampleResults.length > 0) {
+        setTestResults(data.sampleResults.map((r: any, i: number) => ({
+          testCase: i + 1,
+          input: r.input,
+          expected: r.expected,
+          actual: r.actual,
+          passed: r.passed,
+          executionTime: 0,
+        })));
       }
       setOutputTab("output");
     } catch (err: any) {
@@ -1058,7 +1081,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           }`}
                         >
-                          {tab === "input" ? "Input" : tab === "output" ? "Output" : "Test Cases"}
+                          {tab === "input" ? "Input" : tab === "output" ? "Output" : `Samples${testResults.length > 0 ? ` (${testResults.filter((t: any) => t.passed).length}/${testResults.length})` : ""}`}
                         </button>
                       ))}
                     </div>
