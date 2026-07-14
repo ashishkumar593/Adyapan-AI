@@ -964,6 +964,7 @@ router.get("/piston/health", async (_req, res) => {
 router.post("/workspace/:id/run", async (req: any, res) => {
   try {
     const questionId = req.params.id;
+    const userId = req.user.userId;
     const { code, language, stdin = "" } = req.body;
 
     if (!code || !language) {
@@ -981,6 +982,76 @@ router.post("/workspace/:id/run", async (req: any, res) => {
     const examples = analysis.examples || [];
 
     const result = await executeCode(language, code, stdin);
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Save Execution
+    const execution = await userPrisma.codeExecution.create({
+      data: {
+        userId,
+        questionId,
+        language,
+        codeSnapshot: code,
+        stdin,
+        stdout: result.stdout,
+        stderr: result.stderr || result.compile_output,
+        status: result.status,
+        executionTime: result.executionTime,
+      }
+    });
+
+    // Create Execution History Snapshot
+    const previousExecCount = await userPrisma.codeExecution.count({
+      where: { userId, questionId }
+    });
+    await userPrisma.executionHistory.create({
+      data: {
+        executionId: execution.id,
+        versionNumber: previousExecCount,
+        codeSnapshot: code,
+      }
+    });
+
+    // Update statistics in UserQuestionProgress
+    const progressRecord = await userPrisma.userQuestionProgress.findUnique({
+      where: { userId_questionId: { userId, questionId } }
+    });
+
+    let langUsage: Record<string, number> = {};
+    if (progressRecord?.languageUsage) {
+      try {
+        langUsage = typeof progressRecord.languageUsage === "string"
+          ? JSON.parse(progressRecord.languageUsage)
+          : (progressRecord.languageUsage as Record<string, number>) || {};
+      } catch {
+        langUsage = {};
+      }
+    }
+    langUsage[language] = (langUsage[language] || 0) + 1;
+
+    const nextStatus = progressRecord?.status === "solved" ? "solved" : "attempted";
+
+    await userPrisma.userQuestionProgress.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: {
+        runCount: { increment: 1 },
+        successfulRuns: result.success ? { increment: 1 } : undefined,
+        failedRuns: !result.success ? { increment: 1 } : undefined,
+        languageUsage: langUsage,
+        status: nextStatus,
+        attempted: true,
+      },
+      create: {
+        userId,
+        questionId,
+        runCount: 1,
+        successfulRuns: result.success ? 1 : 0,
+        failedRuns: !result.success ? 1 : 0,
+        languageUsage: langUsage,
+        status: nextStatus,
+        attempted: true,
+        viewed: true,
+      }
+    });
 
     let sampleResults: Array<{ input: string; expected: string; actual: string; passed: boolean }> = [];
     if (examples.length > 0) {
@@ -1011,6 +1082,7 @@ router.post("/workspace/:id/run", async (req: any, res) => {
 router.post("/workspace/:id/submit", async (req: any, res) => {
   try {
     const questionId = req.params.id;
+    const userId = req.user.userId;
     const { code, language } = req.body;
 
     if (!code || !language) {
@@ -1043,6 +1115,81 @@ router.post("/workspace/:id/submit", async (req: any, res) => {
       executionTime: tr.executionResult.executionTime,
     }));
 
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const isAllPassed = submission.allPassed;
+    const status = isAllPassed ? "Accepted" : "Failed";
+
+    // Save Execution
+    const execution = await userPrisma.codeExecution.create({
+      data: {
+        userId,
+        questionId,
+        language,
+        codeSnapshot: code,
+        stdin: "all_test_cases",
+        stdout: `Passed ${submission.passedTests}/${submission.totalTests} test cases.`,
+        stderr: isAllPassed ? "" : "Some test cases failed.",
+        status,
+        executionTime: submission.executionTime,
+      }
+    });
+
+    // Create Execution History Snapshot
+    const previousExecCount = await userPrisma.codeExecution.count({
+      where: { userId, questionId }
+    });
+    await userPrisma.executionHistory.create({
+      data: {
+        executionId: execution.id,
+        versionNumber: previousExecCount,
+        codeSnapshot: code,
+      }
+    });
+
+    // Update statistics in UserQuestionProgress
+    const progressRecord = await userPrisma.userQuestionProgress.findUnique({
+      where: { userId_questionId: { userId, questionId } }
+    });
+
+    let langUsage: Record<string, number> = {};
+    if (progressRecord?.languageUsage) {
+      try {
+        langUsage = typeof progressRecord.languageUsage === "string"
+          ? JSON.parse(progressRecord.languageUsage)
+          : (progressRecord.languageUsage as Record<string, number>) || {};
+      } catch {
+        langUsage = {};
+      }
+    }
+    langUsage[language] = (langUsage[language] || 0) + 1;
+
+    const finalStatus = (isAllPassed || progressRecord?.status === "solved") ? "solved" : "attempted";
+
+    await userPrisma.userQuestionProgress.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: {
+        runCount: { increment: 1 },
+        successfulRuns: isAllPassed ? { increment: 1 } : undefined,
+        failedRuns: !isAllPassed ? { increment: 1 } : undefined,
+        languageUsage: langUsage,
+        status: finalStatus,
+        solved: isAllPassed ? true : undefined,
+        attempted: true,
+      },
+      create: {
+        userId,
+        questionId,
+        runCount: 1,
+        successfulRuns: isAllPassed ? 1 : 0,
+        failedRuns: !isAllPassed ? 1 : 0,
+        languageUsage: langUsage,
+        status: finalStatus,
+        solved: isAllPassed,
+        attempted: true,
+        viewed: true,
+      }
+    });
+
     res.json({
       allPassed: submission.allPassed,
       totalTests: submission.totalTests,
@@ -1053,6 +1200,92 @@ router.post("/workspace/:id/submit", async (req: any, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Coding.workspace.submit", "Failed to submit code");
+  }
+});
+
+router.get("/workspace/:id/executions", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const executions = await userPrisma.codeExecution.findMany({
+      where: { userId, questionId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        history: true
+      }
+    });
+
+    res.json({ success: true, executions });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.executions", "Failed to retrieve executions");
+  }
+});
+
+router.get("/workspace/:id/execution/:executionId", async (req: any, res) => {
+  try {
+    const executionId = req.params.executionId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const execution = await userPrisma.codeExecution.findUnique({
+      where: { id: executionId },
+      include: {
+        history: true
+      }
+    });
+
+    if (!execution) {
+      return res.status(404).json({ error: "Execution not found" });
+    }
+
+    res.json({ success: true, execution });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.executionDetails", "Failed to retrieve execution details");
+  }
+});
+
+router.post("/workspace/:id/execution/restore", async (req: any, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.user.userId;
+    const { executionId } = req.body;
+
+    if (!executionId) {
+      return res.status(400).json({ error: "executionId is required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const execution = await userPrisma.codeExecution.findUnique({
+      where: { id: executionId }
+    });
+
+    if (!execution || execution.questionId !== questionId) {
+      return res.status(404).json({ error: "Execution history snapshot not found" });
+    }
+
+    // Update the current active workspace session with restored code
+    const session = await userPrisma.problemWorkspaceSession.upsert({
+      where: { userId_questionId: { userId, questionId } },
+      update: {
+        codeContent: execution.codeSnapshot,
+        language: execution.language,
+        lastOpened: new Date()
+      },
+      create: {
+        userId,
+        questionId,
+        codeContent: execution.codeSnapshot,
+        language: execution.language,
+        status: "In Progress",
+        timeSpent: 0,
+        lastOpened: new Date()
+      }
+    });
+
+    res.json({ success: true, codeContent: execution.codeSnapshot, language: execution.language, session });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.workspace.restore", "Failed to restore execution code");
   }
 });
 

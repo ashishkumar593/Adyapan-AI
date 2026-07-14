@@ -992,16 +992,20 @@ model CodingQuestion {
 }
 
 model UserQuestionProgress {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  questionId String   @map("question_id")
-  status     String   @default("unsolved")
-  viewed     Boolean  @default(false)
-  attempted  Boolean  @default(false)
-  solved     Boolean  @default(false)
-  bookmarked Boolean  @default(false)
-  timeSpent  Int      @default(0) @map("time_spent")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  questionId     String   @map("question_id")
+  status         String   @default("unsolved")
+  viewed         Boolean  @default(false)
+  attempted      Boolean  @default(false)
+  solved         Boolean  @default(false)
+  bookmarked     Boolean  @default(false)
+  timeSpent      Int      @default(0) @map("time_spent")
+  runCount       Int      @default(0) @map("run_count")
+  successfulRuns Int      @default(0) @map("successful_runs")
+  failedRuns     Int      @default(0) @map("failed_runs")
+  languageUsage  Json     @default("{}") @map("language_usage")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, questionId])
   @@map("user_question_progress")
@@ -1028,6 +1032,39 @@ model DailyChallenge {
 
   @@index([questionId])
   @@map("daily_challenges")
+}
+
+model CodeExecution {
+  id            String             @id @default(cuid())
+  userId        String             @map("user_id")
+  questionId    String             @map("question_id")
+  language      String
+  codeSnapshot  String             @map("code_snapshot")
+  stdin         String?
+  stdout        String?
+  stderr        String?
+  status        String
+  executionTime Float              @map("execution_time")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  history       ExecutionHistory[]
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([createdAt])
+  @@map("code_executions")
+}
+
+model ExecutionHistory {
+  id            String        @id @default(cuid())
+  executionId   String        @map("execution_id")
+  versionNumber Int           @map("version_number")
+  codeSnapshot  String        @map("code_snapshot")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  execution     CodeExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@index([createdAt])
+  @@map("execution_history")
 }
 
 

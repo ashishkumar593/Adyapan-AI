@@ -13,7 +13,7 @@ import {
   ChevronLeft, Play, Settings, AlertCircle, CheckCircle2,
   Maximize2, Minimize2, Info, Moon, Sun, Pin, PinOff,
   Trash2, Plus, Search, HelpCircle, ChevronRight, CornerDownRight,
-  BookOpen, Terminal, Send, Clock, RefreshCw
+  BookOpen, Terminal, Send, Clock, RefreshCw, RotateCcw, Copy
 } from "lucide-react";
 import {
   FloatingOrbs,
@@ -113,9 +113,16 @@ export default function ProblemWorkspacePage() {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<any[]>([]);
-  const [outputTab, setOutputTab] = useState<"input" | "output" | "testcases">("output");
+  const [outputTab, setOutputTab] = useState<"input" | "output" | "testcases" | "history">("output");
   const [showTerminal, setShowTerminal] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(30);
+
+  // Day 13 Code snapshot and analytics states
+  const [executions, setExecutions] = useState<any[]>([]);
+  const [selectedExecution, setSelectedExecution] = useState<any>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [executionStepIndex, setExecutionStepIndex] = useState(0);
+  const [runDetails, setRunDetails] = useState<any>(null);
 
   // Time spent tracker
   const [timeSpentSeconds, setTimeSpentSeconds] = useState(0);
@@ -174,6 +181,58 @@ export default function ProblemWorkspacePage() {
     return () => clearTimeout(saveTimer);
   }, [code, language, loading, problem]);
 
+  // Load custom input from LocalStorage on mount
+  useEffect(() => {
+    const savedStdin = localStorage.getItem(`adyapan-stdin-${problemId}`);
+    if (savedStdin) {
+      setStdin(savedStdin);
+    }
+  }, [problemId]);
+
+  // Handle stdin change with local storage backup
+  const handleStdinChange = (val: string) => {
+    setStdin(val);
+    localStorage.setItem(`adyapan-stdin-${problemId}`, val);
+  };
+
+  const executionSteps = [
+    "Preparing Execution Environment",
+    "Validating Code Quality",
+    "Sending to Sandbox Runtimes",
+    "Executing Code Instructions",
+    "Collecting Outputs & Metrics",
+    "Execution Complete"
+  ];
+
+  useEffect(() => {
+    let interval: any;
+    if (isRunning || isSubmitting) {
+      setExecutionStepIndex(0);
+      interval = setInterval(() => {
+        setExecutionStepIndex(prev => {
+          if (prev < executionSteps.length - 2) {
+            return prev + 1;
+          }
+          return prev;
+        });
+      }, 700);
+    } else {
+      setExecutionStepIndex(executionSteps.length - 1);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, isSubmitting]);
+
+  const fetchExecutions = async () => {
+    try {
+      const res = await api.get(`/coding/workspace/${problemId}/executions`);
+      if (res.data.success) {
+        setExecutions(res.data.executions || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch executions", err);
+    }
+  };
+
   const fetchWorkspaceData = async () => {
     try {
       const res = await api.get(`/coding/workspace/${problemId}`);
@@ -191,6 +250,7 @@ export default function ProblemWorkspacePage() {
         setCode(DEFAULT_CODE[language as keyof typeof DEFAULT_CODE] || DEFAULT_CODE.python);
       }
 
+      await fetchExecutions();
       setLoading(false);
     } catch (err) {
       console.error("Workspace load error:", err);
@@ -474,6 +534,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
     setIsRunning(true);
     setOutputTab(stdin ? "output" : "input");
     setOutput("");
+    setRunDetails(null);
     setShowTerminal(true);
     try {
       const res = await api.post(`/coding/workspace/${problemId}/run`, {
@@ -482,14 +543,29 @@ Answer the student's question based on the coding problem. Provide hints or feed
         stdin,
       });
       const data = res.data;
+      setRunDetails({
+        status: data.status,
+        executionTime: data.executionTime,
+        memory: data.memory,
+        language,
+        success: data.success
+      });
       if (data.success) {
         setOutput(data.output || "(No output)");
       } else {
         setOutput(data.error || data.output || "Execution failed");
       }
       setOutputTab("output");
+      fetchExecutions();
     } catch (err: any) {
       setOutput(err.response?.data?.error || err.message || "Failed to run code");
+      setRunDetails({
+        status: "Failed",
+        executionTime: 0,
+        memory: 0,
+        language,
+        success: false
+      });
       setOutputTab("output");
     } finally {
       setIsRunning(false);
@@ -501,6 +577,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
     setIsSubmitting(true);
     setOutputTab("testcases");
     setTestResults([]);
+    setRunDetails(null);
     setShowTerminal(true);
     try {
       const res = await api.post(`/coding/workspace/${problemId}/submit`, {
@@ -509,17 +586,377 @@ Answer the student's question based on the coding problem. Provide hints or feed
       });
       const data = res.data;
       setTestResults(data.testResults || []);
+      setRunDetails({
+        status: data.allPassed ? "Accepted" : "Failed",
+        executionTime: data.executionTime,
+        memory: data.memory,
+        language,
+        success: data.allPassed
+      });
       if (data.allPassed) {
         setProgress((prev: any) => ({ ...prev, status: "solved", solved: true }));
         toast.success(`All ${data.totalTests} test cases passed!`);
       } else {
         toast.warning(`${data.passedTests}/${data.totalTests} test cases passed`);
       }
+      fetchExecutions();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to submit code");
+      setRunDetails({
+        status: "Failed",
+        executionTime: 0,
+        memory: 0,
+        language,
+        success: false
+      });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRestoreExecution = async (execId: string) => {
+    const restorePromise = api.post(`/coding/workspace/${problemId}/execution/restore`, {
+      executionId: execId
+    });
+
+    toast.promise(restorePromise, {
+      loading: "Restoring code from version snapshot...",
+      success: (res) => {
+        setCode(res.data.codeContent);
+        setLanguage(res.data.language);
+        setSelectedExecution(null);
+        setIsComparing(false);
+        return "Workspace restored successfully!";
+      },
+      error: "Failed to restore version snapshot"
+    });
+  };
+
+  const renderOutputConsole = () => {
+    if (isRunning) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-8 gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full flex items-center justify-center"
+          />
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-xs font-bold text-amber-500 animate-pulse">
+              {executionSteps[executionStepIndex]}
+            </span>
+            <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold">
+              Piston Sandbox Runtime
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    if (!runDetails && !output) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-10 text-[var(--text-secondary)] gap-2">
+          <Terminal size={24} className="text-[var(--text-secondary)]/40" />
+          <span>Write code and click "Run" to view compilation/execution output here.</span>
+        </div>
+      );
+    }
+
+    const isSuccess = runDetails?.success;
+    const isCompileError = runDetails?.status === "Compilation Error";
+    const isRuntimeError = runDetails?.status === "Runtime Error";
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Run Metrics Header */}
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
+          <div className="flex items-center gap-3">
+            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+              isSuccess 
+                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]" 
+                : isCompileError
+                  ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                  : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+            }`}>
+              {isSuccess ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
+              <span>{runDetails?.status || "Completed"}</span>
+            </span>
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+              Language: <span className="font-bold text-[var(--text-primary)]">{language}</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 text-[10px] font-mono text-[var(--text-secondary)]">
+            <div>
+              Time: <span className="font-bold text-[var(--text-primary)]">{(runDetails?.executionTime || 0).toFixed(3)}s</span>
+            </div>
+            <div>
+              Memory: <span className="font-bold text-[var(--text-primary)]">{runDetails?.memory ? `${(runDetails.memory / 1024 / 1024).toFixed(2)} MB` : "0 MB"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Console Box */}
+        <div className="flex flex-col bg-black/40 border border-[var(--border-color)] rounded-xl overflow-hidden">
+          <div className="bg-black/30 border-b border-[var(--border-color)] px-3 py-1.5 flex items-center justify-between text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">
+            <span>Terminal Output</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(output);
+                toast.success("Terminal output copied!");
+              }}
+              className="hover:text-[var(--text-primary)] transition flex items-center gap-1"
+            >
+              <Copy size={10} />
+              <span>Copy</span>
+            </button>
+          </div>
+          
+          <pre className={`p-3 text-[11px] font-mono overflow-auto max-h-48 whitespace-pre-wrap leading-relaxed ${
+            isCompileError 
+              ? "text-rose-400 bg-rose-950/5 font-semibold"
+              : isRuntimeError
+                ? "text-amber-400 bg-amber-950/5"
+                : "text-emerald-400"
+          }`}>
+            <div>
+              {output}
+              {!stdin && (output.includes("input()") || output.includes("ValueError") || output.includes("EOFError") || output.includes("EOF when reading")) && (
+                <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-sans">
+                  <span className="font-bold">Tip:</span> Your code uses <code className="text-amber-300 font-mono">input()</code> but no stdin was provided. Go to the <span className="font-bold">Input</span> tab and enter the values your code expects, then click Run again.
+                </div>
+              )}
+            </div>
+          </pre>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRunHistory = () => {
+    if (executions.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-10 text-[var(--text-secondary)] gap-2">
+          <Clock size={24} className="text-[var(--text-secondary)]/40" />
+          <span>No execution history found. Run or submit code to generate attempts.</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+        <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-black mb-1">
+          Recent Code Executions & Snapshots
+        </div>
+        <div className="flex flex-col gap-2">
+          {executions.map((exec, idx) => {
+            const isSuccess = exec.status === "Accepted" || exec.status === "Success" || exec.status === "Completed" || exec.status === "Passed";
+            const dateStr = new Date(exec.createdAt).toLocaleDateString([], { month: "short", day: "numeric" });
+            const timeStr = new Date(exec.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            const versionNum = exec.history?.[0]?.versionNumber || (executions.length - idx);
+
+            return (
+              <div
+                key={exec.id}
+                className="bg-white/5 border border-[var(--border-color)] hover:border-white/15 p-2.5 rounded-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    isSuccess ? "bg-emerald-500 shadow-[0_0_6px_#10b981]" : "bg-rose-500 shadow-[0_0_6px_#f43f5e]"
+                  }`} />
+                  
+                  <div className="flex flex-col gap-0.5">
+                    <div className="font-bold flex items-center gap-1.5 text-[var(--text-primary)]">
+                      <span>Version {versionNum}</span>
+                      <span className="text-[9px] bg-white/5 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-mono uppercase">
+                        {exec.language}
+                      </span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                        isSuccess ? "text-emerald-400 bg-emerald-500/5" : "text-rose-400 bg-rose-500/5"
+                      }`}>
+                        {exec.status}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-[var(--text-secondary)] font-medium">
+                      Executed {dateStr} at {timeStr}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                  <span className="text-[10px] font-mono text-[var(--text-secondary)] mr-1">
+                    {(exec.executionTime || 0).toFixed(3)}s
+                  </span>
+                  
+                  <button
+                    onClick={() => {
+                      setSelectedExecution(exec);
+                      setIsComparing(false);
+                    }}
+                    className="px-2 py-1 bg-white/5 hover:bg-white/10 text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg transition text-[9px] font-bold"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedExecution(exec);
+                      setIsComparing(true);
+                    }}
+                    className="px-2 py-1 bg-white/5 hover:bg-white/10 text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] rounded-lg transition text-[9px] font-bold"
+                  >
+                    Compare
+                  </button>
+
+                  <button
+                    onClick={() => handleRestoreExecution(exec.id)}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black rounded-lg transition text-[9px] font-black uppercase tracking-wider"
+                  >
+                    Restore
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistoryDetailsModal = () => {
+    if (!selectedExecution) return null;
+    const exec = selectedExecution;
+    const isSuccess = exec.status === "Accepted" || exec.status === "Success" || exec.status === "Completed" || exec.status === "Passed";
+    const versionNum = exec.history?.[0]?.versionNumber || "?";
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-[var(--bg-card)] border border-[var(--border-color)] w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+        >
+          {/* Header */}
+          <div className="px-5 py-3 border-b border-[var(--border-color)] bg-black/25 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-amber-500" />
+              <h3 className="text-xs font-black text-[var(--text-primary)]">
+                {isComparing ? "Compare Version Snapshot" : "Execution Details"} (Version {versionNum})
+              </h3>
+            </div>
+            <button
+              onClick={() => setSelectedExecution(null)}
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10px] font-bold px-2 py-1 hover:bg-white/5 rounded-lg transition"
+            >
+              Close
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 text-[11px] select-text">
+            {/* Meta statistics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-black/30 p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold block mb-0.5">Status</span>
+                <span className={`font-black uppercase text-[10px] ${isSuccess ? "text-emerald-400" : "text-rose-400"}`}>
+                  {exec.status}
+                </span>
+              </div>
+              <div className="bg-black/30 p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold block mb-0.5">Language</span>
+                <span className="font-bold text-[var(--text-primary)] uppercase">{exec.language}</span>
+              </div>
+              <div className="bg-black/30 p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold block mb-0.5">Execution Time</span>
+                <span className="font-bold text-[var(--text-primary)]">{(exec.executionTime || 0).toFixed(3)}s</span>
+              </div>
+              <div className="bg-black/30 p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold block mb-0.5">Executed At</span>
+                <span className="font-bold text-[var(--text-primary)]">
+                  {new Date(exec.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            </div>
+
+            {/* Side-by-side compare or snapshot code view */}
+            {isComparing ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+                <div className="flex flex-col gap-1.5">
+                  <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">
+                    Current Code
+                  </div>
+                  <pre className="bg-black/30 border border-[var(--border-color)] p-3 rounded-xl font-mono text-[10px] overflow-auto max-h-[30vh] leading-relaxed text-[var(--text-secondary)]">
+                    {code}
+                  </pre>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="text-[9px] text-amber-500 uppercase tracking-wider font-bold">
+                    Version {versionNum} Code Snapshot
+                  </div>
+                  <pre className="bg-black/30 border border-amber-500/20 p-3 rounded-xl font-mono text-[10px] overflow-auto max-h-[30vh] leading-relaxed text-[var(--text-secondary)]">
+                    {exec.codeSnapshot}
+                  </pre>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">Code Snapshot</span>
+                  <pre className="bg-black/30 border border-[var(--border-color)] p-3 rounded-xl font-mono text-[10px] overflow-auto max-h-[20vh] leading-relaxed text-[var(--text-secondary)]">
+                    {exec.codeSnapshot}
+                  </pre>
+                </div>
+
+                {exec.stdin && exec.stdin !== "all_test_cases" && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">Stdin Input</span>
+                    <pre className="bg-black/30 border border-[var(--border-color)] p-2.5 rounded-xl font-mono text-[10px] text-emerald-400">
+                      {exec.stdin}
+                    </pre>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {exec.stdout && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">Stdout</span>
+                      <pre className="bg-black/30 border border-[var(--border-color)] p-2.5 rounded-xl font-mono text-[10px] text-emerald-400 overflow-auto max-h-[12vh]">
+                        {exec.stdout}
+                      </pre>
+                    </div>
+                  )}
+                  {exec.stderr && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-bold">Stderr / Diagnostics</span>
+                      <pre className="bg-black/30 border border-rose-500/10 p-2.5 rounded-xl font-mono text-[10px] text-rose-400 overflow-auto max-h-[12vh]">
+                        {exec.stderr}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer actions */}
+          <div className="px-5 py-3 border-t border-[var(--border-color)] bg-black/25 flex items-center justify-between shrink-0">
+            <button
+              onClick={() => setSelectedExecution(null)}
+              className="px-3.5 py-1.5 border border-[var(--border-color)] hover:bg-white/5 rounded-xl text-[10px] font-bold transition text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => handleRestoreExecution(exec.id)}
+              className="px-4 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl text-[10px] font-black shadow-lg shadow-amber-500/10 transition flex items-center gap-1.5"
+            >
+              <RotateCcw size={12} className="fill-black/10" />
+              <span>Restore Snapshot</span>
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
   };
 
   // Parse examples if present
@@ -1048,7 +1485,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   <div className="h-8 border-b border-[var(--border-color)] flex items-center justify-between px-3 bg-black/30 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <Terminal size={12} className="text-amber-500" />
-                      {(["input", "output", "testcases"] as const).map(tab => (
+                      {(["input", "output", "testcases", "history"] as const).map(tab => (
                         <button
                           key={tab}
                           onClick={() => setOutputTab(tab)}
@@ -1058,15 +1495,48 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           }`}
                         >
-                          {tab === "input" ? "Input" : tab === "output" ? "Output" : "Test Cases"}
+                          {tab === "input" ? "Input" : tab === "output" ? "Output" : tab === "testcases" ? "Test Cases" : "Run History"}
                         </button>
                       ))}
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Run Code Section helpers */}
+                      <button
+                        onClick={() => {
+                          setCode(DEFAULT_CODE[language as keyof typeof DEFAULT_CODE] || "");
+                          toast.info("Code reset to template.");
+                        }}
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center"
+                        title="Reset Code template"
+                      >
+                        <RotateCcw size={10} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOutput("");
+                          setRunDetails(null);
+                          toast.info("Output console cleared.");
+                        }}
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center"
+                        title="Clear Output"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(output || "");
+                          toast.success("Output copied to clipboard.");
+                        }}
+                        className="p-1 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition flex items-center mr-1.5"
+                        title="Copy Output"
+                      >
+                        <Copy size={10} />
+                      </button>
+                      <div className="h-4 w-px bg-[var(--border-color)] mr-1.5" />
                       <button
                         onClick={handleRun}
                         disabled={isRunning || isSubmitting}
-                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition"
+                        className="flex items-center gap-1.5 text-[10px] px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-white/10 disabled:text-[var(--text-muted)] text-black font-black rounded-lg transition animate-none"
                       >
                         {isRunning ? <RefreshCw size={10} className="animate-spin" /> : <Play size={10} />}
                         <span>{isRunning ? "Running..." : "Run"}</span>
@@ -1092,32 +1562,12 @@ Answer the student's question based on the coding problem. Provide hints or feed
                     {outputTab === "input" && (
                       <textarea
                         value={stdin}
-                        onChange={(e) => setStdin(e.target.value)}
+                        onChange={(e) => handleStdinChange(e.target.value)}
                         placeholder="Enter custom input (stdin)..."
                         className="w-full h-full bg-transparent text-emerald-400 placeholder-[var(--text-muted)] resize-none focus:outline-none"
                       />
                     )}
-                    {outputTab === "output" && (
-                      <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed">
-                        {isRunning ? (
-                          <span className="flex items-center gap-2 text-amber-500">
-                            <RefreshCw size={12} className="animate-spin" />
-                            Executing on Piston engine...
-                          </span>
-                        ) : output ? (
-                          <div>
-                            {output}
-                            {!stdin && (output.includes("input()") || output.includes("ValueError") || output.includes("EOFError") || output.includes("EOF when reading")) && (
-                              <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px]">
-                                <span className="font-bold">Tip:</span> Your code uses <code className="text-amber-300">input()</code> but no stdin was provided. Go to the <span className="font-bold">Input</span> tab and enter the values your code expects, then click Run again.
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-[var(--text-muted)]">Click "Run" to execute your code against custom input.</span>
-                        )}
-                      </pre>
-                    )}
+                    {outputTab === "output" && renderOutputConsole()}
                     {outputTab === "testcases" && (
                       <div className="flex flex-col gap-2">
                         {isSubmitting ? (
@@ -1139,7 +1589,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                                   ? <CheckCircle2 size={12} className="text-emerald-500" />
                                   : <AlertCircle size={12} className="text-rose-500" />
                                 }
-                                <span className={`font-bold ${tr.passed ? "text-emerald-500" : "text-rose-500"}`}>
+                                <span className={`font-bold ${tr.passed ? "text-emerald-500" : "text-rose-400"}`}>
                                   Test Case {tr.testCase} {tr.passed ? "Passed" : "Failed"}
                                 </span>
                               </div>
@@ -1155,6 +1605,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         )}
                       </div>
                     )}
+                    {outputTab === "history" && renderRunHistory()}
                   </div>
                 </div>
               </>
@@ -1168,6 +1619,38 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   <span>Piston Code Engine</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setCode(DEFAULT_CODE[language as keyof typeof DEFAULT_CODE] || "");
+                      toast.info("Code reset to template.");
+                    }}
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition"
+                    title="Reset Code template"
+                  >
+                    <RotateCcw size={12} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOutput("");
+                      setRunDetails(null);
+                      toast.info("Output console cleared.");
+                    }}
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition"
+                    title="Clear Output"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(output || "");
+                      toast.success("Output copied to clipboard.");
+                    }}
+                    className="p-1.5 rounded text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition mr-2"
+                    title="Copy Output"
+                  >
+                    <Copy size={12} />
+                  </button>
+                  <div className="h-5 w-px bg-[var(--border-color)] mr-2" />
                   <button
                     onClick={handleRun}
                     disabled={isRunning || isSubmitting}
@@ -1331,6 +1814,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
         </>
         )}
       </main>
+      {renderHistoryDetailsModal()}
     </div>
   );
 }
