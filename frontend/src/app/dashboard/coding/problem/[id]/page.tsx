@@ -472,7 +472,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
   const handleRun = async () => {
     if (isRunning || isSubmitting) return;
     setIsRunning(true);
-    setOutputTab("output");
+    setOutputTab(stdin ? "output" : "input");
     setOutput("");
     setShowTerminal(true);
     try {
@@ -487,8 +487,10 @@ Answer the student's question based on the coding problem. Provide hints or feed
       } else {
         setOutput(data.error || data.output || "Execution failed");
       }
+      setOutputTab("output");
     } catch (err: any) {
       setOutput(err.response?.data?.error || err.message || "Failed to run code");
+      setOutputTab("output");
     } finally {
       setIsRunning(false);
     }
@@ -1103,7 +1105,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                             Executing on Piston engine...
                           </span>
                         ) : output ? (
-                          output
+                          <div>
+                            {output}
+                            {!stdin && (output.includes("input()") || output.includes("ValueError") || output.includes("EOFError") || output.includes("EOF when reading")) && (
+                              <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px]">
+                                <span className="font-bold">Tip:</span> Your code uses <code className="text-amber-300">input()</code> but no stdin was provided. Go to the <span className="font-bold">Input</span> tab and enter the values your code expects, then click Run again.
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-[var(--text-muted)]">Click "Run" to execute your code against custom input.</span>
                         )}
