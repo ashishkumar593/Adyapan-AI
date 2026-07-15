@@ -319,8 +319,13 @@ export default function CodingRoadmapPage() {
             <div className="flex items-center gap-3 h-9">
               {roadmap && (
                 <>
-                  <PremiumButton variant="secondary" className="text-xs h-9" onClick={handleUpdateProgress}>
-                    <RefreshCw className="w-4 h-4 mr-2" /> Sync Progress
+                  <PremiumButton
+                    variant="secondary"
+                    className="text-xs h-9 whitespace-nowrap"
+                    icon={<RefreshCw className="w-4 h-4" />}
+                    onClick={handleUpdateProgress}
+                  >
+                    Sync Progress
                   </PremiumButton>
                   <PremiumButton variant="secondary" className="text-xs h-9 !border-red-500/20 !text-red-400 hover:!bg-red-500/10" onClick={handleResetRoadmap}>
                     Regenerate
@@ -561,8 +566,12 @@ export default function CodingRoadmapPage() {
                       </div>
                     </div>
 
-                    <PremiumButton type="submit" className="w-full py-4 text-sm mt-6 relative z-10">
-                      <Sparkles className="w-4 h-4 mr-2" /> Generate AI Roadmap
+                    <PremiumButton
+                      type="submit"
+                      className="w-full py-4 text-sm mt-6 relative z-10 whitespace-nowrap"
+                      icon={<Sparkles className="w-4 h-4" />}
+                    >
+                      Generate AI Roadmap
                     </PremiumButton>
                   </form>
                   </div>
