@@ -426,28 +426,30 @@ export function CodingChallengesView() {
                 zIndex: 10,
               }}
             >
+              {/* Close button - positioned in corner */}
+              <motion.button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-3 right-3 z-30 flex items-center justify-center rounded-lg"
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  color: "#000",
+                  boxShadow: "0 2px 10px rgba(245,158,11,0.3)",
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                  <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                  <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+                </svg>
+              </motion.button>
+
               {/* Header block */}
               <div className="p-3 space-y-2 flex-shrink-0">
                 <div className="flex items-center gap-2">
-                  <motion.button
-                    onClick={() => setSidebarOpen(false)}
-                    className="flex items-center justify-center rounded-lg flex-shrink-0"
-                    style={{
-                      width: 32,
-                      height: 32,
-                      background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                      color: "#000",
-                      boxShadow: "0 2px 10px rgba(245,158,11,0.3)",
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.94 }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="4" width="12" height="1.5" rx="0.75" fill="currentColor" />
-                      <rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
-                      <rect x="2" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
-                    </svg>
-                  </motion.button>
 
                   {/* Sidebar Tabs */}
                   <div className="flex-1 flex bg-black/20 p-1 rounded-xl border" style={{ borderColor: sidebarBorder }}>
