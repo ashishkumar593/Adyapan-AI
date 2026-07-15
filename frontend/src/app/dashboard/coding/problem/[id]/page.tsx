@@ -1196,44 +1196,43 @@ Answer the student's question based on the coding problem. Provide hints or feed
           </button>
         </div>
       );
-    }
-
-    return (
+    }    return (
       <div className="flex flex-col gap-6 select-text">
         {/* Scores Grid */}
         <div className="grid grid-cols-2 gap-4">
           {/* Efficiency Score */}
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative">
-            <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider font-bold mb-2">Efficiency Score</span>
-            <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+          <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col items-center justify-center relative dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
+            <span className="text-[8px] text-slate-400 dark:text-zinc-400 uppercase tracking-wider font-bold mb-2">Efficiency Score</span>
+            <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
               <svg className="w-full h-full transform -rotate-90">
-                <circle cx="32" cy="32" r="26" className="stroke-slate-250 dark:stroke-zinc-850" strokeWidth="5" fill="transparent" />
+                <circle cx="40" cy="40" r="34" className="stroke-slate-200 dark:stroke-zinc-800/60" strokeWidth="6" fill="transparent" />
                 <motion.circle
-                  cx="32"
-                  cy="32"
-                  r="26"
+                  cx="40"
+                  cy="40"
+                  r="34"
                   className="stroke-amber-500"
-                  strokeWidth="5"
+                  strokeWidth="6"
                   fill="transparent"
-                  strokeDasharray="163.36"
-                  initial={{ strokeDashoffset: 163.36 }}
-                  animate={{ strokeDashoffset: 163.36 - (163.36 * (complexityResult.efficiency_score || 0)) / 100 }}
+                  strokeDasharray="213.6"
+                  style={{ filter: "drop-shadow(0px 0px 4px rgba(245, 158, 11, 0.45))" }}
+                  initial={{ strokeDashoffset: 213.6 }}
+                  animate={{ strokeDashoffset: 213.6 - (213.6 * (complexityResult.efficiency_score || 0)) / 100 }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-sm font-black text-slate-800 dark:text-white">{complexityResult.efficiency_score}</span>
-                <span className="text-[6px] text-slate-400 dark:text-zinc-550 uppercase font-black">/ 100</span>
+                <span className="text-lg font-black text-slate-800 dark:text-zinc-100">{complexityResult.efficiency_score}</span>
+                <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase font-black">/ 100</span>
               </div>
             </div>
           </div>
 
           {/* Optimization Score */}
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative">
-            <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider font-bold mb-2">Optimization Score</span>
+          <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col items-center justify-center relative dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
+            <span className="text-[8px] text-slate-400 dark:text-zinc-400 uppercase tracking-wider font-bold mb-2">Optimization Score</span>
             <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
               <svg className="w-full h-full transform -rotate-90">
-                <circle cx="32" cy="32" r="26" className="stroke-slate-250 dark:stroke-zinc-850" strokeWidth="5" fill="transparent" />
+                <circle cx="32" cy="32" r="26" className="stroke-slate-200 dark:stroke-zinc-800/60" strokeWidth="5" fill="transparent" />
                 <motion.circle
                   cx="32"
                   cy="32"
@@ -1242,14 +1241,15 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   strokeWidth="5"
                   fill="transparent"
                   strokeDasharray="163.36"
+                  style={{ filter: "drop-shadow(0px 0px 4px rgba(139, 92, 246, 0.45))" }}
                   initial={{ strokeDashoffset: 163.36 }}
                   animate={{ strokeDashoffset: 163.36 - (163.36 * (complexityResult.optimization_score || 0)) / 100 }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-sm font-black text-slate-800 dark:text-white">{complexityResult.optimization_score}</span>
-                <span className="text-[6px] text-slate-400 dark:text-zinc-555 uppercase font-black">/ 100</span>
+                <span className="text-sm font-black text-slate-800 dark:text-zinc-100">{complexityResult.optimization_score}</span>
+                <span className="text-[6px] text-slate-400 dark:text-zinc-500 uppercase font-black">/ 100</span>
               </div>
             </div>
           </div>
@@ -1257,7 +1257,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
         {/* Complexity badges */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2.5">
+          <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-2.5 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
             <h4 className="text-[8px] font-black uppercase text-amber-500 tracking-wider">Time Complexity</h4>
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-xs">
@@ -1271,7 +1271,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
             </div>
           </div>
 
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2.5">
+          <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-2.5 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
             <h4 className="text-[8px] font-black uppercase text-amber-500 tracking-wider">Space Complexity</h4>
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-xs">
@@ -1301,12 +1301,11 @@ Answer the student's question based on the coding problem. Provide hints or feed
           };
           const currentClean = cleanComplexityStr(complexityResult.time_complexity);
           const bestClean = cleanComplexityStr(complexityResult.best_possible_time);
-
           return (
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4 overflow-x-auto">
+            <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-4 overflow-x-auto dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
               <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Visual Time Complexity</h4>
               <div className="relative flex items-center justify-between px-2 pt-6 pb-2 min-w-[340px]">
-                <div className="absolute top-[2.1rem] left-8 right-8 h-1 bg-slate-250 dark:bg-zinc-800 z-0 rounded-full" />
+                <div className="absolute top-[2.1rem] left-8 right-8 h-1 bg-slate-250 dark:bg-zinc-800/60 z-0 rounded-full" />
 
                 {complexities.map((comp, idx) => {
                   const isCurrent = comp === currentClean;
@@ -1316,10 +1315,10 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       <div 
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-black border transition-all duration-300 ${
                           isCurrent 
-                            ? "bg-amber-500 border-amber-600 text-black shadow-[0_0_12px_#f59e0b] scale-110" 
+                            ? "bg-amber-500 border-amber-600 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-110" 
                             : isBest
-                              ? "bg-emerald-500 border-emerald-600 text-black shadow-[0_0_12px_#10b981] scale-105"
-                              : "bg-slate-100 border-slate-300 dark:bg-zinc-900 dark:border-zinc-800 text-slate-500 dark:text-zinc-400"
+                              ? "bg-emerald-500 border-emerald-600 text-black shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105"
+                              : "bg-slate-100 border-slate-300 dark:bg-zinc-950 dark:border-zinc-800/80 text-slate-500 dark:text-zinc-400"
                         }`}
                       >
                         {idx + 1}
@@ -1334,12 +1333,12 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         {comp}
                       </span>
                       {isCurrent && (
-                        <span className="absolute -top-4 text-[7px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap">
+                        <span className="absolute -top-4 text-[7px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 dark:bg-amber-950/20 dark:border-amber-800/30 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap animate-none">
                           Current
                         </span>
                       )}
                       {isBest && !isCurrent && (
-                        <span className="absolute -top-4 text-[7px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap">
+                        <span className="absolute -top-4 text-[7px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 dark:bg-emerald-950/20 dark:border-emerald-800/30 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap animate-none">
                           Target
                         </span>
                       )}
@@ -1352,23 +1351,23 @@ Answer the student's question based on the coding problem. Provide hints or feed
         })()}
 
         {/* Complexity Breakdown */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-3 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
           <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Complexity Origin Breakdown</h4>
-          <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{complexityResult.analysis}</p>
+          <p className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed font-semibold">{complexityResult.analysis}</p>
 
           {complexityResult.complexity_breakdown && complexityResult.complexity_breakdown.length > 0 && (
             <div className="flex flex-col gap-3 mt-2 border-t border-slate-200 dark:border-zinc-800/40 pt-3">
               <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-black mb-1">Details by code segments</span>
               <div className="flex flex-col gap-2.5">
                 {complexityResult.complexity_breakdown.map((item: any, i: number) => (
-                  <div key={i} className="bg-black/20 dark:bg-black/30 border border-slate-200 dark:border-zinc-850 p-3 rounded-xl flex flex-col gap-2">
+                  <div key={i} className="bg-slate-50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800/50 p-3 rounded-xl flex flex-col gap-2">
                     {item.code_segment && (
-                      <pre className="bg-slate-100 dark:bg-zinc-900/50 p-2 rounded border border-slate-200 dark:border-zinc-800 text-[9px] font-mono text-slate-800 dark:text-zinc-300 overflow-x-auto whitespace-pre select-text">
+                      <pre className="bg-slate-100 dark:bg-zinc-950/80 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/60 text-[9px] font-mono text-slate-800 dark:text-zinc-300 overflow-x-auto whitespace-pre select-text">
                         {item.code_segment}
                       </pre>
                     )}
                     <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-600 dark:text-zinc-400 leading-relaxed pr-2">{item.explanation}</span>
+                      <span className="text-slate-655 dark:text-zinc-300 leading-relaxed pr-2">{item.explanation}</span>
                       <span className="text-[9px] font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2 py-0.5 rounded shrink-0">{item.complexity}</span>
                     </div>
                   </div>
@@ -1379,7 +1378,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
         </div>
 
         {/* Scalability analysis */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-3 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
           <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Scalability Estimations</h4>
           <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-semibold mb-1 block">
             Expected growth metrics:
@@ -1401,7 +1400,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
         </div>
 
         {/* Data Structure analysis */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-3 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
           <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Data Structure Evaluation</h4>
           <div className="flex flex-col gap-2.5">
             {complexityResult.data_structure_analysis?.evaluated?.map((ds: any, i: number) => {
@@ -1412,7 +1411,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                 "Not Needed": "bg-slate-500/10 text-slate-400 border-slate-500/20"
               };
               return (
-                <div key={i} className="bg-black/20 dark:bg-black/35 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-xl flex flex-col gap-1.5">
+                <div key={i} className="bg-slate-50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-xl flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-bold text-slate-800 dark:text-white text-xs">{ds.name}</span>
                     <span className={`text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusColors[ds.status as keyof typeof statusColors] || statusColors["Not Needed"]}`}>
@@ -1425,24 +1424,23 @@ Answer the student's question based on the coding problem. Provide hints or feed
             })}
           </div>
         </div>
-
-        {/* Optimization Suggestions */}
-        <div className="bg-amber-50 dark:bg-amber-550/5 border border-amber-100 dark:border-amber-500/10 rounded-2xl p-4 flex flex-col gap-3">
-          <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-wider flex items-center gap-1.5">
+                {/* Optimization Suggestions */}
+        <div className="bg-gradient-to-br from-amber-50/60 to-amber-50/20 dark:from-amber-950/10 dark:to-amber-950/5 border border-amber-100/80 dark:border-amber-800/25 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider flex items-center gap-1.5">
             <Sparkles size={12} className="text-amber-500 animate-pulse" />
             <span>Optimization Opportunities</span>
           </h4>
           <div className="flex flex-col gap-3">
             {complexityResult.suggestions?.map((sug: any, i: number) => (
-              <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-805 p-3.5 rounded-xl flex flex-col gap-2">
+              <div key={i} className="bg-white dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/60 p-3.5 rounded-xl flex flex-col gap-2">
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
-                  <div className="flex flex-col gap-0.5 bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/10 rounded-lg p-2 text-center font-semibold">
-                    <span className="text-[7px] text-rose-500 uppercase tracking-widest font-black block mb-0.5">Current: {sug.current_approach}</span>
-                    <span className="font-mono font-black text-rose-455">{sug.current_complexity}</span>
+                  <div className="flex flex-col gap-0.5 bg-rose-500/5 dark:bg-rose-955/15 border border-rose-500/10 dark:border-rose-900/30 rounded-lg p-2 text-center font-semibold">
+                    <span className="text-[7px] text-rose-500 dark:text-rose-455 uppercase tracking-widest font-black block mb-0.5">Current: {sug.current_approach}</span>
+                    <span className="font-mono font-black text-rose-500 dark:text-rose-455">{sug.current_complexity}</span>
                   </div>
-                  <div className="flex flex-col gap-0.5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 rounded-lg p-2 text-center font-semibold">
-                    <span className="text-[7px] text-emerald-500 uppercase tracking-widest font-black block mb-0.5">Suggested: {sug.suggested_approach}</span>
-                    <span className="font-mono font-black text-emerald-455">{sug.suggested_complexity}</span>
+                  <div className="flex flex-col gap-0.5 bg-emerald-500/5 dark:bg-emerald-955/15 border border-emerald-500/10 dark:border-emerald-900/30 rounded-lg p-2 text-center font-semibold">
+                    <span className="text-[7px] text-emerald-500 dark:text-emerald-455 uppercase tracking-widest font-black block mb-0.5">Suggested: {sug.suggested_approach}</span>
+                    <span className="font-mono font-black text-emerald-500 dark:text-emerald-455">{sug.suggested_complexity}</span>
                   </div>
                 </div>
                 <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold mt-1">
@@ -1454,28 +1452,28 @@ Answer the student's question based on the coding problem. Provide hints or feed
         </div>
 
         {/* Interview Rating */}
-        <div className="bg-violet-50 dark:bg-violet-500/5 border border-violet-100 dark:border-violet-500/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-gradient-to-br from-violet-50/60 to-violet-50/20 dark:from-violet-950/10 dark:to-violet-950/5 border border-violet-100/80 dark:border-violet-800/25 rounded-2xl p-4 flex flex-col gap-3">
           <h4 className="text-[10px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-wider flex items-center justify-between">
             <span>Technical Interview expectations</span>
             <span className={`text-[8px] px-2 py-0.5 rounded-full font-black border uppercase tracking-wider ${
               complexityResult.interview_analysis?.accepted_in_interview
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 dark:bg-emerald-950/20 dark:border-emerald-800/35"
+                : "bg-rose-500/10 text-rose-400 border-rose-500/20 dark:bg-rose-955/20 dark:border-rose-800/35"
             }`}>
               {complexityResult.interview_analysis?.accepted_in_interview ? "Accepted" : "Rejected"}
             </span>
           </h4>
 
-          <div className="flex items-center justify-between bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs font-semibold">
+          <div className="flex items-center justify-between bg-white dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/60 p-2.5 rounded-xl text-xs font-semibold">
             <span className="text-slate-500 dark:text-zinc-400">Interview Score:</span>
             <span className="font-black text-violet-500 font-mono text-sm">{complexityResult.interview_analysis?.interview_rating} / 100</span>
           </div>
 
-          <p className="text-xs text-slate-700 dark:text-zinc-305 leading-relaxed font-semibold mt-1">{complexityResult.interview_analysis?.feedback}</p>
+          <p className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed font-semibold mt-1">{complexityResult.interview_analysis?.feedback}</p>
 
           {complexityResult.interview_analysis?.follow_up_questions?.length > 0 && (
             <div className="flex flex-col gap-1.5 mt-2 border-t border-slate-200 dark:border-zinc-800/40 pt-3">
-              <span className="text-[9px] text-violet-655 dark:text-violet-400 uppercase tracking-widest font-black">Typical follow-up questions</span>
+              <span className="text-[9px] text-violet-600 dark:text-violet-400 uppercase tracking-widest font-black">Typical follow-up questions</span>
               <ul className="flex flex-col gap-2">
                 {complexityResult.interview_analysis.follow_up_questions.map((fq: string, idx: number) => (
                   <li key={idx} className="text-xs text-slate-700 dark:text-zinc-300 font-medium flex items-start gap-1.5">
@@ -1489,28 +1487,27 @@ Answer the student's question based on the coding problem. Provide hints or feed
         </div>
 
         {/* Algorithm pattern insights */}
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4">
+        <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-4 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
           <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Learning Insights</h4>
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 flex flex-col gap-1">
-              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block">Pattern Detected</span>
-              <span className="font-bold text-slate-800 dark:text-white font-mono text-[10px]">
+            <div className="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-xl border border-slate-100 dark:border-zinc-800/60 flex flex-col gap-1">
+              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block animate-none">Pattern Detected</span>
+              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono text-[10px]">
                 {complexityResult.algorithm_pattern?.detected_pattern || "N/A"}
               </span>
             </div>
-            <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 flex flex-col gap-1">
-              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block">Pattern Missing</span>
-              <span className="font-bold text-slate-800 dark:text-white font-mono text-[10px]">
+            <div className="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-xl border border-slate-100 dark:border-zinc-800/60 flex flex-col gap-1">
+              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block animate-none">Pattern Missing</span>
+              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono text-[10px]">
                 {complexityResult.algorithm_pattern?.pattern_missing || "N/A"}
               </span>
             </div>
           </div>
-          <div className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold bg-slate-50 dark:bg-black/25 p-3.5 rounded-xl border border-slate-100 dark:border-zinc-900/50">
+          <div className="text-xs text-slate-705 dark:text-zinc-200 leading-relaxed font-semibold bg-slate-50 dark:bg-zinc-950/30 p-3.5 rounded-xl border border-slate-100 dark:border-zinc-800/50">
             <span className="text-[8px] text-amber-500 uppercase font-black tracking-widest block mb-1">Recommended next steps</span>
             {complexityResult.algorithm_pattern?.recommended_next_topic || "Practice sliding windows / patterns."}
           </div>
-        </div>
-      </div>
+        </div>      </div>
     );
   };
 
@@ -1769,17 +1766,17 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       )}
 
                       {/* Executive Summary */}
-                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+                      <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-2 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
                         <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Executive Summary</h4>
-                        <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{reviewResult.summary}</p>
+                        <p className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed font-semibold">{reviewResult.summary}</p>
                       </div>
 
                       {/* Scorecard Circular and Subscore bars */}
-                      <div className="flex items-center gap-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+                      <div className="flex items-center gap-6 bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
                         {/* Overall score circular ring */}
                         <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                           <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="40" cy="40" r="34" className="stroke-slate-200 dark:stroke-zinc-800" strokeWidth="6" fill="transparent" />
+                            <circle cx="40" cy="40" r="34" className="stroke-slate-200 dark:stroke-zinc-800/60" strokeWidth="6" fill="transparent" />
                             <motion.circle
                               cx="40"
                               cy="40"
@@ -1788,13 +1785,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               strokeWidth="6"
                               fill="transparent"
                               strokeDasharray="213.6"
+                              style={{ filter: "drop-shadow(0px 0px 4px rgba(139, 92, 246, 0.45))" }}
                               initial={{ strokeDashoffset: 213.6 }}
                               animate={{ strokeDashoffset: 213.6 - (213.6 * (reviewResult.overall_score || 0)) / 100 }}
                               transition={{ duration: 1.5, ease: "easeOut" }}
                             />
                           </svg>
                           <div className="absolute flex flex-col items-center justify-center">
-                            <span className="text-lg font-black text-slate-800 dark:text-white">{reviewResult.overall_score}</span>
+                            <span className="text-lg font-black text-slate-800 dark:text-zinc-100">{reviewResult.overall_score}</span>
                             <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase font-bold">Overall</span>
                           </div>
                         </div>
@@ -1811,9 +1809,9 @@ Answer the student's question based on the coding problem. Provide hints or feed
                             <div key={idx} className="flex flex-col gap-1">
                               <div className="flex items-center justify-between text-[9px]">
                                 <span className="text-slate-500 dark:text-zinc-400 font-semibold">{sub.label}</span>
-                                <span className="text-slate-800 dark:text-white font-black">{sub.val}/100</span>
+                                <span className="text-slate-800 dark:text-zinc-200 font-black">{sub.val}/100</span>
                               </div>
-                              <div className="w-full h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="w-full h-1 bg-slate-200 dark:bg-zinc-800/80 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${sub.val}%` }}
@@ -1855,10 +1853,8 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           <Sparkles size={12} />
                           <span>{complexityResult ? "View Complexity Dashboard" : "Run Complexity Analysis"}</span>
                         </button>
-                      </div>
-
-                      {/* Strengths List */}
-                      <div className="bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
+                                   {/* Strengths List */}
+                      <div className="bg-gradient-to-br from-emerald-50/60 to-emerald-50/20 dark:from-emerald-950/10 dark:to-emerald-950/5 border border-emerald-100/80 dark:border-emerald-800/25 rounded-2xl p-4 flex flex-col gap-2.5">
                         <h4 className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
                           <CheckCircle2 size={12} className="text-emerald-500" />
                           <span>Key Strengths</span>
@@ -1870,7 +1866,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               initial={{ opacity: 0, x: -5 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed font-semibold"
+                              className="text-xs text-slate-700 dark:text-zinc-200 flex items-start gap-2 leading-relaxed font-semibold"
                             >
                               <span className="text-emerald-500 shrink-0">✓</span>
                               <span>{str}</span>
@@ -1880,7 +1876,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       </div>
 
                       {/* Weaknesses / Issues */}
-                      <div className="bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
+                      <div className="bg-gradient-to-br from-rose-50/60 to-rose-50/20 dark:from-rose-950/10 dark:to-rose-950/5 border border-rose-100/80 dark:border-rose-800/25 rounded-2xl p-4 flex flex-col gap-2.5">
                         <h4 className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
                           <AlertCircle size={12} className="text-rose-500" />
                           <span>Weaknesses & Issues</span>
@@ -1892,7 +1888,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               initial={{ opacity: 0, x: -5 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed font-semibold"
+                              className="text-xs text-slate-700 dark:text-zinc-200 flex items-start gap-2 leading-relaxed font-semibold"
                             >
                               <span className="text-rose-500 shrink-0">⚠️</span>
                               <span>{iss}</span>
@@ -1905,14 +1901,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       </div>
 
                       {/* Optimizations Section */}
-                      <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10 rounded-2xl p-4 flex flex-col gap-3">
-                        <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-widest flex items-center gap-1.5">
+                      <div className="bg-gradient-to-br from-amber-50/60 to-amber-50/20 dark:from-amber-950/10 dark:to-amber-950/5 border border-amber-100/80 dark:border-amber-800/25 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-widest flex items-center gap-1.5">
                           <Sparkles size={12} className="text-amber-500 animate-pulse" />
                           <span>Optimization Opportunities</span>
                         </h4>
                         <div className="flex flex-col gap-2.5">
                           {reviewResult.optimizations?.map((opt: string, i: number) => (
-                            <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">
+                            <div key={i} className="bg-white dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/60 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">
                               {opt}
                             </div>
                           ))}
@@ -1923,13 +1919,13 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       </div>
 
                       {/* Edge Cases Simulation */}
-                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+                      <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-3 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
                         <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">Edge Case Simulation</h4>
                         <div className="flex flex-col gap-2">
                           {reviewResult.edge_cases?.map((ec: string, i: number) => (
-                            <div key={i} className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-900 pb-1.5 last:border-0 last:pb-0 text-xs">
-                              <span className="text-slate-600 dark:text-zinc-450 font-bold">{ec}</span>
-                              <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded uppercase tracking-wider">
+                            <div key={i} className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/40 pb-1.5 last:border-0 last:pb-0 text-xs">
+                              <span className="text-slate-600 dark:text-zinc-200 font-bold">{ec}</span>
+                              <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded uppercase tracking-wider dark:bg-emerald-950/20 dark:border-emerald-800/30">
                                 Verified
                               </span>
                             </div>
@@ -1941,22 +1937,22 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       </div>
 
                       {/* Interview Readiness */}
-                      <div className="bg-violet-50 dark:bg-violet-500/5 border border-violet-100 dark:border-violet-500/10 rounded-2xl p-4 flex flex-col gap-3">
-                        <h4 className="text-[10px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest flex items-center justify-between">
+                      <div className="bg-gradient-to-br from-violet-50/60 to-violet-50/20 dark:from-violet-950/10 dark:to-violet-950/5 border border-violet-100/80 dark:border-violet-800/25 rounded-2xl p-4 flex flex-col gap-3">
+                        <h4 className="text-[10px] font-black uppercase text-violet-650 dark:text-violet-400 tracking-widest flex items-center justify-between">
                           <span>Technical Interview Readiness</span>
                           <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border ${
                             reviewResult.interview_readiness?.interview_ready 
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                              : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 dark:bg-emerald-950/20 dark:border-emerald-800/35" 
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/20 dark:bg-rose-955/20 dark:border-rose-800/35"
                           }`}>
                             {reviewResult.interview_readiness?.interview_ready ? "Passes Interview" : "Fail / Needs Work"}
                           </span>
                         </h4>
-                        <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
+                        <p className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
                         
                         {reviewResult.interview_readiness?.follow_ups?.length > 0 && (
                           <div className="flex flex-col gap-1.5 mt-1 border-t border-slate-200 dark:border-zinc-800/40 pt-2.5">
-                            <span className="text-[9px] text-violet-600 dark:text-violet-400 uppercase font-black tracking-widest">Typical Interviewer Follow-Ups</span>
+                            <span className="text-[9px] text-violet-650 dark:text-violet-400 uppercase font-black tracking-widest">Typical Interviewer Follow-Ups</span>
                             <ul className="flex flex-col gap-2">
                               {reviewResult.interview_readiness.follow_ups.map((fq: string, i: number) => (
                                 <li key={i} className="text-xs text-slate-700 dark:text-zinc-300 font-medium flex items-start gap-1.5">
@@ -1967,22 +1963,22 @@ Answer the student's question based on the coding problem. Provide hints or feed
                             </ul>
                           </div>
                         )}
-                      </div>
+                      </div>                     </div>
 
                       {/* Line Level Feedback Inspector */}
                       {reviewResult.line_level_feedback && reviewResult.line_level_feedback.length > 0 && (
                         <div className="flex flex-col gap-3.5">
-                          <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-350 tracking-widest">Line-Level Code Annotations</h4>
+                          <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-400 tracking-widest">Line-Level Code Annotations</h4>
                           <div className="flex flex-col gap-3">
                             {reviewResult.line_level_feedback.map((lf: any, idx: number) => (
-                              <div key={idx} className="bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 flex flex-col gap-2">
+                              <div key={idx} className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-xl p-3 flex flex-col gap-2 dark:shadow-md">
                                 <div className="flex items-center justify-between text-[9px] text-slate-500 dark:text-zinc-400 uppercase tracking-widest font-black">
                                   <span>Line {lf.line_number}</span>
                                 </div>
-                                <div className="bg-slate-100 dark:bg-zinc-900/50 p-2 rounded border border-slate-200 dark:border-zinc-800 font-mono text-[10px] text-slate-800 dark:text-zinc-300 select-text whitespace-pre overflow-x-auto">
+                                <div className="bg-slate-100 dark:bg-zinc-955/80 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/60 font-mono text-[10px] text-slate-800 dark:text-zinc-300 select-text whitespace-pre overflow-x-auto">
                                   {lf.code_line}
                                 </div>
-                                <p className="text-xs text-amber-600 dark:text-amber-400/90 leading-relaxed font-bold">
+                                <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed font-bold">
                                   {lf.feedback}
                                 </p>
                               </div>
@@ -1992,7 +1988,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       )}
 
                       {/* Learning Guidance */}
-                      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4">
+                      <div className="bg-white dark:bg-zinc-900/65 border border-slate-200/80 dark:border-zinc-800/85 rounded-2xl p-4 flex flex-col gap-4 dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:backdrop-blur-md">
                         <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">AI Coach Mode Insights</h4>
                         <div className="flex flex-col gap-3">
                           <div className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed bg-slate-50 dark:bg-black/25 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 font-semibold">
