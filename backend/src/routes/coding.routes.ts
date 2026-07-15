@@ -8,6 +8,7 @@ import { CodeforcesService } from "../services/codeforces.service";
 import { AICodingService } from "../services/ai-coding.service";
 import { executeCode, runTestCases, checkPistonHealth } from "../services/piston.service";
 import { AIReviewService } from "../services/ai-review.service";
+import { ComplexityService } from "../services/complexity.service";
 
 
 const router = Router();
@@ -1384,5 +1385,107 @@ router.get("/review/:id", async (req: any, res) => {
   }
 });
 
+// ─── Day 15 AI Complexity Analysis Engine API Endpoints ─────────────────────
+
+// POST /api/coding/complexity/analyze
+// Generate complexity analysis
+router.post("/complexity/analyze", async (req: any, res) => {
+  try {
+    const { questionId, code, language } = req.body;
+    const userId = req.user.userId;
+
+    if (!questionId || !code || !language) {
+      return res.status(400).json({ error: "questionId, code, and language are required" });
+    }
+
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    // Generate Complexity analysis from ComplexityService
+    const analysisJson = await ComplexityService.generateAnalysis(
+      userPrisma,
+      userId,
+      questionId,
+      code,
+      language
+    );
+
+    // Find if there's a last execution of this user for context to attach
+    const lastExecution = await userPrisma.codeExecution.findFirst({
+      where: { userId, questionId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    // Find if there's a last review of this user
+    const lastReview = await userPrisma.codeReview.findFirst({
+      where: { userId, questionId },
+      orderBy: { generatedAt: "desc" }
+    });
+
+    // Save complexity analysis record to Database
+    const complexityAnalysis = await userPrisma.complexityAnalysis.create({
+      data: {
+        userId,
+        questionId,
+        executionId: lastExecution?.id || null,
+        reviewId: lastReview?.id || null,
+        timeComplexity: analysisJson.time_complexity,
+        spaceComplexity: analysisJson.space_complexity,
+        efficiencyScore: analysisJson.efficiency_score,
+        analysisJson: analysisJson as any
+      }
+    });
+
+    res.json({ success: true, complexityAnalysis });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.complexity.analyze", "Failed to generate complexity analysis");
+  }
+});
+
+// GET /api/coding/complexity/history
+// Fetch history of previous complexity analyses
+router.get("/complexity/history", async (req: any, res) => {
+  try {
+    const { questionId } = req.query;
+    const userId = req.user.userId;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const whereClause: any = { userId };
+    if (questionId) {
+      whereClause.questionId = questionId as string;
+    }
+
+    const history = await userPrisma.complexityAnalysis.findMany({
+      where: whereClause,
+      orderBy: { generatedAt: "desc" }
+    });
+
+    res.json({ success: true, history });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.complexity.history", "Failed to retrieve complexity history");
+  }
+});
+
+// GET /api/coding/complexity/:id
+// Get details of a specific complexity analysis
+router.get("/complexity/:id", async (req: any, res) => {
+  try {
+    const id = req.params.id;
+    const userPrisma = await getUserPrismaFromRequest(req);
+
+    const complexityAnalysis = await userPrisma.complexityAnalysis.findUnique({
+      where: { id }
+    });
+
+    if (!complexityAnalysis) {
+      return res.status(404).json({ error: "Complexity analysis not found" });
+    }
+
+    res.json({ success: true, complexityAnalysis });
+  } catch (error) {
+    handleRouteError(res, error, "Coding.complexity.getDetails", "Failed to retrieve complexity details");
+  }
+});
+
 export const codingRouter = router;
+
 

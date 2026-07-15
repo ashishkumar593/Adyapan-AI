@@ -131,7 +131,14 @@ export default function ProblemWorkspacePage() {
   const [reviewResult, setReviewResult] = useState<any>(null);
   const [reviewHistory, setReviewHistory] = useState<any[]>([]);
   const [reviewStepIndex, setReviewStepIndex] = useState<number>(0);
-  const [activeReviewTab, setActiveReviewTab] = useState<"active" | "history">("active");
+  const [activeReviewTab, setActiveReviewTab] = useState<"active" | "complexity" | "history">("active");
+
+  // Day 15 AI Complexity Engine states
+  const [isAnalyzingComplexity, setIsAnalyzingComplexity] = useState<boolean>(false);
+  const [complexityResult, setComplexityResult] = useState<any>(null);
+  const [complexityHistory, setComplexityHistory] = useState<any[]>([]);
+  const [complexityStepIndex, setComplexityStepIndex] = useState<number>(0);
+
 
   // Time spent tracker
 
@@ -271,6 +278,17 @@ export default function ProblemWorkspacePage() {
       } catch (err) {
         console.error("Failed to load history reviews:", err);
       }
+
+      // Fetch complexity history
+      try {
+        const compHistoryRes = await api.get(`/coding/complexity/history?questionId=${problemId}`);
+        if (compHistoryRes.data.success) {
+          setComplexityHistory(compHistoryRes.data.history || []);
+        }
+      } catch (err) {
+        console.error("Failed to load history complexity:", err);
+      }
+
 
       setLoading(false);
 
@@ -1062,7 +1080,532 @@ Answer the student's question based on the coding problem. Provide hints or feed
     setReviewDrawerOpen(true);
   };
 
+  // Day 15 Complexity Engine Action Handlers
+  const fetchComplexityHistory = async () => {
+    try {
+      const res = await api.get(`/coding/complexity/history?questionId=${problemId}`);
+      if (res.data.success) {
+        setComplexityHistory(res.data.history || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch complexity history", err);
+    }
+  };
+
+  const handleRequestComplexityAnalysis = async () => {
+    if (isAnalyzingComplexity || isRunning || isSubmitting) return;
+    setIsAnalyzingComplexity(true);
+    setReviewDrawerOpen(true);
+    setActiveReviewTab("complexity");
+    setComplexityStepIndex(0);
+    setComplexityResult(null);
+
+    // Progressive step loading experience
+    const interval = setInterval(() => {
+      setComplexityStepIndex(prev => {
+        if (prev < 5) return prev + 1;
+        return prev;
+      });
+    }, 1000);
+
+    try {
+      const res = await api.post(`/coding/complexity/analyze`, {
+        questionId: problemId,
+        code,
+        language
+      });
+      if (res.data.success) {
+        setComplexityResult(res.data.complexityAnalysis.analysisJson);
+        setComplexityStepIndex(6); // Complete
+        toast.success("AI Complexity Analysis completed!");
+        fetchComplexityHistory();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to analyze complexity");
+      setReviewDrawerOpen(false);
+    } finally {
+      clearInterval(interval);
+      setIsAnalyzingComplexity(false);
+    }
+  };
+
+  const handleViewHistoryComplexity = (comp: any) => {
+    setComplexityResult(comp.analysisJson);
+    setComplexityStepIndex(6); // Complete
+    setActiveReviewTab("complexity");
+    setReviewDrawerOpen(true);
+  };
+
+  const renderComplexityTabContent = () => {
+    if (isAnalyzingComplexity) {
+      const complexityLoadingSteps = [
+        "Analyzing Algorithm",
+        "Detecting Patterns",
+        "Calculating Complexity",
+        "Evaluating Scalability",
+        "Generating Insights",
+        "Preparing Recommendations",
+        "Analysis Complete"
+      ];
+      return (
+        <div className="flex flex-col items-center justify-center py-20 gap-5">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full"
+          />
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <span className="text-xs font-bold text-amber-500 animate-pulse">
+              {complexityLoadingSteps[complexityStepIndex]}
+            </span>
+            <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-semibold">
+              Running Big-O analysis simulations
+            </span>
+          </div>
+
+          {/* Progress dots */}
+          <div className="flex items-center gap-2 mt-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-full">
+            {complexityLoadingSteps.slice(0, 6).map((step, idx) => (
+              <div
+                key={idx}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  idx <= complexityStepIndex ? "bg-amber-500 shadow-[0_0_8px_#f59e0b]" : "bg-slate-300 dark:bg-zinc-800"
+                }`}
+                title={step}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (!complexityResult) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 dark:text-zinc-400 gap-3">
+          <Sparkles size={32} className="text-slate-300 dark:text-zinc-700 animate-pulse" />
+          <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">No complexity analysis generated for this session</span>
+          <p className="text-[10px] text-slate-400 dark:text-zinc-500 max-w-xs leading-relaxed mb-3">
+            Click **Run Complexity Analysis** inside the Code Review tab to run standard complexity checks on your solution code.
+          </p>
+          <button
+            onClick={handleRequestComplexityAnalysis}
+            className="flex items-center gap-1.5 text-xs px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black rounded-lg transition shadow-md"
+          >
+            <Sparkles size={12} />
+            <span>Run Complexity Analysis</span>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-6 select-text">
+        {/* Scores Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Efficiency Score */}
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative">
+            <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider font-bold mb-2">Efficiency Score</span>
+            <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="32" cy="32" r="26" className="stroke-slate-250 dark:stroke-zinc-850" strokeWidth="5" fill="transparent" />
+                <motion.circle
+                  cx="32"
+                  cy="32"
+                  r="26"
+                  className="stroke-amber-500"
+                  strokeWidth="5"
+                  fill="transparent"
+                  strokeDasharray="163.36"
+                  initial={{ strokeDashoffset: 163.36 }}
+                  animate={{ strokeDashoffset: 163.36 - (163.36 * (complexityResult.efficiency_score || 0)) / 100 }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center justify-center">
+                <span className="text-sm font-black text-slate-800 dark:text-white">{complexityResult.efficiency_score}</span>
+                <span className="text-[6px] text-slate-400 dark:text-zinc-550 uppercase font-black">/ 100</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Optimization Score */}
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center relative">
+            <span className="text-[8px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider font-bold mb-2">Optimization Score</span>
+            <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="32" cy="32" r="26" className="stroke-slate-250 dark:stroke-zinc-850" strokeWidth="5" fill="transparent" />
+                <motion.circle
+                  cx="32"
+                  cy="32"
+                  r="26"
+                  className="stroke-violet-500"
+                  strokeWidth="5"
+                  fill="transparent"
+                  strokeDasharray="163.36"
+                  initial={{ strokeDashoffset: 163.36 }}
+                  animate={{ strokeDashoffset: 163.36 - (163.36 * (complexityResult.optimization_score || 0)) / 100 }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center justify-center">
+                <span className="text-sm font-black text-slate-800 dark:text-white">{complexityResult.optimization_score}</span>
+                <span className="text-[6px] text-slate-400 dark:text-zinc-555 uppercase font-black">/ 100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Complexity badges */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2.5">
+            <h4 className="text-[8px] font-black uppercase text-amber-500 tracking-wider">Time Complexity</h4>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-zinc-400">Current Solution</span>
+                <span className="font-black text-amber-500">{complexityResult.time_complexity}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-zinc-400">Best Known</span>
+                <span className="font-black text-emerald-500">{complexityResult.best_possible_time}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2.5">
+            <h4 className="text-[8px] font-black uppercase text-amber-500 tracking-wider">Space Complexity</h4>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-zinc-400">Current Solution</span>
+                <span className="font-black text-amber-500">{complexityResult.space_complexity}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-zinc-400">Best Known</span>
+                <span className="font-black text-emerald-500">{complexityResult.best_possible_space}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Visual Timeline */}
+        {(() => {
+          const complexities = ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"];
+          const cleanComplexityStr = (cStr: string) => {
+            let clean = cStr.toLowerCase().replace(/\s+/g, "");
+            if (clean.includes("1")) return "O(1)";
+            if (clean.includes("logn")) return "O(log n)";
+            if (clean.includes("nlogn")) return "O(n log n)";
+            if (clean.includes("n^2") || clean.includes("n2")) return "O(n²)";
+            if (clean.includes("2^n") || clean.includes("2n")) return "O(2ⁿ)";
+            if (clean.includes("n")) return "O(n)";
+            return "O(n²)";
+          };
+          const currentClean = cleanComplexityStr(complexityResult.time_complexity);
+          const bestClean = cleanComplexityStr(complexityResult.best_possible_time);
+
+          return (
+            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4 overflow-x-auto">
+              <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Visual Time Complexity</h4>
+              <div className="relative flex items-center justify-between px-2 pt-6 pb-2 min-w-[340px]">
+                <div className="absolute top-[2.1rem] left-8 right-8 h-1 bg-slate-250 dark:bg-zinc-800 z-0 rounded-full" />
+
+                {complexities.map((comp, idx) => {
+                  const isCurrent = comp === currentClean;
+                  const isBest = comp === bestClean;
+                  return (
+                    <div key={idx} className="flex flex-col items-center relative z-10">
+                      <div 
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-black border transition-all duration-300 ${
+                          isCurrent 
+                            ? "bg-amber-500 border-amber-600 text-black shadow-[0_0_12px_#f59e0b] scale-110" 
+                            : isBest
+                              ? "bg-emerald-500 border-emerald-600 text-black shadow-[0_0_12px_#10b981] scale-105"
+                              : "bg-slate-100 border-slate-300 dark:bg-zinc-900 dark:border-zinc-800 text-slate-500 dark:text-zinc-400"
+                        }`}
+                      >
+                        {idx + 1}
+                      </div>
+                      <span className={`text-[8px] font-bold mt-2 uppercase ${
+                        isCurrent 
+                          ? "text-amber-500" 
+                          : isBest 
+                            ? "text-emerald-500" 
+                            : "text-slate-400 dark:text-zinc-500"
+                      }`}>
+                        {comp}
+                      </span>
+                      {isCurrent && (
+                        <span className="absolute -top-4 text-[7px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap">
+                          Current
+                        </span>
+                      )}
+                      {isBest && !isCurrent && (
+                        <span className="absolute -top-4 text-[7px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap">
+                          Target
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Complexity Breakdown */}
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Complexity Origin Breakdown</h4>
+          <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{complexityResult.analysis}</p>
+
+          {complexityResult.complexity_breakdown && complexityResult.complexity_breakdown.length > 0 && (
+            <div className="flex flex-col gap-3 mt-2 border-t border-slate-200 dark:border-zinc-800/40 pt-3">
+              <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-black mb-1">Details by code segments</span>
+              <div className="flex flex-col gap-2.5">
+                {complexityResult.complexity_breakdown.map((item: any, i: number) => (
+                  <div key={i} className="bg-black/20 dark:bg-black/30 border border-slate-200 dark:border-zinc-850 p-3 rounded-xl flex flex-col gap-2">
+                    {item.code_segment && (
+                      <pre className="bg-slate-100 dark:bg-zinc-900/50 p-2 rounded border border-slate-200 dark:border-zinc-800 text-[9px] font-mono text-slate-800 dark:text-zinc-300 overflow-x-auto whitespace-pre select-text">
+                        {item.code_segment}
+                      </pre>
+                    )}
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-slate-600 dark:text-zinc-400 leading-relaxed pr-2">{item.explanation}</span>
+                      <span className="text-[9px] font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2 py-0.5 rounded shrink-0">{item.complexity}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scalability analysis */}
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Scalability Estimations</h4>
+          <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-semibold mb-1 block">
+            Expected growth metrics:
+          </span>
+          <div className="flex flex-col gap-1.5 border border-slate-200 dark:border-zinc-800/50 rounded-xl overflow-hidden text-xs">
+            <div className="grid grid-cols-3 bg-slate-100 dark:bg-white/5 p-2 font-black uppercase text-[8px] text-slate-500 dark:text-zinc-400 tracking-wider">
+              <span>Input Size</span>
+              <span>Runtime</span>
+              <span>Memory</span>
+            </div>
+            {complexityResult.scalability_analysis?.map((scale: any, i: number) => (
+              <div key={i} className="grid grid-cols-3 p-2 border-t border-slate-200/50 dark:border-zinc-900/50 last:border-0 font-medium text-slate-700 dark:text-zinc-300">
+                <span className="font-mono text-slate-900 dark:text-white font-bold">{scale.input_size.toLocaleString()}</span>
+                <span>{scale.expected_runtime}</span>
+                <span>{scale.expected_memory}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Data Structure analysis */}
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Data Structure Evaluation</h4>
+          <div className="flex flex-col gap-2.5">
+            {complexityResult.data_structure_analysis?.evaluated?.map((ds: any, i: number) => {
+              const statusColors = {
+                Used: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                Recommended: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                Inefficient: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+                "Not Needed": "bg-slate-500/10 text-slate-400 border-slate-500/20"
+              };
+              return (
+                <div key={i} className="bg-black/20 dark:bg-black/35 border border-slate-200 dark:border-zinc-800/80 p-3 rounded-xl flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-slate-800 dark:text-white text-xs">{ds.name}</span>
+                    <span className={`text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusColors[ds.status as keyof typeof statusColors] || statusColors["Not Needed"]}`}>
+                      {ds.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-semibold">{ds.feedback}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Optimization Suggestions */}
+        <div className="bg-amber-50 dark:bg-amber-550/5 border border-amber-100 dark:border-amber-500/10 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-wider flex items-center gap-1.5">
+            <Sparkles size={12} className="text-amber-500 animate-pulse" />
+            <span>Optimization Opportunities</span>
+          </h4>
+          <div className="flex flex-col gap-3">
+            {complexityResult.suggestions?.map((sug: any, i: number) => (
+              <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-805 p-3.5 rounded-xl flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="flex flex-col gap-0.5 bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/10 rounded-lg p-2 text-center font-semibold">
+                    <span className="text-[7px] text-rose-500 uppercase tracking-widest font-black block mb-0.5">Current: {sug.current_approach}</span>
+                    <span className="font-mono font-black text-rose-455">{sug.current_complexity}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 rounded-lg p-2 text-center font-semibold">
+                    <span className="text-[7px] text-emerald-500 uppercase tracking-widest font-black block mb-0.5">Suggested: {sug.suggested_approach}</span>
+                    <span className="font-mono font-black text-emerald-455">{sug.suggested_complexity}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold mt-1">
+                  {sug.explanation}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Interview Rating */}
+        <div className="bg-violet-50 dark:bg-violet-500/5 border border-violet-100 dark:border-violet-500/10 rounded-2xl p-4 flex flex-col gap-3">
+          <h4 className="text-[10px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-wider flex items-center justify-between">
+            <span>Technical Interview expectations</span>
+            <span className={`text-[8px] px-2 py-0.5 rounded-full font-black border uppercase tracking-wider ${
+              complexityResult.interview_analysis?.accepted_in_interview
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+            }`}>
+              {complexityResult.interview_analysis?.accepted_in_interview ? "Accepted" : "Rejected"}
+            </span>
+          </h4>
+
+          <div className="flex items-center justify-between bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs font-semibold">
+            <span className="text-slate-500 dark:text-zinc-400">Interview Score:</span>
+            <span className="font-black text-violet-500 font-mono text-sm">{complexityResult.interview_analysis?.interview_rating} / 100</span>
+          </div>
+
+          <p className="text-xs text-slate-700 dark:text-zinc-305 leading-relaxed font-semibold mt-1">{complexityResult.interview_analysis?.feedback}</p>
+
+          {complexityResult.interview_analysis?.follow_up_questions?.length > 0 && (
+            <div className="flex flex-col gap-1.5 mt-2 border-t border-slate-200 dark:border-zinc-800/40 pt-3">
+              <span className="text-[9px] text-violet-655 dark:text-violet-400 uppercase tracking-widest font-black">Typical follow-up questions</span>
+              <ul className="flex flex-col gap-2">
+                {complexityResult.interview_analysis.follow_up_questions.map((fq: string, idx: number) => (
+                  <li key={idx} className="text-xs text-slate-700 dark:text-zinc-300 font-medium flex items-start gap-1.5">
+                    <span className="text-violet-500 mt-0.5">•</span>
+                    <span>{fq}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Algorithm pattern insights */}
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4">
+          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Learning Insights</h4>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 flex flex-col gap-1">
+              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block">Pattern Detected</span>
+              <span className="font-bold text-slate-800 dark:text-white font-mono text-[10px]">
+                {complexityResult.algorithm_pattern?.detected_pattern || "N/A"}
+              </span>
+            </div>
+            <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 flex flex-col gap-1">
+              <span className="text-[7px] text-slate-400 dark:text-zinc-500 uppercase font-black tracking-wider block">Pattern Missing</span>
+              <span className="font-bold text-slate-800 dark:text-white font-mono text-[10px]">
+                {complexityResult.algorithm_pattern?.pattern_missing || "N/A"}
+              </span>
+            </div>
+          </div>
+          <div className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold bg-slate-50 dark:bg-black/25 p-3.5 rounded-xl border border-slate-100 dark:border-zinc-900/50">
+            <span className="text-[8px] text-amber-500 uppercase font-black tracking-widest block mb-1">Recommended next steps</span>
+            {complexityResult.algorithm_pattern?.recommended_next_topic || "Practice sliding windows / patterns."}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistoryTabContent = () => {
+    return (
+      <div className="flex flex-col gap-6 select-none">
+        {/* Past Code Reviews section */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-black flex items-center gap-1.5">
+            <Clock size={10} />
+            <span>Code Review History ({reviewHistory.length})</span>
+          </span>
+          {reviewHistory.length === 0 ? (
+            <p className="text-[10px] text-slate-400 dark:text-zinc-500 italic px-2">No reviews recorded.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              {reviewHistory.map((rev) => {
+                const dateStr = new Date(rev.generatedAt).toLocaleDateString([], { month: "short", day: "numeric" });
+                const timeStr = new Date(rev.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <div
+                    key={rev.id}
+                    onClick={() => handleViewHistoryReview(rev)}
+                    className="bg-white dark:bg-white/5 border border-slate-200 dark:border-zinc-800 hover:border-slate-350 dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-white/[0.02] p-3.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition shadow-sm dark:shadow-none"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[8px] font-black uppercase text-violet-650 dark:text-violet-400 bg-violet-550/10 px-1.5 py-0.5 rounded border border-violet-550/20">
+                          {rev.reviewMode} Mode
+                        </span>
+                        <span className="text-[8px] font-black text-emerald-655 dark:text-emerald-400 bg-emerald-555/10 px-1.5 py-0.5 rounded border border-emerald-550/20">
+                          Score: {rev.overallScore}
+                        </span>
+                      </div>
+                      <span className="text-[8px] text-slate-400 dark:text-zinc-500">
+                        {dateStr} at {timeStr}
+                      </span>
+                    </div>
+                    <span className="text-[8px] text-amber-500 font-bold uppercase hover:underline">
+                      Load →
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Past Complexity Analyses section */}
+        <div className="flex flex-col gap-3 mt-2 border-t border-slate-200 dark:border-zinc-900/60 pt-4">
+          <span className="text-[9px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-black flex items-center gap-1.5">
+            <Clock size={10} />
+            <span>Complexity Analysis History ({complexityHistory.length})</span>
+          </span>
+          {complexityHistory.length === 0 ? (
+            <p className="text-[10px] text-slate-400 dark:text-zinc-500 italic px-2">No complexity runs recorded.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              {complexityHistory.map((comp) => {
+                const dateStr = new Date(comp.generatedAt).toLocaleDateString([], { month: "short", day: "numeric" });
+                const timeStr = new Date(comp.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <div
+                    key={comp.id}
+                    onClick={() => handleViewHistoryComplexity(comp)}
+                    className="bg-white dark:bg-white/5 border border-slate-200 dark:border-zinc-800 hover:border-slate-350 dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-white/[0.02] p-3.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition shadow-sm dark:shadow-none"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[8px] font-black text-amber-550 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                          {comp.timeComplexity} / {comp.spaceComplexity}
+                        </span>
+                        <span className="text-[8px] font-black text-emerald-655 dark:text-emerald-400 bg-emerald-555/10 px-1.5 py-0.5 rounded border border-emerald-550/20">
+                          Efficiency: {comp.efficiencyScore}
+                        </span>
+                      </div>
+                      <span className="text-[8px] text-slate-400 dark:text-zinc-500">
+                        {dateStr} at {timeStr}
+                      </span>
+                    </div>
+                    <span className="text-[8px] text-amber-500 font-bold uppercase hover:underline">
+                      Load →
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderReviewDrawer = () => {
+
     const reviewLoadingSteps = [
       "Analyzing Solution",
       "Evaluating Logic",
@@ -1108,7 +1651,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
               </div>
 
               {/* Toggle Tabs */}
-              <div className="h-10 border-b border-slate-200 dark:border-zinc-900 bg-slate-50/50 dark:bg-black/25 flex items-center px-5 gap-4">
+              <div className="h-10 border-b border-slate-200 dark:border-zinc-900 bg-slate-50/50 dark:bg-black/25 flex items-center px-5 gap-4 select-none">
                 <button
                   onClick={() => setActiveReviewTab("active")}
                   className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
@@ -1117,12 +1660,29 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       : "border-transparent text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                   }`}
                 >
-                  Current Review
+                  Code Review
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveReviewTab("complexity");
+                    if (!complexityResult && complexityHistory.length > 0) {
+                      setComplexityResult(complexityHistory[0].analysisJson);
+                      setComplexityStepIndex(6);
+                    }
+                  }}
+                  className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
+                    activeReviewTab === "complexity"
+                      ? "border-violet-500 text-slate-900 dark:text-white"
+                      : "border-transparent text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                  }`}
+                >
+                  Complexity Analysis
                 </button>
                 <button
                   onClick={() => {
                     setActiveReviewTab("history");
                     fetchReviewHistory();
+                    fetchComplexityHistory();
                   }}
                   className={`text-[10px] uppercase tracking-wider font-black border-b-2 py-2 transition-all ${
                     activeReviewTab === "history"
@@ -1130,12 +1690,13 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       : "border-transparent text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                   }`}
                 >
-                  Review History ({reviewHistory.length})
+                  History
                 </button>
               </div>
 
+
               {/* Content Body */}
-              {activeReviewTab === "active" ? (
+              {activeReviewTab === "active" && (
                 <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
                   
                   {/* AI Review Loader */}
@@ -1191,14 +1752,14 @@ Answer the student's question based on the coding problem. Provide hints or feed
                             <AlertCircle size={14} className="text-rose-500 animate-pulse" />
                             <span>Execution Error review: {reviewResult.error_review.error_type}</span>
                           </h4>
-                          <div className="bg-rose-50/50 dark:bg-black/30 p-2.5 rounded-xl border border-rose-100 dark:border-rose-950/20 font-mono text-[10px] text-rose-600 dark:text-rose-300">
+                          <div className="bg-rose-50/50 dark:bg-black/30 p-2.5 rounded-xl border border-rose-100 dark:border-rose-950/20 font-mono text-[10px] text-rose-600 dark:text-rose-350 font-bold">
                             {reviewResult.error_review.message}
                           </div>
-                          <div className="text-xs text-slate-600 dark:text-zinc-300">
+                          <div className="text-xs text-slate-600 dark:text-zinc-300 font-semibold">
                             <span className="font-bold text-slate-800 dark:text-white block mb-0.5">Likely Cause:</span>
                             {reviewResult.error_review.cause}
                           </div>
-                          <div className="text-xs text-slate-600 dark:text-zinc-300">
+                          <div className="text-xs text-slate-600 dark:text-zinc-300 font-semibold">
                             <span className="font-bold text-slate-800 dark:text-white block mb-0.5">Suggested Fix:</span>
                             <div className="bg-slate-100 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 font-mono text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 whitespace-pre-wrap">
                               {reviewResult.error_review.suggested_fix}
@@ -1210,7 +1771,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       {/* Executive Summary */}
                       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2">
                         <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Executive Summary</h4>
-                        <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">{reviewResult.summary}</p>
+                        <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{reviewResult.summary}</p>
                       </div>
 
                       {/* Scorecard Circular and Subscore bars */}
@@ -1264,6 +1825,37 @@ Answer the student's question based on the coding problem. Provide hints or feed
                           ))}
                         </div>
                       </div>
+                      {/* Complexity Analysis Deep Dive teaser */}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black uppercase text-amber-500 tracking-wider flex items-center gap-1.5">
+                            <Sparkles size={12} className="text-amber-550 dark:text-amber-400 animate-pulse" />
+                            <span>Algorithmic Complexity Auditing</span>
+                          </h4>
+                          <span className="text-[8px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                            Day 15 Engine
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-650 dark:text-zinc-450 leading-relaxed font-semibold">
+                          {complexityResult 
+                            ? `Your solution has O(${complexityResult.time_complexity}) time complexity. Explore timeline scales and data structure checks.`
+                            : "Analyze code execution growth runtime patterns, Big-O classes, data structure swaps, and interview thresholds."
+                          }
+                        </p>
+                        <button
+                          onClick={() => {
+                            if (complexityResult) {
+                              setActiveReviewTab("complexity");
+                            } else {
+                              handleRequestComplexityAnalysis();
+                            }
+                          }}
+                          className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-black text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-1.5"
+                        >
+                          <Sparkles size={12} />
+                          <span>{complexityResult ? "View Complexity Dashboard" : "Run Complexity Analysis"}</span>
+                        </button>
+                      </div>
 
                       {/* Strengths List */}
                       <div className="bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-2xl p-4 flex flex-col gap-2.5">
@@ -1278,7 +1870,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               initial={{ opacity: 0, x: -5 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed"
+                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed font-semibold"
                             >
                               <span className="text-emerald-500 shrink-0">✓</span>
                               <span>{str}</span>
@@ -1300,7 +1892,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                               initial={{ opacity: 0, x: -5 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed"
+                              className="text-xs text-slate-700 dark:text-zinc-300 flex items-start gap-2 leading-relaxed font-semibold"
                             >
                               <span className="text-rose-500 shrink-0">⚠️</span>
                               <span>{iss}</span>
@@ -1320,7 +1912,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         </h4>
                         <div className="flex flex-col gap-2.5">
                           {reviewResult.optimizations?.map((opt: string, i: number) => (
-                            <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">
+                            <div key={i} className="bg-white dark:bg-black/30 border border-slate-200 dark:border-zinc-800 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">
                               {opt}
                             </div>
                           ))}
@@ -1336,7 +1928,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         <div className="flex flex-col gap-2">
                           {reviewResult.edge_cases?.map((ec: string, i: number) => (
                             <div key={i} className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-900 pb-1.5 last:border-0 last:pb-0 text-xs">
-                              <span className="text-slate-600 dark:text-zinc-400 font-semibold">{ec}</span>
+                              <span className="text-slate-600 dark:text-zinc-450 font-bold">{ec}</span>
                               <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded uppercase tracking-wider">
                                 Verified
                               </span>
@@ -1360,7 +1952,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                             {reviewResult.interview_readiness?.interview_ready ? "Passes Interview" : "Fail / Needs Work"}
                           </span>
                         </h4>
-                        <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
+                        <p className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed font-semibold">{reviewResult.interview_feedback}</p>
                         
                         {reviewResult.interview_readiness?.follow_ups?.length > 0 && (
                           <div className="flex flex-col gap-1.5 mt-1 border-t border-slate-200 dark:border-zinc-800/40 pt-2.5">
@@ -1380,7 +1972,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       {/* Line Level Feedback Inspector */}
                       {reviewResult.line_level_feedback && reviewResult.line_level_feedback.length > 0 && (
                         <div className="flex flex-col gap-3.5">
-                          <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">Line-Level Code Annotations</h4>
+                          <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-350 tracking-widest">Line-Level Code Annotations</h4>
                           <div className="flex flex-col gap-3">
                             {reviewResult.line_level_feedback.map((lf: any, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 flex flex-col gap-2">
@@ -1403,7 +1995,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-4">
                         <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-zinc-300 tracking-widest">AI Coach Mode Insights</h4>
                         <div className="flex flex-col gap-3">
-                          <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed bg-slate-50 dark:bg-black/25 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 font-semibold">
+                          <div className="text-xs text-slate-700 dark:text-zinc-350 leading-relaxed bg-slate-50 dark:bg-black/25 p-3 rounded-xl border border-slate-100 dark:border-zinc-900 font-semibold">
                             {reviewResult.learning_insights?.ai_coach_guidance}
                           </div>
                           <div className="grid grid-cols-2 gap-3 text-xs">
@@ -1429,16 +2021,16 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
                       {/* Recommendations Engine */}
                       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3">
-                        <h4 className="text-[10px] font-black uppercase text-slate-550 dark:text-zinc-300 tracking-widest">Targeted Next Problem Sets</h4>
+                        <h4 className="text-[10px] font-black uppercase text-slate-555 dark:text-zinc-300 tracking-widest">Targeted Next Problem Sets</h4>
                         <div className="flex flex-col gap-3 text-xs">
                           {reviewResult.recommendations?.harder_problems?.length > 0 && (
                             <div>
-                              <span className="text-[9px] text-orange-600 dark:text-orange-400 uppercase font-black tracking-widest block mb-1.5">Harder Progression Challenges:</span>
+                              <span className="text-[9px] text-orange-650 dark:text-orange-400 uppercase font-black tracking-widest block mb-1.5">Harder Progression Challenges:</span>
                               <div className="flex flex-col gap-1.5">
                                 {reviewResult.recommendations.harder_problems.map((p: string, idx: number) => (
                                   <div key={idx} className="bg-slate-50 dark:bg-black/25 px-3 py-2 rounded-lg border border-slate-100 dark:border-zinc-900 flex items-center justify-between text-slate-700 dark:text-zinc-300">
                                     <span className="font-semibold">{p}</span>
-                                    <span className="text-[9px] text-amber-500 font-black">Practice →</span>
+                                    <span className="text-[9px] text-amber-505 font-black">Practice →</span>
                                   </div>
                                 ))}
                               </div>
@@ -1451,7 +2043,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                                 {reviewResult.recommendations.interview_variants.map((p: string, idx: number) => (
                                   <div key={idx} className="bg-slate-50 dark:bg-black/25 px-3 py-2 rounded-lg border border-slate-100 dark:border-zinc-900 flex items-center justify-between text-slate-700 dark:text-zinc-300">
                                     <span className="font-semibold">{p}</span>
-                                    <span className="text-[9px] text-amber-500 font-black">Practice →</span>
+                                    <span className="text-[9px] text-amber-505 font-black">Practice →</span>
                                   </div>
                                 ))}
                               </div>
@@ -1464,44 +2056,17 @@ Answer the student's question based on the coding problem. Provide hints or feed
                   )}
 
                 </div>
-              ) : (
-                // Review History Tab view
-                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
-                  {reviewHistory.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-zinc-400 gap-2">
-                      <Clock size={24} className="text-slate-355 dark:text-zinc-700 animate-pulse" />
-                      <span className="text-xs font-bold">No review history recorded for this problem</span>
-                    </div>
-                  ) : (
-                    reviewHistory.map((rev) => {
-                      const dateStr = new Date(rev.generatedAt).toLocaleDateString([], { month: "short", day: "numeric" });
-                      const timeStr = new Date(rev.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                      return (
-                        <div
-                          key={rev.id}
-                          onClick={() => handleViewHistoryReview(rev)}
-                          className="bg-white dark:bg-white/5 border border-slate-200 dark:border-zinc-800 hover:border-slate-350 dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-white/[0.02] p-3.5 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition shadow-sm dark:shadow-none"
-                        >
-                          <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[8px] font-black uppercase text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-550/20 dark:border-violet-500/20">
-                                {rev.reviewMode} Mode
-                              </span>
-                              <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-550/20 dark:border-emerald-500/20">
-                                Score: {rev.overallScore}
-                              </span>
-                            </div>
-                            <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-semibold">
-                              Reviewed {dateStr} at {timeStr}
-                            </span>
-                          </div>
-                          <button className="text-[9px] text-amber-550 dark:text-amber-500 font-black uppercase tracking-wider hover:underline">
-                            View details →
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
+              )}
+              
+              {activeReviewTab === "complexity" && (
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+                  {renderComplexityTabContent()}
+                </div>
+              )}
+
+              {activeReviewTab === "history" && (
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+                  {renderHistoryTabContent()}
                 </div>
               )}
             </motion.div>
@@ -2111,6 +2676,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                         {isReviewing ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />}
                         <span>{isReviewing ? "Reviewing..." : "Review Code"}</span>
                       </button>
+
                       <button
                         onClick={handleRun}
                         disabled={isRunning || isSubmitting}
@@ -2249,6 +2815,7 @@ Answer the student's question based on the coding problem. Provide hints or feed
                     {isReviewing ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
                     <span>{isReviewing ? "Reviewing..." : "Review Code"}</span>
                   </button>
+
                   <button
                     onClick={handleRun}
                     disabled={isRunning || isSubmitting}

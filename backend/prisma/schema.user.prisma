@@ -1083,6 +1083,25 @@ model CodeReview {
   @@map("code_reviews")
 }
 
+model ComplexityAnalysis {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  questionId       String   @map("question_id")
+  executionId      String?  @map("execution_id")
+  reviewId         String?  @map("review_id")
+  timeComplexity   String   @map("time_complexity")
+  spaceComplexity  String   @map("space_complexity")
+  efficiencyScore  Int      @map("efficiency_score")
+  analysisJson     Json     @map("analysis_json")
+  generatedAt      DateTime @default(now()) @map("generated_at")
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([generatedAt])
+  @@map("complexity_analyses")
+}
+
+
 
 
 
