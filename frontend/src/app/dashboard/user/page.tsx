@@ -13,6 +13,7 @@ import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import {
   PremiumCard,
   PremiumButton,
@@ -196,6 +197,59 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     </div>
   );
 }
+
+// ─── Search Index ─────────────────────────────────────────────────────────────
+interface SearchEntry { label: string; viewId: string; category: string; }
+const SEARCH_INDEX: SearchEntry[] = [
+  { label: "Dashboard", viewId: "dashboard", category: "General" },
+  { label: "Profile", viewId: "profile", category: "General" },
+  { label: "Community Profile", viewId: "community-profile", category: "General" },
+  { label: "Settings", viewId: "settings", category: "General" },
+  { label: "Billing", viewId: "billing", category: "General" },
+  { label: "Ady Chat", viewId: "ady-chat", category: "General" },
+  { label: "Notifications", viewId: "notifications", category: "General" },
+  { label: "Progress Tracking", viewId: "progress-hub", category: "General" },
+  { label: "Study Assistant", viewId: "study-assistant", category: "Learning Hub" },
+  { label: "Notes Generator", viewId: "notes-generator", category: "Learning Hub" },
+  { label: "Quiz Generator", viewId: "quiz-generator", category: "Learning Hub" },
+  { label: "Assignment Generator", viewId: "assignment-generator", category: "Learning Hub" },
+  { label: "PPT Generator", viewId: "ppt-generator", category: "Learning Hub" },
+  { label: "Mind Maps", viewId: "mind-maps", category: "Learning Hub" },
+  { label: "Flashcards", viewId: "flashcards", category: "Learning Hub" },
+  { label: "Study Planner", viewId: "study-planner", category: "Learning Hub" },
+  { label: "Learning Streak", viewId: "learning-streak", category: "Learning Hub" },
+  { label: "DSA Practice", viewId: "dsa-practice", category: "Coding Hub" },
+  { label: "Coding Assistant", viewId: "coding-assistant", category: "Coding Hub" },
+  { label: "Coding Challenges", viewId: "coding-challenges", category: "Coding Hub" },
+  { label: "GitHub Portfolio", viewId: "github-portfolio", category: "Coding Hub" },
+  { label: "Resume Builder", viewId: "resume-builder", category: "Resume Hub" },
+  { label: "ATS Score Checker", viewId: "ats-checker", category: "Resume Hub" },
+  { label: "Cover Letter Generator", viewId: "cover-letter", category: "Resume Hub" },
+  { label: "LinkedIn Optimizer", viewId: "linkedin-optimizer", category: "Resume Hub" },
+  { label: "AI HR Interview", viewId: "interview-hub", category: "Interview Hub" },
+  { label: "AI Technical Interview", viewId: "interview-hub", category: "Interview Hub" },
+  { label: "Mock Interviews", viewId: "interview-hub", category: "Interview Hub" },
+  { label: "Research Paper AI", viewId: "research-hub", category: "Research Hub" },
+  { label: "Plagiarism Checker", viewId: "research-plagiarism", category: "Research Hub" },
+  { label: "Internship Finder", viewId: "internship-hub", category: "Internship Hub" },
+  { label: "Internship Tracker", viewId: "internship-hub", category: "Internship Hub" },
+  { label: "Job Matching", viewId: "job-hub", category: "Job Hub" },
+  { label: "Resume vs JD Match", viewId: "job-hub", category: "Job Hub" },
+  { label: "Job Referrals", viewId: "job-hub", category: "Job Hub" },
+  { label: "Hiring Challenges", viewId: "job-hub", category: "Job Hub" },
+  { label: "Aptitude Practice", viewId: "placement-hub", category: "Placement Hub" },
+  { label: "Logical Reasoning", viewId: "placement-hub", category: "Placement Hub" },
+  { label: "Technical MCQs", viewId: "placement-hub", category: "Placement Hub" },
+  { label: "Mock Tests", viewId: "placement-hub", category: "Placement Hub" },
+  { label: "Readiness Score", viewId: "placement-hub", category: "Placement Hub" },
+  { label: "Email Writer", viewId: "prod-email", category: "Productivity" },
+  { label: "SOP Generator", viewId: "prod-sop", category: "Productivity" },
+  { label: "LinkedIn Post Generator", viewId: "prod-linkedin", category: "Productivity" },
+  { label: "Content Writer", viewId: "prod-content", category: "Productivity" },
+  { label: "Progress Tracker", viewId: "analytics-hub", category: "Analytics" },
+  { label: "Interview Progress", viewId: "analytics-hub", category: "Analytics" },
+  { label: "Skill Growth", viewId: "analytics-hub", category: "Analytics" },
+];
 
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
 export const sidebarItems: SidebarItem[] = [
@@ -496,12 +550,25 @@ export function DashboardTopNav({
   const [evaluateOpen, setEvaluateOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const searchResults = searchQuery.trim().length >= 2
+    ? SEARCH_INDEX.filter((entry) =>
+        entry.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        entry.category.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 8)
+    : [];
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
         setNotificationsOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -553,16 +620,18 @@ export function DashboardTopNav({
           <Image src="/assets/logo.png" alt="Adyapan AI" width={30} height={30} style={{ borderRadius: "50%" }} />
           <span style={{ fontWeight: 700, fontSize: "1.15rem", color: navBtnColor }}>Adyapan AI</span>
         </Link>
-        <motion.div className="desktop-search" style={{ position: "relative" }}
+        <motion.div ref={searchRef} className="desktop-search" style={{ position: "relative" }}
           animate={{width: searchFocused ? 300 : 230}}
           transition={{duration: 0.2, ease: "easeOut"}}
         >
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex", color: searchFocused ? "var(--primary)" : "var(--text-muted)", transition: "color 0.15s ease" }}>
+          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex", color: searchFocused ? "var(--primary)" : "var(--text-muted)", transition: "color 0.15s ease", zIndex: 1 }}>
             <Search size={14} />
           </span>
           <motion.input
             type="text" placeholder="Search tools, notes, jobs..."
-            onFocus={() => setSearchFocused(true)}
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+            onFocus={() => { setSearchFocused(true); if (searchQuery.trim().length >= 2) setSearchOpen(true); }}
             onBlur={() => setSearchFocused(false)}
             initial={false}
             animate={{
@@ -577,6 +646,49 @@ export function DashboardTopNav({
               boxSizing: "border-box",
             }}
           />
+          {searchOpen && searchResults.length > 0 && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%", minWidth: 260,
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 10, padding: "0.4rem", zIndex: 200,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+            }}>
+              {(() => {
+                const grouped = searchResults.reduce<Record<string, SearchEntry[]>>((acc, entry) => {
+                  (acc[entry.category] ??= []).push(entry);
+                  return acc;
+                }, {});
+                return Object.entries(grouped).map(([cat, entries]) => (
+                  <div key={cat}>
+                    <div style={{ padding: "0.3rem 0.6rem", fontSize: "0.65rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{cat}</div>
+                    {entries.map((entry) => (
+                      <motion.button key={entry.label} whileHover={{scale:1.01}} whileTap={{scale:0.98}} transition={{duration:0.08}}
+                        onMouseDown={(e) => { e.preventDefault(); onViewTool(entry.viewId); setSearchQuery(""); setSearchOpen(false); }}
+                        style={{
+                          display: "block", width: "100%", textAlign: "left",
+                          padding: "0.45rem 0.6rem", fontSize: "0.8rem", color: "var(--text-secondary)",
+                          background: "transparent", border: "none", cursor: "pointer", borderRadius: 6,
+                        }}
+                      >
+                        {entry.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
+          {searchOpen && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, marginTop: 6, width: "100%",
+              background: dropdownBg, border: `1px solid ${navBorder}`,
+              borderRadius: 10, padding: "1rem", zIndex: 200,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35)", textAlign: "center",
+              fontSize: "0.8rem", color: "var(--text-muted)",
+            }}>
+              No results found
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -1692,6 +1804,7 @@ function UserDashboardContent() {
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [recommendations, setRecommendations] = useState<Array<{ id?: string; priority: string; recommendationType: string; topicName?: string; reason?: string; impactScore?: number; urgencyScore?: number }>>([]);
   const [dailyBrief, setDailyBrief] = useState<{ text?: string } | null>(null);
@@ -1808,6 +1921,10 @@ function UserDashboardContent() {
     const savedTheme = localStorage.getItem("adyapan-theme") || "dark";
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
+
+    // Check if onboarding is needed
+    const onboarded = localStorage.getItem("adyapan-onboarded");
+    if (!onboarded) setShowOnboarding(true);
 
     // Seed from localStorage/sessionStorage first (instant display), then refresh from API
     try {
@@ -1952,6 +2069,7 @@ function UserDashboardContent() {
 
   return (
     <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
+      {showOnboarding && <OnboardingFlow onComplete={() => setShowOnboarding(false)} />}
       <FloatingOrbs />
       <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
       <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
