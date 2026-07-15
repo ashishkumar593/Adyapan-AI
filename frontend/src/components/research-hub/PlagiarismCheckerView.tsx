@@ -15,6 +15,7 @@ import {
   ShieldX, Fingerprint, Type, BookMarked, Quote, Feather, BrainCircuit,
   Activity, Gauge, Sparkle, RotateCcw, ArrowRight,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -27,18 +28,6 @@ const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
   visible: (i = 0) => ({ opacity: 1, scale: 1, transition: { delay: i * 0.07, duration: 0.35 } }),
 };
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
 
 interface SimilarityMatch {
   id: string;

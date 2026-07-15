@@ -33,7 +33,7 @@ import confetti from "canvas-confetti";
 
 // ─── Inline Github Icon Fallback ─────────────────────────────────────────────
 
-const GithubIcon = (props: any) => (
+const GithubIcon = (props: React.SVGProps<SVGSVGElement> & { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -277,8 +277,8 @@ export function GithubPortfolioView() {
       } else {
         throw new Error(res.data?.error || "Push rejected");
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || "Failed to authenticate or commit code.";
+    } catch (error) {
+      const msg = (error as { response?: { data?: { error?: string } }; message?: string })?.response?.data?.error || (error as Error)?.message || "Failed to authenticate or commit code.";
       setPushLog({
         status: "error",
         message: "Push failed. Verification of repository settings needed.",

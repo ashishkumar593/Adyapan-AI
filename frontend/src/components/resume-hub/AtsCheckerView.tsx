@@ -11,6 +11,7 @@ import {
   BookOpen, Code2, Briefcase, GraduationCap,
   Sun, Moon, Zap, FileCheck2, Plus, Lightbulb,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -71,18 +72,6 @@ interface AtsCheckerViewProps {
 }
 
 // ─── Theme Colors ──────────────────────────────────────────────────────────────
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
 
 const mkColors = (theme: string) => {
   const isDark = theme === "dark";

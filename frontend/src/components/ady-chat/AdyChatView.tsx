@@ -14,6 +14,7 @@ import { ChatGreeting } from "./ChatGreeting";
 import { ChatInput } from "./ChatInput";
 import { MessageList } from "./MessageList";
 import { ADY_MODELS, type ChatSession, type ChatMessage } from "./types";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Voice recognition hook ──────────────────────────────────────────────────
 
@@ -52,24 +53,6 @@ function useVoiceRecognition(onResult: (text: string) => void) {
   return { listening, toggle };
 }
 
-// ─── Theme hook ──────────────────────────────────────────────────────────────
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-
-  return { theme };
-}
-
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface AdyChatViewProps {
@@ -80,7 +63,7 @@ interface AdyChatViewProps {
 
 export function AdyChatView({ setView }: AdyChatViewProps) {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const theme = useTheme();
   const isDark = theme === "dark";
 
   // ── Intro animation ────────────────────────────────────────────────────────

@@ -31,16 +31,54 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { renderMarkdown } from "@/utils/renderMarkdown";
 import { ChatBackground } from "@/components/ady-chat/ChatBackground";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Types & Interfaces ──────────────────────────────────────────────────────
 
 type Mode = "generate" | "debug" | "explain" | "project";
 
+interface Phase {
+  phase: string;
+  tasks: string[];
+}
+
+interface GenerateResult {
+  code?: string;
+  folderStructure?: string;
+  setupGuide?: string;
+}
+
+interface DebugResult {
+  diagnosis?: string;
+  issues?: string;
+  issue?: string;
+  fixes?: string;
+  rootCause?: string;
+  explanation?: string;
+  fixedCode?: string;
+}
+
+interface ExplainResult {
+  breakdown?: string;
+  complexity?: string;
+  explanation?: string;
+  examples?: string;
+}
+
+interface ProjectResult {
+  design?: string;
+  architecture?: string;
+  roadmap?: Phase[];
+  techStack?: string[];
+  features?: string[];
+  specs?: string;
+}
+
 interface CodingMessage {
   id: string;
   role: "user" | "assistant";
   content: string; // User prompt or raw assistant text
-  result?: any; // Parsed JSON result for specialized visual layouts
+  result?: GenerateResult | DebugResult | ExplainResult | ProjectResult; // Parsed JSON result for specialized visual layouts
   codeSnippet?: string; // Cache code snippet for user messages
   errorMsg?: string; // Cache error message for user messages
 }
@@ -54,28 +92,11 @@ interface CodingSession {
   updatedAt: string;
 }
 
-// ─── Theme Hook ──────────────────────────────────────────────────────────────
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-
-  return { theme, isDark: theme === "dark" };
-}
-
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function CodingAssistantView() {
-  const { isDark } = useTheme();
+  const theme = useTheme();
+  const isDark = theme === "dark";
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Sessions state (client-side persisted)
@@ -767,10 +788,10 @@ export function CodingAssistantView() {
                       ) : msg.result ? (
                         // Special parsed tabbed assistants views
                         <div className="space-y-4">
-                          {mode === "generate" && <GenerateResultView result={msg.result} isDark={isDark} />}
-                          {mode === "debug" && <DebugResultView result={msg.result} isDark={isDark} />}
-                          {mode === "explain" && <ExplainResultView result={msg.result} isDark={isDark} />}
-                          {mode === "project" && <ProjectResultView result={msg.result} isDark={isDark} />}
+                          {mode === "generate" && <GenerateResultView result={msg.result as GenerateResult} isDark={isDark} />}
+                          {mode === "debug" && <DebugResultView result={msg.result as DebugResult} isDark={isDark} />}
+                          {mode === "explain" && <ExplainResultView result={msg.result as ExplainResult} isDark={isDark} />}
+                          {mode === "project" && <ProjectResultView result={msg.result as ProjectResult} isDark={isDark} />}
                         </div>
                       ) : (
                         // Standard markdown response (errors, stubs)
@@ -981,7 +1002,7 @@ function CodeAccordion({ code, isDark }: { code: string; isDark: boolean }) {
 }
 
 // 📄 GENERATE MODE RESULTS VIEW
-function GenerateResultView({ result, isDark }: { result: any; isDark: boolean }) {
+function GenerateResultView({ result, isDark }: { result: GenerateResult; isDark: boolean }) {
   const [activeTab, setActiveTab] = useState<"code" | "structure" | "setup">("code");
   const [copied, setCopied] = useState(false);
 
@@ -1091,7 +1112,7 @@ function GenerateResultView({ result, isDark }: { result: any; isDark: boolean }
 }
 
 // 🐞 DEBUG MODE RESULTS VIEW
-function DebugResultView({ result, isDark }: { result: any; isDark: boolean }) {
+function DebugResultView({ result, isDark }: { result: DebugResult; isDark: boolean }) {
   const [activeTab, setActiveTab] = useState<"diagnosis" | "fixed">("diagnosis");
   const [copied, setCopied] = useState(false);
 
@@ -1171,7 +1192,7 @@ function DebugResultView({ result, isDark }: { result: any; isDark: boolean }) {
 }
 
 // 💡 EXPLAIN MODE RESULTS VIEW
-function ExplainResultView({ result, isDark }: { result: any; isDark: boolean }) {
+function ExplainResultView({ result, isDark }: { result: ExplainResult; isDark: boolean }) {
   const [activeTab, setActiveTab] = useState<"breakdown" | "complexity">("breakdown");
 
   return (
@@ -1238,29 +1259,12 @@ function ExplainResultView({ result, isDark }: { result: any; isDark: boolean })
 }
 
 // 🏗️ PROJECT PLAN MODE RESULTS VIEW
-interface Phase {
-  phase: string;
-  tasks: string[];
-}
 
-function ProjectResultView({ result, isDark }: { result: any; isDark: boolean }) {
+function ProjectResultView({ result, isDark }: { result: ProjectResult; isDark: boolean }) {
   const [activeTab, setActiveTab] = useState<"design" | "roadmap" | "specs">("design");
 
   // Format roadmap into array of Phase objects
-  let parsedRoadmap: Phase[] = [];
-  if (Array.isArray(result.roadmap)) {
-    parsedRoadmap = result.roadmap.map((item: any, idx: number) => {
-      if (typeof item === "object" && item.phase) {
-        return item;
-      } else {
-        return {
-          phase: typeof item === "string" ? item : `Phase ${idx + 1}`,
-          tasks: [],
-        };
-      }
-    });
-  }
-
+  const parsedRoadmap: Phase[] = Array.isArray(result.roadmap) ? result.roadmap : [];
   const techStack = Array.isArray(result.techStack) ? result.techStack : [];
   const features = Array.isArray(result.features) ? result.features : [];
 

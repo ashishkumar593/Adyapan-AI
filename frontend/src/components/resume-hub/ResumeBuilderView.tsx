@@ -12,6 +12,7 @@ import {
   Monitor, Trophy, RefreshCw, AlertCircle, Star, Target,
 } from "lucide-react";
 import type { ResumeHubViewType } from "@/types/resume";
+import { useTheme } from "@/hooks/useTheme";
 
 interface ResumeBuilderViewProps {
   setView: (v: ResumeHubViewType) => void;
@@ -23,18 +24,6 @@ const PROFESSIONS = ["Software Engineer", "ML Engineer", "Data Scientist", "Full
 const CAREER_LEVELS = ["Fresher", "Junior (1-2 yrs)", "Mid-Level (3-5 yrs)", "Senior (6-8 yrs)", "Lead (8+ yrs)"];
 const RESUME_STYLES = ["ATS Modern", "ATS Professional", "ATS Minimal", "ATS Developer", "ATS Student"];
 const CHAT_SUGGESTIONS = ["Optimize for Amazon", "Reduce to one page", "Improve summary", "Improve project descriptions", "Add stronger action verbs", "Rewrite achievements"];
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => setTheme(document.documentElement.getAttribute("data-theme") || "dark"));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
 
 const mkColors = (theme: string) => {
   const isDark = theme === "dark";

@@ -11,20 +11,7 @@ const fadeUp = {
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }),
 };
 import { toast } from "sonner";
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
+import { useTheme } from "@/hooks/useTheme";
 
 export function BillingView() {
   const theme = useTheme();

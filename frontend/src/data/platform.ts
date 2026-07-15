@@ -89,7 +89,7 @@ export const foundationModules = [
 ];
 
 export const roleLabels: Record<UserRole, string> = {
-  user: "User",
-  admin: "Admin",
+  USER: "User",
+  ADMIN: "Admin",
 };
 

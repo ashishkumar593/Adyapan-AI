@@ -173,7 +173,7 @@ export function CodingChallengesView() {
         // Parse Challenges
         const chList = chRes.data?.challenges || [];
         if (chList.length > 0) {
-          const formatted: Challenge[] = chList.map((c: any, idx: number) => ({
+          const formatted: Challenge[] = chList.map((c: { id?: string; title?: string; difficulty?: string; points?: number; description?: string }, idx: number) => ({
             id: c.id,
             title: c.title,
             difficulty: c.difficulty,
@@ -188,7 +188,7 @@ export function CodingChallengesView() {
         // Parse Leaderboard
         const rawLb = lbRes.data?.leaderboard || [];
         if (rawLb.length > 0) {
-          const formattedLb: LeaderboardEntry[] = rawLb.map((item: any, idx: number) => ({
+          const formattedLb: LeaderboardEntry[] = rawLb.map((item: { rank?: number; user?: { name?: string }; userId?: string; score?: number; badges?: string[] }, idx: number) => ({
             rank: item.rank || idx + 1,
             name: item.user?.name || `User #${item.userId?.slice(-4) || idx}`,
             score: item.score,
@@ -254,11 +254,11 @@ export function CodingChallengesView() {
           details: "[Success] Case 1: nums = [2,7,11,15], target = 9 -> Output: [0, 1] (passed)\n[Success] Case 2: nums = [3,2,4], target = 6 -> Output: [1, 2] (passed)\n[Success] Case 3: nums = [3,3], target = 6 -> Output: [0, 1] (passed)\n[Success] Execution time: 12ms\n[Success] Memory usage: 10.4MB",
         });
         toast.success("Local tests passed!");
-      } catch (e: any) {
+      } catch (error) {
         setTestLog({
           status: "Error",
           message: "Syntax Error: compilation failed during runtime validation.",
-          details: e?.message || "Execution exception raised.",
+          details: (error as Error)?.message || "Execution exception raised.",
         });
         toast.error("Compilation error in syntax.");
       }
@@ -714,7 +714,7 @@ export function CodingChallengesView() {
               <span className="text-xs text-slate-400 font-bold uppercase">Language:</span>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as any)}
+                onChange={(e) => setLanguage(e.target.value as "javascript" | "python" | "cpp" | "java")}
                 className="bg-black/40 border border-white/10 hover:border-white/20 transition px-3 py-1.5 rounded-xl text-xs font-semibold outline-none"
               >
                 <option value="javascript">JavaScript</option>

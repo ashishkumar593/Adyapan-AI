@@ -19,6 +19,7 @@ import {
   PremiumProgressRing, PremiumProgressBar, SettingsToggle, SettingsSelect
 } from "@/components/ui/PremiumComponents";
 import { getDiceBearUrl } from "@/lib/avatar";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Animation Variants ──────────────────────────────────────────────────
 const fadeUp = {
@@ -31,21 +32,6 @@ const sectionTransition = {
   animate: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
   exit: { opacity: 0, x: -20, transition: { duration: 0.15 } },
 };
-
-// ─── Theme Hook ──────────────────────────────────────────────────────────
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
 
 // ─── Navigation Config ───────────────────────────────────────────────────
 const NAV_ITEMS = [

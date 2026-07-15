@@ -8,6 +8,7 @@ import { saveAuthSession } from "@/hooks/useAuth";
 import { Navbar } from "@/components/layout/Navbar";
 import ParticleBackground from "@/components/ui/ParticleBackground";
 import { AnimatedCheckCircle } from "@/components/ui/AnimatedIcons";
+import type { PlatformUser } from "@/types/user";
 
 type Tab = "login" | "register" | "forgot";
 type ForgotStep = "email" | "otp" | "done";
@@ -66,11 +67,11 @@ export default function LoginPage() {
       const userStr = params.get("user");
       if (token && userStr) {
         try {
-          const user = JSON.parse(userStr) as { role?: string };
-          saveAuthSession(token, user as any, true);
+          const user = JSON.parse(userStr) as PlatformUser;
+          saveAuthSession(token, user, true);
           router.replace(user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
           return;
-        } catch { /* ignore parse error */ }
+        } catch { return; }
       }
     } else if (githubStatus === "error") {
       setLoginError(params.get("message") || "GitHub login failed. Please try again.");

@@ -21,21 +21,7 @@ import {
   PremiumCard, PremiumButton, PremiumBadge, PremiumProgressRing,
   PremiumProgressBar, AnimatedSkeleton
 } from "@/components/ui/PremiumComponents";
-
-// ─── Theme Hook ────────────────────────────────────────────────────────────
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const t = document.documentElement.getAttribute("data-theme") || "dark";
-    setTheme(t);
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Profile Interface ─────────────────────────────────────────────────────
 interface ProfileData {
@@ -287,9 +273,9 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
       const data = res.data.profile as ProfileData;
       setProfile(data);
       populate(data);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to load profile";
-      console.error("[ProfileView] Fetch error:", err);
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as Error)?.message || "Failed to load profile";
+      console.error("[ProfileView] Fetch error:", error);
       setError(msg);
       // Still allow editing even if fetch fails (new user scenario)
       setProfile(null);
@@ -315,9 +301,9 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
       setEditMode(false);
       setHasChanges(false);
       await fetchProfile();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to save profile";
-      console.error("[ProfileView] Save error:", err);
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as Error)?.message || "Failed to save profile";
+      console.error("[ProfileView] Save error:", error);
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -345,9 +331,9 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
       await api.post("/profile/upload-resume", fd, { headers: { "Content-Type": "multipart/form-data" } });
       toast.success("Resume uploaded successfully!");
       await fetchProfile();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Upload failed";
-      console.error("[ProfileView] Upload error:", err);
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || "Upload failed";
+      console.error("[ProfileView] Upload error:", error);
       toast.error(msg);
     } finally {
       setUploading(false);
@@ -359,8 +345,8 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
       await api.post("/profile/remove-resume");
       toast.success("Resume removed");
       await fetchProfile();
-    } catch (err: any) {
-      console.error("[ProfileView] Remove resume error:", err);
+    } catch (error) {
+      console.error("[ProfileView] Remove resume error:", error);
       toast.error("Could not remove resume");
     }
   }, [fetchProfile]);

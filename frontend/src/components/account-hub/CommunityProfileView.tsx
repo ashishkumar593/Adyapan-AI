@@ -3,14 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useInView, type Variants } from "framer-motion";
 import {
-  User, Award, Users, Globe, Share2, MessageSquare,
-  ExternalLink, Star, BookOpen, Code2, FileText, Trophy, Target,
-  TrendingUp, Calendar, Clock, Eye, Heart, Download, ArrowUpRight,
-  Zap, Brain, GraduationCap, Flame,
-  Bookmark, Lightbulb, Layers, GitBranch,
-  Quote, BadgeCheck, Rocket, Coffee, Crown, Medal, BrainCircuit,
-  BarChart3, Activity, Folder, ImageIcon, Plus,
-  MapPin, Terminal, Cpu, Database, Wifi, Lock, Sun, Server
+  User, Users, Globe, Share2, MessageSquare,
+  ExternalLink, BookOpen, Code2, FileText, Trophy, Target,
+  TrendingUp, Calendar, Clock, ArrowUpRight,
+  Zap, GraduationCap, Lightbulb,
+  Quote, BadgeCheck, Medal,
+  BarChart3, Activity, Folder, Plus, MapPin, Award
 } from "lucide-react";
 import CountUp from "react-countup";
 import { toast } from "sonner";
@@ -19,12 +17,10 @@ import { getDiceBearUrl } from "@/lib/avatar";
 import { useTheme } from "@/hooks/useTheme";
 import {
   PremiumBadge, PremiumProgressRing,
-  PremiumProgressBar, AnimatedSkeleton
+  PremiumProgressBar, AnimatedSkeleton, EmptyState
 } from "@/components/ui/PremiumComponents";
 
-// ─── SVG ICONS ───────────────────────────────────────────────────────────────
-
-function Github({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGSVGElement>) {
+function GithubSvg({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
@@ -33,7 +29,7 @@ function Github({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGS
   );
 }
 
-function Linkedin({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGSVGElement>) {
+function LinkedinSvg({ size = 24, ...props }: { size?: number } & React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -42,8 +38,6 @@ function Linkedin({ size = 24, ...props }: { size?: number } & React.SVGProps<SV
     </svg>
   );
 }
-
-// ─── ANIMATION VARIANTS ──────────────────────────────────────────────────────
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -61,14 +55,6 @@ const scaleIn: Variants = {
   }),
 };
 
-const slideRight: Variants = {
-  hidden: { opacity: 0, x: -30 },
-  visible: (i = 0) => ({
-    opacity: 1, x: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-  }),
-};
-
 const staggerContainer: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
@@ -78,8 +64,6 @@ const staggerItem: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
-
-// ─── ANIMATED COUNTER ────────────────────────────────────────────────────────
 
 function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; suffix?: string; prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -95,8 +79,6 @@ function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; s
     </span>
   );
 }
-
-// ─── PROFILE INTERFACE & MOCK DATA ───────────────────────────────────────────
 
 interface ProfileData {
   id: string;
@@ -118,209 +100,8 @@ interface ProfileData {
   portfolio: string | null;
   resumeUrl: string | null;
   resumeName: string | null;
-  user?: { id: string; name: string; email: string; role: string };
+  user?: { id: string; name: string; email: string; role: string; createdAt?: string };
 }
-
-const MOCK_STATS = {
-  followers: 1248,
-  following: 196,
-  reputation: 4820,
-  contributions: 342,
-  projects: 18,
-  papers: 5,
-  challenges: 127,
-  certificates: 12,
-};
-
-const MOCK_LEARNING = {
-  overall: 78,
-  aiScore: 92,
-  streak: 14,
-  coursesCompleted: 24,
-  totalCourses: 30,
-  learningHours: 1240,
-  weeklyGrowth: 12,
-  monthlyGrowth: 18,
-};
-
-const MOCK_SKILLS = {
-  programming: [
-    { name: "Python", level: 92, endorsements: 48, icon: Terminal },
-    { name: "JavaScript", level: 88, endorsements: 42, icon: Code2 },
-    { name: "TypeScript", level: 82, endorsements: 35, icon: Code2 },
-    { name: "Java", level: 75, endorsements: 28, icon: Cpu },
-    { name: "C++", level: 70, endorsements: 22, icon: Terminal },
-    { name: "SQL", level: 85, endorsements: 30, icon: Database },
-  ],
-  ai: [
-    { name: "Machine Learning", level: 90, endorsements: 52, icon: Brain },
-    { name: "Deep Learning", level: 85, endorsements: 40, icon: BrainCircuit },
-    { name: "NLP", level: 78, endorsements: 32, icon: MessageSquare },
-    { name: "Computer Vision", level: 72, endorsements: 26, icon: Eye },
-    { name: "TensorFlow", level: 80, endorsements: 35, icon: Layers },
-    { name: "PyTorch", level: 82, endorsements: 38, icon: Flame },
-  ],
-  development: [
-    { name: "React", level: 90, endorsements: 45, icon: Layers },
-    { name: "Next.js", level: 88, endorsements: 42, icon: Zap },
-    { name: "Node.js", level: 85, endorsements: 38, icon: Server },
-    { name: "MongoDB", level: 78, endorsements: 28, icon: Database },
-    { name: "Docker", level: 75, endorsements: 25, icon: Lock },
-    { name: "Git", level: 92, endorsements: 50, icon: GitBranch },
-  ],
-};
-
-const MOCK_PROJECTS = [
-  {
-    title: "Adyapan AI Dashboard",
-    desc: "Full-stack AI-powered education platform with real-time analytics, personalized learning paths, and intelligent tutoring.",
-    tech: ["Next.js", "TypeScript", "Python", "PostgreSQL"],
-    stars: 142,
-    likes: 89,
-    views: 2340,
-    comments: 34,
-    status: "completed" as const,
-    github: "#",
-    demo: "#",
-    gradient: "from-amber-500/20 via-orange-500/10 to-purple-500/10",
-  },
-  {
-    title: "Neural Code Reviewer",
-    desc: "AI tool that reviews code for bugs, security vulnerabilities, and performance issues using LLMs.",
-    tech: ["Python", "FastAPI", "OpenAI", "Docker"],
-    stars: 98,
-    likes: 67,
-    views: 1890,
-    comments: 22,
-    status: "completed" as const,
-    github: "#",
-    demo: "#",
-    gradient: "from-purple-500/20 via-blue-500/10 to-cyan-500/10",
-  },
-  {
-    title: "Research Paper Generator",
-    desc: "Automated research paper drafting with citation management, plagiarism detection, and formatting.",
-    tech: ["React", "Node.js", "LangChain", "LaTeX"],
-    stars: 76,
-    likes: 54,
-    views: 1230,
-    comments: 18,
-    status: "in-progress" as const,
-    github: "#",
-    demo: "#",
-    gradient: "from-cyan-500/20 via-blue-500/10 to-purple-500/10",
-  },
-  {
-    title: "AI Study Companion",
-    desc: "Personalized study assistant using RAG with adaptive quizzing, flashcards, and mind map generation.",
-    tech: ["Python", "LangChain", "React", "Vector DB"],
-    stars: 64,
-    likes: 45,
-    views: 980,
-    comments: 15,
-    status: "completed" as const,
-    github: "#",
-    demo: "#",
-    gradient: "from-emerald-500/20 via-cyan-500/10 to-blue-500/10",
-  },
-];
-
-const MOCK_RESEARCH = [
-  {
-    title: "Transformer-Based Automated Code Review for Educational Platforms",
-    abstract: "We propose a novel approach using fine-tuned transformer models to provide automated, context-aware code review feedback tailored for student submissions in educational coding environments.",
-    date: "Mar 2026",
-    domain: "AI in Education",
-    keywords: ["Transformers", "NLP", "Code Review", "EdTech"],
-    citations: 12,
-    downloads: 340,
-  },
-  {
-    title: "Adaptive Learning Path Optimization Using Reinforcement Learning",
-    abstract: "This paper presents an RL-based framework for dynamically optimizing personalized learning sequences based on student performance metrics and cognitive load estimation.",
-    date: "Nov 2025",
-    domain: "Machine Learning",
-    keywords: ["Reinforcement Learning", "Adaptive Learning", "Student Modeling"],
-    citations: 8,
-    downloads: 210,
-  },
-  {
-    title: "Multi-Modal Emotion Recognition in Virtual Classrooms",
-    abstract: "A deep learning approach combining facial expression analysis, voice prosody, and text sentiment for real-time student engagement detection in online learning environments.",
-    date: "Jul 2025",
-    domain: "Computer Vision",
-    keywords: ["Emotion Recognition", "Multi-Modal", "Deep Learning", "EdTech"],
-    citations: 15,
-    downloads: 420,
-  },
-];
-
-const MOCK_CERTIFICATIONS = [
-  { org: "Google", name: "Machine Learning Specialization", date: "Jan 2026", credentialId: "GML-2026-AK9F2", color: "from-blue-500 to-cyan-500" },
-  { org: "AWS", name: "Solutions Architect Associate", date: "Sep 2025", credentialId: "AWS-SAA-8812K", color: "from-orange-500 to-amber-500" },
-  { org: "Meta", name: "Front-End Developer Professional", date: "Jun 2025", credentialId: "META-FE-2025-PL", color: "from-blue-600 to-indigo-500" },
-  { org: "DeepLearning.AI", name: "Deep Learning Specialization", date: "Mar 2025", credentialId: "DLAI-DL-2025-X9", color: "from-purple-500 to-pink-500" },
-];
-
-const MOCK_ACHIEVEMENTS = [
-  { name: "Top Contributor", desc: "Top 1% community contributor", icon: Crown, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", rarity: "Legendary", glow: "shadow-amber-500/20" },
-  { name: "AI Expert", desc: "100+ AI problems solved", icon: BrainCircuit, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", rarity: "Epic", glow: "shadow-purple-500/20" },
-  { name: "Research Scholar", desc: "Published 2+ papers", icon: BookOpen, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", rarity: "Rare", glow: "shadow-cyan-500/20" },
-  { name: "Coding Champion", desc: "500+ DSA problems", icon: Code2, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", rarity: "Epic", glow: "shadow-emerald-500/20" },
-  { name: "Fast Learner", desc: "Completed 10 courses in a month", icon: Rocket, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", rarity: "Rare", glow: "shadow-orange-500/20" },
-  { name: "Mentor Choice", desc: "Rated best mentor by peers", icon: Heart, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", rarity: "Epic", glow: "shadow-rose-500/20" },
-  { name: "Community Helper", desc: "Answered 200+ questions", icon: MessageSquare, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", rarity: "Common", glow: "shadow-blue-500/20" },
-  { name: "Open Source Hero", desc: "10+ accepted PRs", icon: GitBranch, color: "text-teal-400", bg: "bg-teal-500/10", border: "border-teal-500/20", rarity: "Rare", glow: "shadow-teal-500/20" },
-];
-
-const MOCK_TIMELINE = [
-  { time: "2 days ago", action: "Published research paper on Adaptive Learning", icon: BookOpen, color: "text-cyan-400", bg: "bg-cyan-500/10" },
-  { time: "1 week ago", action: "Uploaded project: Neural Code Reviewer", icon: Folder, color: "text-purple-400", bg: "bg-purple-500/10" },
-  { time: "2 weeks ago", action: "Earned badge: AI Expert", icon: BrainCircuit, color: "text-amber-400", bg: "bg-amber-500/10" },
-  { time: "1 month ago", action: "Completed Google ML Specialization", icon: GraduationCap, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-  { time: "1 month ago", action: "Won weekly coding contest", icon: Trophy, color: "text-orange-400", bg: "bg-orange-500/10" },
-  { time: "2 months ago", action: "Joined Adyapan AI community", icon: Rocket, color: "text-blue-400", bg: "bg-blue-500/10" },
-];
-
-const MOCK_RECOMMENDATIONS = [
-  { name: "Priya Sharma", role: "ML Engineer @ Google", text: "Ashish is an exceptional developer with deep knowledge of AI/ML. His research contributions are outstanding and he consistently delivers high-quality work.", rating: 5 },
-  { name: "Rohan Patel", role: "SDE @ Microsoft", text: "One of the most dedicated peers I've worked with. Strong problem-solving skills and a great team player who elevates everyone around him.", rating: 5 },
-  { name: "Ananya Reddy", role: "Research Scholar @ IIT", text: "Brilliant researcher with a passion for education technology. Highly recommend for any collaborative project or research endeavor.", rating: 4 },
-];
-
-const MOCK_INTERESTS = [
-  "Artificial Intelligence", "Machine Learning", "Cyber Security", "Cloud Computing",
-  "Data Science", "Web Development", "Competitive Programming", "Research", "Robotics", "Blockchain"
-];
-
-const CONTRIBUTION_DATA = Array.from({ length: 91 }, () => Math.floor(Math.random() * 5));
-
-const LANG_DIST = [
-  { name: "Python", percent: 35, color: "from-blue-500 to-cyan-500" },
-  { name: "JavaScript", percent: 28, color: "from-amber-500 to-orange-500" },
-  { name: "TypeScript", percent: 18, color: "from-blue-600 to-blue-400" },
-  { name: "Java", percent: 12, color: "from-red-500 to-rose-500" },
-  { name: "C++", percent: 7, color: "from-purple-500 to-indigo-500" },
-];
-
-const WEEKLY_ACTIVITY = [
-  { day: "Mon", hours: 3 },
-  { day: "Tue", hours: 5 },
-  { day: "Wed", hours: 2 },
-  { day: "Thu", hours: 6 },
-  { day: "Fri", hours: 4 },
-  { day: "Sat", hours: 7 },
-  { day: "Sun", hours: 1 },
-];
-
-const MONTHLY_GROWTH = [
-  { month: "Jan", value: 40 },
-  { month: "Feb", value: 55 },
-  { month: "Mar", value: 65 },
-  { month: "Apr", value: 72 },
-  { month: "May", value: 80 },
-  { month: "Jun", value: 92 },
-];
 
 const SECTION_TABS = [
   { id: "overview", label: "Overview", icon: User },
@@ -333,8 +114,6 @@ const SECTION_TABS = [
 
 type TabId = (typeof SECTION_TABS)[number]["id"];
 
-// ─── HELPER COMPONENTS ───────────────────────────────────────────────────────
-
 function GlassCard({ children, className = "", glow = false, glowColor = "rgba(245,158,11,0.06)" }: {
   children: React.ReactNode; className?: string; glow?: boolean; glowColor?: string;
 }) {
@@ -346,8 +125,8 @@ function GlassCard({ children, className = "", glow = false, glowColor = "rgba(2
         background: isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
         borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
         backdropFilter: "blur(20px)",
-        boxShadow: isDark 
-          ? "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" 
+        boxShadow: isDark
+          ? "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)"
           : "0 8px 32px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6)",
       }}>
       {glow && (
@@ -367,9 +146,9 @@ function SectionHeader({ icon: Icon, title, subtitle, gradient = false }: {
   return (
     <div className="flex items-center gap-3 mb-4">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ 
-          background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", 
-          border: isDark ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(245,158,11,0.2)" 
+        style={{
+          background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)",
+          border: isDark ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(245,158,11,0.2)"
         }}>
         <Icon size={16} className="text-amber-500" />
       </div>
@@ -384,23 +163,14 @@ function SectionHeader({ icon: Icon, title, subtitle, gradient = false }: {
   );
 }
 
-function SkillLevelBadge({ level }: { level: number }) {
-  if (level >= 90) return <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-md">Expert</span>;
-  if (level >= 75) return <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-md">Advanced</span>;
-  return <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-md">Intermediate</span>;
-}
-
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-
 export function CommunityProfileView() {
   const theme = useTheme();
   const isDark = theme === "dark";
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const [skillFilter, setSkillFilter] = useState<keyof typeof MOCK_SKILLS>("programming");
-  const [projectFilter, setProjectFilter] = useState("all");
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
@@ -410,6 +180,7 @@ export function CommunityProfileView() {
         setProfile(res.data.profile);
       } catch (err) {
         console.error("Failed to load profile", err);
+        setError("Failed to load profile");
       } finally {
         setLoading(false);
       }
@@ -427,10 +198,12 @@ export function CommunityProfileView() {
     toast.success(isFollowing ? "Unfollowed" : "Following!");
   }, [isFollowing]);
 
-  const displayName = profile?.user?.name ?? "Ashish Kumar";
-  const username = profile?.username ? `@${profile.username}` : "@ashishk";
-  const bio = profile?.aboutMe || profile?.careerObjective || "Passionate AI researcher and full-stack developer building the future of education technology. Committed to making AI-powered learning accessible to everyone.";
-  const displaySkills = profile?.skills?.length ? profile.skills : MOCK_SKILLS.programming.map(s => s.name);
+  const displayName = profile?.user?.name ?? "";
+  const username = profile?.username ? `@${profile.username}` : "";
+  const bio = profile?.aboutMe || profile?.careerObjective || "";
+  const skills = profile?.skills ?? [];
+  const domains = profile?.interestedDomains ?? [];
+  const linkCount = [profile?.linkedin, profile?.github, profile?.portfolio].filter(Boolean).length;
 
   if (loading) {
     return (
@@ -444,7 +217,18 @@ export function CommunityProfileView() {
     );
   }
 
-  // Theme constants
+  if (error || !profile) {
+    return (
+      <div className="space-y-5 p-1">
+        <EmptyState
+          title="Failed to load profile"
+          description={error || "Something went wrong while loading your profile."}
+          illustration={<User className="w-8 h-8" />}
+        />
+      </div>
+    );
+  }
+
   const primaryText = isDark ? "text-white" : "text-slate-900";
   const secondaryText = isDark ? "text-slate-400" : "text-slate-500";
   const labelColor = isDark ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.55)";
@@ -464,18 +248,14 @@ export function CommunityProfileView() {
       className="space-y-5 min-h-screen"
       style={{ fontFamily: "'Inter', 'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* HERO PROFILE SECTION                                              */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* HERO PROFILE SECTION */}
       <GlassCard glow glowColor="rgba(139,92,246,0.08)">
-        {/* Cover Banner with parallax-like gradient */}
         <div className="h-36 sm:h-48 relative overflow-hidden rounded-t-[20px]">
           <div className="absolute inset-0" style={{ background: coverBg }} />
           <div className="absolute inset-0"
             style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(245,158,11,0.1) 0%, transparent 50%)" }} />
           <div className="absolute inset-0"
             style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(139,92,246,0.08) 0%, transparent 50%)" }} />
-          {/* Floating orbs */}
           <motion.div
             className="absolute top-6 right-12 w-24 h-24 rounded-full bg-purple-500/10 blur-2xl"
             animate={{ scale: [1, 1.3, 1], x: [0, 15, 0], y: [0, -10, 0] }}
@@ -490,7 +270,6 @@ export function CommunityProfileView() {
 
         <div className="px-5 sm:px-8 pb-7">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12 sm:-mt-14">
-            {/* Profile Image */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -500,13 +279,12 @@ export function CommunityProfileView() {
               <div className="w-28 h-28 rounded-[22px] overflow-hidden border-4"
                 style={{
                   borderColor: avatarBorderColor,
-                  boxShadow: isDark 
+                  boxShadow: isDark
                     ? "0 0 30px rgba(245,158,11,0.25), 0 0 60px rgba(139,92,246,0.1)"
                     : "0 4px 20px rgba(0,0,0,0.08)",
                 }}>
                 <img src={getDiceBearUrl(displayName)} alt="avatar" width={112} height={112} className="block bg-slate-100" />
               </div>
-              {/* Verified Badge */}
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -518,23 +296,33 @@ export function CommunityProfileView() {
               </motion.div>
             </motion.div>
 
-            {/* User Info */}
             <div className="flex-1 text-center sm:text-left pb-1">
               <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2.5">
                 <h1 className={`text-xl font-extrabold tracking-tight ${primaryText}`}>{displayName}</h1>
-                <PremiumBadge variant="amber" pulse>Pro</PremiumBadge>
-                <PremiumBadge variant="purple">Top 1%</PremiumBadge>
+                {profile.resumeUrl && <PremiumBadge variant="amber" pulse>Pro</PremiumBadge>}
               </div>
-              <p className="text-xs font-bold mt-1" style={{ color: labelColorSemi }}>
-                {username} · {profile?.targetRole || "AI Researcher & Full-Stack Developer"}
-              </p>
+              {username && (
+                <p className="text-xs font-bold mt-1" style={{ color: labelColorSemi }}>
+                  {username}{profile.targetRole ? ` \u00B7 ${profile.targetRole}` : ""}
+                </p>
+              )}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-[11px]" style={{ color: labelColor }}>
-                <span className="flex items-center gap-1"><GraduationCap size={12} className="text-amber-400" /> {profile?.college || "IIT Delhi"}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-400/30" />
-                <span>{profile?.branch || "Computer Science"}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-400/30" />
-                <span>Class of {profile?.graduationYear || "2027"}</span>
-                {profile?.location && (
+                {profile.college && (
+                  <span className="flex items-center gap-1"><GraduationCap size={12} className="text-amber-400" /> {profile.college}</span>
+                )}
+                {profile.branch && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-400/30" />
+                    <span>{profile.branch}</span>
+                  </>
+                )}
+                {profile.graduationYear && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-400/30" />
+                    <span>Class of {profile.graduationYear}</span>
+                  </>
+                )}
+                {profile.location && (
                   <>
                     <span className="w-1 h-1 rounded-full bg-slate-400/30" />
                     <span className="flex items-center gap-1"><MapPin size={11} /> {profile.location}</span>
@@ -543,7 +331,6 @@ export function CommunityProfileView() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2.5 shrink-0">
               <motion.button
                 whileHover={{ scale: 1.04, boxShadow: isFollowing ? "none" : "0 0 20px rgba(245,158,11,0.3)" }}
@@ -551,7 +338,7 @@ export function CommunityProfileView() {
                 onClick={handleFollow}
                 className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
                 style={{
-                  background: isFollowing 
+                  background: isFollowing
                     ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
                     : "linear-gradient(135deg, #f59e0b, #ea580c)",
                   color: isFollowing ? (isDark ? "rgba(255,255,255,0.7)" : "#334155") : "#000",
@@ -565,10 +352,10 @@ export function CommunityProfileView() {
                 whileTap={{ scale: 0.96 }}
                 onClick={() => toast.info("Messaging coming soon")}
                 className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-colors"
-                style={{ 
-                  borderColor: customBorder, 
-                  color: isDark ? "rgba(255,255,255,0.7)" : "#334155", 
-                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" 
+                style={{
+                  borderColor: customBorder,
+                  color: isDark ? "rgba(255,255,255,0.7)" : "#334155",
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
                 }}
               >
                 <MessageSquare size={13} /> Message
@@ -578,10 +365,10 @@ export function CommunityProfileView() {
                 whileTap={{ scale: 0.92 }}
                 onClick={handleShare}
                 className="w-10 h-10 rounded-xl border flex items-center justify-center transition-colors"
-                style={{ 
-                  borderColor: customBorder, 
-                  color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.45)", 
-                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" 
+                style={{
+                  borderColor: customBorder,
+                  color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.45)",
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
                 }}
               >
                 <Share2 size={14} />
@@ -589,73 +376,68 @@ export function CommunityProfileView() {
             </div>
           </div>
 
-          {/* Bio */}
-          <p className="text-[11px] mt-5 max-w-2xl leading-relaxed" style={{ color: labelColorSemi }}>
-            {bio}
-          </p>
+          {bio && (
+            <p className="text-[11px] mt-5 max-w-2xl leading-relaxed" style={{ color: labelColorSemi }}>
+              {bio}
+            </p>
+          )}
 
-          {/* Skills Tags */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {displaySkills.slice(0, 8).map((s, i) => (
-              <motion.span
-                key={s}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.05 }}
-                whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.15)", borderColor: "rgba(245,158,11,0.35)" }}
-                className="px-3 py-1 rounded-lg text-[10px] font-bold cursor-default transition-all"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
-                  border: `1px solid ${customBorder}`, 
-                  color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,23,42,0.65)" 
-                }}
-              >
-                {s}
-              </motion.span>
-            ))}
-          </div>
+          {skills.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {skills.slice(0, 8).map((s, i) => (
+                <motion.span
+                  key={s}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + i * 0.05 }}
+                  whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.15)", borderColor: "rgba(245,158,11,0.35)" }}
+                  className="px-3 py-1 rounded-lg text-[10px] font-bold cursor-default transition-all"
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                    border: `1px solid ${customBorder}`,
+                    color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,23,42,0.65)"
+                  }}
+                >
+                  {s}
+                </motion.span>
+              ))}
+            </div>
+          )}
 
-          {/* Social Links */}
           <div className="flex flex-wrap gap-4 mt-4">
-            {profile?.portfolio && (
+            {profile.portfolio && (
               <a href={profile.portfolio} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                 style={{ color: labelColorSemi }}>
                 <Globe size={12} /> Portfolio <ArrowUpRight size={10} />
               </a>
             )}
-            {profile?.github && (
+            {profile.github && (
               <a href={profile.github} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                 style={{ color: labelColorSemi }}>
-                <Github size={12} /> GitHub <ArrowUpRight size={10} />
+                <GithubSvg size={12} /> GitHub <ArrowUpRight size={10} />
               </a>
             )}
-            {profile?.linkedin && (
+            {profile.linkedin && (
               <a href={profile.linkedin} target="_blank" rel="noreferrer"
-                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors" 
+                className="text-[11px] font-bold flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                 style={{ color: labelColorSemi }}>
-                <Linkedin size={12} /> LinkedIn <ArrowUpRight size={10} />
+                <LinkedinSvg size={12} /> LinkedIn <ArrowUpRight size={10} />
               </a>
             )}
           </div>
         </div>
       </GlassCard>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* COMMUNITY STATISTICS                                              */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* STATS ROW */}
       <motion.div variants={staggerContainer} initial="hidden" animate="visible"
         className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Followers", val: MOCK_STATS.followers, icon: Users, color: "#06b6d4", gradient: "from-cyan-500 to-blue-500" },
-          { label: "Following", val: MOCK_STATS.following, icon: User, color: "#8b5cf6", gradient: "from-purple-500 to-indigo-500" },
-          { label: "Reputation", val: MOCK_STATS.reputation, icon: Award, color: "#f59e0b", gradient: "from-amber-500 to-orange-500" },
-          { label: "Contributions", val: MOCK_STATS.contributions, icon: Heart, color: "#f43f5e", gradient: "from-rose-500 to-pink-500" },
-          { label: "Projects", val: MOCK_STATS.projects, icon: Folder, color: "#10b981", gradient: "from-emerald-500 to-teal-500" },
-          { label: "Research Papers", val: MOCK_STATS.papers, icon: BookOpen, color: "#3b82f6", gradient: "from-blue-500 to-indigo-500" },
-          { label: "Challenges Solved", val: MOCK_STATS.challenges, icon: Code2, color: "#f97316", gradient: "from-orange-500 to-amber-500" },
-          { label: "Certificates", val: MOCK_STATS.certificates, icon: Medal, color: "#14b8a6", gradient: "from-teal-500 to-cyan-500" },
+          { label: "Followers", val: 0, icon: Users, color: "#06b6d4", gradient: "from-cyan-500 to-blue-500" },
+          { label: "Following", val: 0, icon: User, color: "#8b5cf6", gradient: "from-purple-500 to-indigo-500" },
+          { label: "Skills", val: skills.length, icon: Zap, color: "#f59e0b", gradient: "from-amber-500 to-orange-500" },
+          { label: "Domains", val: domains.length, icon: Target, color: "#f43f5e", gradient: "from-rose-500 to-pink-500" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -687,14 +469,12 @@ export function CommunityProfileView() {
         ))}
       </motion.div>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* TAB NAVIGATION                                                     */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* TAB NAVIGATION */}
       <div className="flex gap-1 p-1.5 rounded-2xl overflow-x-auto"
-        style={{ 
-          background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.85)", 
-          border: `1px solid ${customBorder}`, 
-          backdropFilter: "blur(20px)" 
+        style={{
+          background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.85)",
+          border: `1px solid ${customBorder}`,
+          backdropFilter: "blur(20px)"
         }}
       >
         {SECTION_TABS.map((tab) => {
@@ -710,9 +490,9 @@ export function CommunityProfileView() {
                 <motion.div
                   layoutId="community-tab"
                   className="absolute inset-0 rounded-xl"
-                  style={{ 
-                    background: "rgba(245,158,11,0.1)", 
-                    border: "1px solid rgba(245,158,11,0.2)" 
+                  style={{
+                    background: "rgba(245,158,11,0.1)",
+                    border: "1px solid rgba(245,158,11,0.2)"
                   }}
                   transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 />
@@ -723,75 +503,48 @@ export function CommunityProfileView() {
         })}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* FULL-WIDTH PROFILE SUMMARY ROW                                    */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* PROFILE SUMMARY CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {/* Profile Summary */}
         <GlassCard glow glowColor="rgba(245,158,11,0.06)">
           <div className="p-5 space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Profile Summary</span>
             <div className="space-y-2.5">
               {[
-                { label: "Reputation Score", val: "4,820", icon: Award, gradient: "from-amber-500 to-orange-500" },
-                { label: "Global Rank", val: "#14", icon: Trophy, gradient: "from-purple-500 to-indigo-500" },
-                { label: "University Rank", val: "#3", icon: GraduationCap, gradient: "from-cyan-500 to-blue-500" },
-                { label: "Skill Level", val: "Expert", icon: Zap, gradient: "from-emerald-500 to-teal-500" },
+                { label: "Name", val: displayName || "\u2014", icon: User, gradient: "from-amber-500 to-orange-500" },
+                { label: "Email", val: profile.user?.email || "\u2014", icon: Mail, gradient: "from-purple-500 to-indigo-500" },
+                { label: "Location", val: profile.location || "\u2014", icon: MapPin, gradient: "from-cyan-500 to-blue-500" },
+                { label: "Resume", val: profile.resumeName || "Not uploaded", icon: FileText, gradient: "from-emerald-500 to-teal-500" },
               ].map((item, i) => (
                 <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2" style={{ color: labelColorSemi }}>
+                  className="flex items-center justify-between text-xs gap-2">
+                  <span className="flex items-center gap-2 shrink-0" style={{ color: labelColorSemi }}>
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
                       <item.icon size={10} className="text-white" />
                     </div>
                     {item.label}
                   </span>
-                  <span className={`font-bold ${primaryText}`}>{item.val}</span>
+                  <span className={`font-bold ${primaryText} truncate text-right`}>{item.val}</span>
                 </motion.div>
               ))}
             </div>
           </div>
         </GlassCard>
 
-        {/* Recent Badges */}
-        <GlassCard>
-          <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Recent Badges</span>
-            {MOCK_ACHIEVEMENTS.slice(0, 4).map((a, i) => {
-              const Icon = a.icon;
-              return (
-                <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 + i * 0.04 }}
-                  className="flex items-center gap-2.5">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${a.bg} shrink-0`}>
-                    <Icon size={14} className={a.color} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-[10px] font-bold block truncate ${primaryText}`}>{a.name}</span>
-                    <span className="text-[9px]" style={{ color: labelColor }}>{a.rarity}</span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </GlassCard>
-
-        {/* Quick Stats */}
         <GlassCard>
           <div className="p-5 space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Quick Stats</span>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "Online", val: "2h 14m", icon: Wifi, color: "text-emerald-400" },
-                { label: "This Week", val: "28h", icon: Clock, color: "text-cyan-400" },
-                { label: "Avg. Daily", val: "4.2h", icon: Coffee, color: "text-amber-400" },
-                { label: "Peak Hour", val: "11 PM", icon: Sun, color: "text-purple-400" },
+                { label: "Skills", val: String(skills.length), icon: Zap, color: "text-amber-400" },
+                { label: "Domains", val: String(domains.length), icon: Target, color: "text-purple-400" },
+                { label: "Links", val: String(linkCount), icon: ExternalLink, color: "text-cyan-400" },
+                { label: "Resume", val: profile.resumeUrl ? "Yes" : "No", icon: FileText, color: "text-emerald-400" },
               ].map((stat, i) => (
-                <div key={i} className="p-2.5 rounded-xl text-center transition-colors" 
-                  style={{ 
-                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
-                    border: `1px solid ${customBorder}` 
+                <div key={i} className="p-2.5 rounded-xl text-center transition-colors"
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                    border: `1px solid ${customBorder}`
                   }}
                 >
                   <stat.icon size={12} className={`${stat.color} mx-auto mb-1`} />
@@ -803,16 +556,15 @@ export function CommunityProfileView() {
           </div>
         </GlassCard>
 
-        {/* Learning Streak & Focus */}
         <GlassCard>
           <div className="p-5 space-y-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Learning Pulse</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Academic Info</span>
             <div className="space-y-2.5">
               {[
-                { label: "Learning Streak", val: "14 days", icon: Flame, gradient: "from-orange-500 to-red-500" },
-                { label: "Current Focus", val: "AI/ML", icon: Brain, gradient: "from-blue-500 to-indigo-500" },
-                { label: "Courses Active", val: "3", icon: BookOpen, gradient: "from-purple-500 to-pink-500" },
-                { label: "Next Goal", val: "500 DSA", icon: Target, gradient: "from-emerald-500 to-teal-500" },
+                { label: "College", val: profile.college || "\u2014", icon: GraduationCap, gradient: "from-cyan-500 to-blue-500" },
+                { label: "Branch", val: profile.branch || "\u2014", icon: Code2, gradient: "from-purple-500 to-indigo-500" },
+                { label: "Degree", val: profile.degree || "\u2014", icon: BookOpen, gradient: "from-amber-500 to-orange-500" },
+                { label: "Graduation", val: profile.graduationYear || "\u2014", icon: Calendar, gradient: "from-emerald-500 to-teal-500" },
               ].map((item, i) => (
                 <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -829,11 +581,35 @@ export function CommunityProfileView() {
             </div>
           </div>
         </GlassCard>
+
+        <GlassCard>
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>Social Links</span>
+            <div className="space-y-2.5">
+              {[
+                { label: "LinkedIn", val: profile.linkedin, icon: LinkedinSvg, gradient: "from-blue-500 to-blue-600" },
+                { label: "GitHub", val: profile.github, icon: GithubSvg, gradient: "from-gray-500 to-gray-600" },
+                { label: "Portfolio", val: profile.portfolio, icon: Globe, gradient: "from-emerald-500 to-teal-500" },
+                { label: "Target Role", val: profile.targetRole, icon: Target, gradient: "from-amber-500 to-orange-500" },
+              ].map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2" style={{ color: labelColorSemi }}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.gradient} shrink-0`}>
+                      <item.icon size={10} className="text-white" />
+                    </div>
+                    {item.label}
+                  </span>
+                  <span className={`font-bold ${primaryText}`}>{item.val || "\u2014"}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* TAB CONTENT - FULL WIDTH                                           */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* TAB CONTENT */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -842,10 +618,10 @@ export function CommunityProfileView() {
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
         >
-          {activeTab === "overview" && <OverviewTab />}
-          {activeTab === "projects" && <ProjectsTab projectFilter={projectFilter} setProjectFilter={setProjectFilter} />}
+          {activeTab === "overview" && <OverviewTab profile={profile} />}
+          {activeTab === "projects" && <ProjectsTab />}
           {activeTab === "research" && <ResearchTab />}
-          {activeTab === "skills" && <SkillsTab skillFilter={skillFilter} setSkillFilter={setSkillFilter} />}
+          {activeTab === "skills" && <SkillsTab skills={skills} />}
           {activeTab === "activity" && <ActivityTab />}
           {activeTab === "achievements" && <AchievementsTab />}
         </motion.div>
@@ -854,288 +630,15 @@ export function CommunityProfileView() {
   );
 }
 
-// ─── OVERVIEW TAB ────────────────────────────────────────────────────────────
-
-function OverviewTab() {
-  const theme = useTheme();
-  const isDark = theme === "dark";
-  const primaryText = isDark ? "text-white" : "text-slate-900";
-  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
-  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
-  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
-  const timelineDotBorder = isDark ? "#070715" : "#ffffff";
-  const timelineDotBg = isDark ? "#0B1120" : "#f1f5f9";
-
+function Mail({ size = 24, className }: { size?: number; className?: string }) {
   return (
-    <div className="space-y-5">
-      {/* Learning Progress */}
-      <GlassCard glow glowColor="rgba(139,92,246,0.05)">
-        <div className="p-6">
-          <SectionHeader icon={TrendingUp} title="Learning Progress" subtitle="Your learning journey at a glance" gradient />
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-5 mt-2">
-            {[
-              { label: "Overall", val: MOCK_LEARNING.overall, color: "amber" as const },
-              { label: "AI Score", val: MOCK_LEARNING.aiScore, color: "purple" as const },
-              { label: "Streak", val: 70, color: "green" as const },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                variants={scaleIn}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                className="flex flex-col items-center"
-              >
-                <PremiumProgressRing value={item.val} size={72} strokeWidth={6} />
-                <span className={`text-[10px] font-bold mt-2 ${primaryText}`}>{item.label}</span>
-              </motion.div>
-            ))}
-            {[
-              { label: "Courses Done", val: MOCK_LEARNING.coursesCompleted, sub: `/ ${MOCK_LEARNING.totalCourses}` },
-              { label: "Study Hours", val: MOCK_LEARNING.learningHours, sub: "total" },
-              { label: "Monthly Growth", val: `+${MOCK_LEARNING.monthlyGrowth}`, sub: "this month", prefix: "", suffix: "%" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                variants={scaleIn}
-                initial="hidden"
-                animate="visible"
-                custom={i + 3}
-                className="text-center"
-              >
-                <span className={`text-2xl font-extrabold block ${primaryText}`}>
-                  {typeof item.val === "number" ? (
-                    <AnimatedCounter value={item.val} />
-                  ) : (
-                    item.val
-                  )}
-                </span>
-                <span className="text-[9px]" style={{ color: labelColor }}>{item.sub}</span>
-                <span className="text-[10px] font-bold block mt-1" style={{ color: labelColorSemi }}>{item.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Coding Activity Heatmap */}
-      <GlassCard>
-        <div className="p-6">
-          <SectionHeader icon={Activity} title="Coding Activity" subtitle="Your contribution heatmap" />
-          <div className="flex gap-[3px] flex-wrap mt-2">
-            {CONTRIBUTION_DATA.map((level, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.005 }}
-                whileHover={{ scale: 1.4 }}
-                className="w-3 h-3 rounded-[3px] cursor-default transition-all"
-                title={`${level} contributions`}
-                style={{
-                  background: level === 0 
-                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
-                    : level === 1 ? "rgba(245,158,11,0.2)" 
-                    : level === 2 ? "rgba(245,158,11,0.4)" 
-                    : level === 3 ? "rgba(245,158,11,0.65)" 
-                    : "rgba(245,158,11,0.9)",
-                }}
-              />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: labelColor }}>
-            <span>Less</span>
-            {[0, 1, 2, 3, 4].map((l) => (
-              <div key={l} className="w-3 h-3 rounded-sm"
-                style={{
-                  background: l === 0 
-                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
-                    : l === 1 ? "rgba(245,158,11,0.2)" 
-                    : l === 2 ? "rgba(245,158,11,0.4)" 
-                    : l === 3 ? "rgba(245,158,11,0.65)" 
-                    : "rgba(245,158,11,0.9)",
-                }}
-              />
-            ))}
-            <span>More</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-            {[
-              { label: "Problems Solved", val: 127, icon: Code2, color: "text-emerald-400", gradient: "from-emerald-500 to-teal-500" },
-              { label: "Coding Hours", val: 486, icon: Clock, color: "text-cyan-400", gradient: "from-cyan-500 to-blue-500" },
-              { label: "Languages", val: 6, icon: Globe, color: "text-purple-400", gradient: "from-purple-500 to-indigo-500" },
-              { label: "Current Streak", val: 14, suffix: "d", icon: Flame, color: "text-orange-400", gradient: "from-orange-500 to-red-500" },
-            ].map((s, i) => (
-              <motion.div
-                key={i}
-                variants={scaleIn}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -2 }}
-                className="p-3.5 rounded-xl flex items-center gap-3 transition-colors"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
-                  border: `1px solid ${customBorder}` 
-                }}
-              >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${s.gradient} shrink-0`}>
-                  <s.icon size={14} className="text-white" />
-                </div>
-                <div>
-                  <span className="text-[9px] block" style={{ color: labelColor }}>{s.label}</span>
-                  <span className={`text-sm font-extrabold ${primaryText}`}>
-                    <AnimatedCounter value={s.val} suffix={s.suffix || ""} />
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Language Distribution */}
-          <div className="space-y-2.5 mt-5">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>
-              Language Distribution
-            </span>
-            {LANG_DIST.map((lang, i) => (
-              <motion.div
-                key={lang.name}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="space-y-1"
-              >
-                <div className="flex justify-between text-[10px]">
-                  <span className={`font-bold ${primaryText}`}>{lang.name}</span>
-                  <span style={{ color: labelColor }}>{lang.percent}%</span>
-                </div>
-                <PremiumProgressBar value={lang.percent} color="amber" height={4} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Interests */}
-      <GlassCard>
-        <div className="p-6">
-          <SectionHeader icon={Lightbulb} title="Interests" subtitle="Topics you're passionate about" />
-          <div className="flex flex-wrap gap-2 mt-2">
-            {MOCK_INTERESTS.map((interest, i) => (
-              <motion.span
-                key={interest}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04 }}
-                whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.12)", borderColor: "rgba(245,158,11,0.25)", color: "#f59e0b" }}
-                className="px-3.5 py-1.5 rounded-xl text-[10px] font-bold cursor-default transition-all"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
-                  border: `1px solid ${customBorder}`, 
-                  color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)" 
-                }}
-              >
-                {interest}
-              </motion.span>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Activity Timeline */}
-      <GlassCard>
-        <div className="p-6">
-          <SectionHeader icon={Clock} title="Activity Timeline" subtitle="Recent activity" />
-          <div className="relative pl-8 space-y-5 mt-3">
-            <div className="absolute left-[11px] top-0 bottom-0 w-px" 
-              style={{ 
-                background: isDark
-                  ? "linear-gradient(to bottom, rgba(245,158,11,0.3), rgba(139,92,246,0.2), rgba(6,182,212,0.1), transparent)" 
-                  : "linear-gradient(to bottom, rgba(245,158,11,0.4), rgba(139,92,246,0.25), rgba(6,182,212,0.15), transparent)" 
-              }} 
-            />
-            {MOCK_TIMELINE.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <motion.div
-                  key={i}
-                  variants={slideRight}
-                  initial="hidden"
-                  animate="visible"
-                  custom={i}
-                  className="relative flex items-start gap-4"
-                >
-                  <div className="absolute left-[-20px] top-1.5 w-2.5 h-2.5 rounded-full border-2 transition-colors"
-                    style={{ borderColor: "#f59e0b", background: timelineDotBorder }} />
-                  <div className="flex-1 p-3 rounded-xl transition-all hover:bg-white/[0.02]"
-                    style={{ border: "1px solid transparent" }}>
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${item.bg} shrink-0`}>
-                        <Icon size={13} className={item.color} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-[11px] font-bold block truncate ${primaryText}`}>{item.action}</span>
-                        <span className="text-[10px]" style={{ color: labelColor }}>{item.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Recommendations */}
-      <GlassCard>
-        <div className="p-6">
-          <SectionHeader icon={Quote} title="Recommendations" subtitle="What peers say about you" />
-          <div className="space-y-3 mt-2">
-            {MOCK_RECOMMENDATIONS.map((rec, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -2, borderColor: "rgba(245,158,11,0.15)" }}
-                className="p-4 rounded-xl transition-all"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)", 
-                  border: `1px solid ${customBorder}` 
-                }}
-              >
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0"
-                    style={{ border: `1px solid ${customBorder}` }}>
-                    <img src={getDiceBearUrl(rec.name)} alt={rec.name} width={36} height={36} className="block bg-slate-100" />
-                  </div>
-                  <div className="flex-1">
-                    <span className={`text-[11px] font-bold block ${primaryText}`}>{rec.name}</span>
-                    <span className="text-[10px]" style={{ color: labelColor }}>{rec.role}</span>
-                  </div>
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: rec.rating }).map((_, j) => (
-                      <Star key={j} size={10} className="text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
-                  &ldquo;{rec.text}&rdquo;
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
   );
 }
 
-// ─── PROJECTS TAB ────────────────────────────────────────────────────────────
-
-function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: string; setProjectFilter: (v: string) => void }) {
+function OverviewTab({ profile }: { profile: ProfileData }) {
   const theme = useTheme();
   const isDark = theme === "dark";
   const primaryText = isDark ? "text-white" : "text-slate-900";
@@ -1143,250 +646,132 @@ function ProjectsTab({ projectFilter, setProjectFilter }: { projectFilter: strin
   const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
   const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
-  const filters = ["all", "completed", "in-progress", "research"];
-  const filtered = projectFilter === "all" ? MOCK_PROJECTS : MOCK_PROJECTS.filter(p => p.status === projectFilter);
+  const domains = profile.interestedDomains ?? [];
 
   return (
     <div className="space-y-5">
-      <GlassCard>
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <SectionHeader icon={Folder} title="Featured Projects" subtitle="Your best work" />
-            <div className="flex gap-1 p-1 rounded-xl self-start sm:self-auto" 
-              style={{ 
-                background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)", 
-                border: `1px solid ${customBorder}` 
-              }}
-            >
-              {filters.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setProjectFilter(f)}
-                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer"
+      {domains.length > 0 && (
+        <GlassCard>
+          <div className="p-6">
+            <SectionHeader icon={Lightbulb} title="Interests" subtitle="Topics you're passionate about" />
+            <div className="flex flex-wrap gap-2 mt-2">
+              {domains.map((interest, i) => (
+                <motion.span
+                  key={interest}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                  whileHover={{ scale: 1.08, backgroundColor: "rgba(245,158,11,0.12)", borderColor: "rgba(245,158,11,0.25)", color: "#f59e0b" }}
+                  className="px-3.5 py-1.5 rounded-xl text-[10px] font-bold cursor-default transition-all"
                   style={{
-                    background: projectFilter === f ? "rgba(245,158,11,0.12)" : "transparent",
-                    color: projectFilter === f ? "#ea580c" : (isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.5)"),
-                    border: projectFilter === f ? "1px solid rgba(245,158,11,0.2)" : "1px solid transparent",
+                    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                    border: `1px solid ${customBorder}`,
+                    color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)"
                   }}
                 >
-                  {f}
-                </button>
+                  {interest}
+                </motion.span>
               ))}
             </div>
           </div>
+        </GlassCard>
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filtered.map((proj, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -6, scale: 1.01, boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.3)" : "0 20px 30px rgba(0,0,0,0.05)" }}
-                className="rounded-[20px] border overflow-hidden transition-all shadow-sm"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
-                  borderColor: customBorder 
-                }}
-              >
-                {/* Project Thumbnail */}
-                <div className={`h-36 relative bg-gradient-to-br ${proj.gradient}`}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div
-                      whileHover={{ rotate: 10, scale: 1.1 }}
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}
-                    >
-                      <Code2 size={24} className="text-white/60" />
-                    </motion.div>
-                  </div>
-                  <div className="absolute top-3 right-3">
-                    <PremiumBadge variant={proj.status === "completed" ? "green" : proj.status === "in-progress" ? "amber" : "purple"}>
-                      {proj.status}
-                    </PremiumBadge>
-                  </div>
-                </div>
-
-                <div className="p-4 space-y-3">
-                  <h4 className={`text-sm font-extrabold ${primaryText}`}>{proj.title}</h4>
-                  <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
-                    {proj.desc}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {proj.tech.map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded-md text-[9px] font-bold"
-                        style={{ 
-                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", 
-                          border: `1px solid ${customBorder}`, 
-                          color: labelColorSemi 
-                        }}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${customBorder}` }}>
-                    <div className="flex gap-4 text-[10px]" style={{ color: labelColor }}>
-                      <span className="flex items-center gap-1"><Star size={10} className="text-amber-400" /> {proj.stars}</span>
-                      <span className="flex items-center gap-1"><Heart size={10} className="text-rose-400" /> {proj.likes}</span>
-                      <span className="flex items-center gap-1"><Eye size={10} className="text-cyan-400" /> {proj.views}</span>
-                      <span className="flex items-center gap-1"><MessageSquare size={10} className="text-blue-400" /> {proj.comments}</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <motion.a href={proj.github} whileHover={{ scale: 1.15, rotate: 5 }}
-                        className="p-2 rounded-lg transition-colors border"
-                        style={{ 
-                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)", 
-                          borderColor: customBorder 
-                        }}
-                      >
-                        <Github size={12} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)" }} />
-                      </motion.a>
-                      <motion.a href={proj.demo} whileHover={{ scale: 1.15, rotate: -5 }}
-                        className="p-2 rounded-lg transition-colors border"
-                        style={{ 
-                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)", 
-                          borderColor: customBorder 
-                        }}
-                      >
-                        <ExternalLink size={12} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)" }} />
-                      </motion.a>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+      {domains.length === 0 && (
+        <GlassCard>
+          <div className="p-6">
+            <EmptyState
+              title="No interests added yet"
+              description="Add your interested domains to showcase your focus areas."
+              illustration={<Lightbulb className="w-8 h-8" />}
+            />
           </div>
+        </GlassCard>
+      )}
+
+      <GlassCard>
+        <div className="p-6">
+          <SectionHeader icon={Clock} title="Activity Timeline" subtitle="Recent activity" />
+          <EmptyState
+            title="No activity yet"
+            description="Your recent activity will appear here as you engage with the platform."
+            illustration={<Activity className="w-8 h-8" />}
+          />
+        </div>
+      </GlassCard>
+
+      <GlassCard>
+        <div className="p-6">
+          <SectionHeader icon={Quote} title="Recommendations" subtitle="What peers say about you" />
+          <EmptyState
+            title="No recommendations yet"
+            description="Recommendations from peers will appear here once they endorse you."
+            illustration={<Quote className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
     </div>
   );
 }
 
-// ─── RESEARCH TAB ────────────────────────────────────────────────────────────
+function ProjectsTab() {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <div className="space-y-5">
+      <GlassCard>
+        <div className="p-6">
+          <SectionHeader icon={Folder} title="Featured Projects" subtitle="Your best work" />
+          <EmptyState
+            title="No projects yet"
+            description="Start building amazing projects and they'll be showcased here."
+            illustration={<Folder className="w-8 h-8" />}
+          />
+        </div>
+      </GlassCard>
+    </div>
+  );
+}
 
 function ResearchTab() {
   const theme = useTheme();
   const isDark = theme === "dark";
-  const primaryText = isDark ? "text-white" : "text-slate-900";
-  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
-  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
-  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
-      {/* Publications */}
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={BookOpen} title="Research Publications" subtitle="Your academic contributions" gradient />
-          <div className="space-y-4 mt-2">
-            {MOCK_RESEARCH.map((paper, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -3, borderColor: "rgba(139,92,246,0.2)" }}
-                className="rounded-[20px] border p-5 space-y-3 transition-all"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
-                  borderColor: customBorder, 
-                  backdropFilter: "blur(20px)" 
-                }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h4 className={`text-sm font-extrabold leading-snug ${primaryText}`}>{paper.title}</h4>
-                  <PremiumBadge variant="cyan">{paper.domain}</PremiumBadge>
-                </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: labelColorSemi }}>
-                  {paper.abstract}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {paper.keywords.map((k) => (
-                    <span key={k} className="px-2.5 py-0.5 rounded-lg text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                      {k}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${customBorder}` }}>
-                  <div className="flex gap-4 text-[10px]" style={{ color: labelColor }}>
-                    <span>{paper.date}</span>
-                    <span className="flex items-center gap-1"><Quote size={10} className="text-amber-400" /> {paper.citations} citations</span>
-                    <span className="flex items-center gap-1"><Download size={10} className="text-cyan-400" /> {paper.downloads} downloads</span>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.04, boxShadow: "0 0 15px rgba(245,158,11,0.2)" }}
-                    whileTap={{ scale: 0.96 }}
-                    className="px-4 py-2 rounded-xl text-[10px] font-bold flex items-center gap-1.5"
-                    style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#ea580c" }}
-                  >
-                    <FileText size={10} /> Read Paper
-                  </motion.button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <EmptyState
+            title="No publications yet"
+            description="Your research papers and publications will appear here."
+            illustration={<BookOpen className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
 
-      {/* Certifications */}
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Medal} title="Certifications" subtitle="Professional credentials" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            {MOCK_CERTIFICATIONS.map((cert, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -4, scale: 1.02, boxShadow: isDark ? "0 15px 30px rgba(0,0,0,0.3)" : "0 15px 20px rgba(0,0,0,0.05)" }}
-                className="p-5 rounded-[20px] border text-center space-y-3 transition-all"
-                style={{ 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)", 
-                  borderColor: customBorder 
-                }}
-              >
-                <div className={`w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-gradient-to-br ${cert.color} shadow-sm`}>
-                  <span className="text-sm font-black text-white">{cert.org[0]}</span>
-                </div>
-                <span className="text-[10px] font-bold block" style={{ color: labelColor }}>{cert.org}</span>
-                <span className={`text-xs font-bold block ${primaryText}`}>{cert.name}</span>
-                <span className="text-[9px] block" style={{ color: labelColor }}>{cert.date}</span>
-                <span className="text-[8px] block font-mono" style={{ color: labelColor }}>{cert.credentialId}</span>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  className="text-[10px] font-bold flex items-center gap-1 mx-auto mt-1"
-                  style={{ color: "#ea580c" }}
-                >
-                  <ExternalLink size={10} /> View Certificate
-                </motion.button>
-              </motion.div>
-            ))}
-          </div>
+          <EmptyState
+            title="No certifications yet"
+            description="Add your professional certifications to build credibility."
+            illustration={<Medal className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
     </div>
   );
 }
 
-// ─── SKILLS TAB ──────────────────────────────────────────────────────────────
-
-function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof MOCK_SKILLS; setSkillFilter: (v: keyof typeof MOCK_SKILLS) => void }) {
+function SkillsTab({ skills }: { skills: string[] }) {
   const theme = useTheme();
   const isDark = theme === "dark";
   const primaryText = isDark ? "text-white" : "text-slate-900";
   const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
+  const labelColorSemi = isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)";
   const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
-
-  const filters: { id: keyof typeof MOCK_SKILLS; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-    { id: "programming", label: "Programming", icon: Code2 },
-    { id: "ai", label: "AI & ML", icon: Brain },
-    { id: "development", label: "Development", icon: Layers },
-  ];
 
   return (
     <div className="space-y-5">
@@ -1394,357 +779,121 @@ function SkillsTab({ skillFilter, setSkillFilter }: { skillFilter: keyof typeof 
         <div className="p-6">
           <SectionHeader icon={Zap} title="Skills Showcase" subtitle="Your technical expertise" gradient />
 
-          <div className="flex gap-2 mt-2 mb-5 overflow-x-auto pb-1">
-            {filters.map((f) => {
-              const isActive = skillFilter === f.id;
-              return (
-                <motion.button
-                  key={f.id}
-                  onClick={() => setSkillFilter(f.id)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
-                  style={{
-                    background: isActive ? "rgba(245,158,11,0.12)" : (isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"),
-                    border: isActive ? "1px solid rgba(245,158,11,0.25)" : `1px solid ${customBorder}`,
-                    color: isActive ? "#ea580c" : (isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)"),
-                  }}
-                >
-                  <f.icon size={13} /> {f.label}
-                </motion.button>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {MOCK_SKILLS[skillFilter].map((skill, i) => {
-              const SkillIcon = skill.icon;
-              return (
+          {skills.length === 0 ? (
+            <EmptyState
+              title="No skills added yet"
+              description="Add your skills to showcase your technical expertise."
+              illustration={<Zap className="w-8 h-8" />}
+            />
+          ) : (
+            <div className="flex flex-wrap gap-3 mt-2">
+              {skills.map((skill, i) => (
                 <motion.div
-                  key={skill.name}
+                  key={skill}
                   variants={fadeUp}
                   initial="hidden"
                   animate="visible"
                   custom={i}
-                  whileHover={{ y: -3, borderColor: "rgba(245,158,11,0.2)" }}
-                  className="p-4 rounded-[16px] border transition-colors shadow-sm"
-                  style={{ 
-                    borderColor: customBorder, 
-                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
+                  whileHover={{ y: -3, borderColor: "rgba(245,158,11,0.25)", scale: 1.05 }}
+                  className="p-4 rounded-[16px] border transition-all shadow-sm min-w-[140px]"
+                  style={{
+                    borderColor: customBorder,
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)"
                   }}
                 >
-                  <div className="flex items-center gap-3 mb-2.5">
+                  <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ 
-                        background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)", 
-                        border: "1px solid rgba(245,158,11,0.15)" 
+                      style={{
+                        background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.08)",
+                        border: "1px solid rgba(245,158,11,0.15)"
                       }}>
-                      <SkillIcon size={14} className="text-amber-500" />
+                      <Zap size={14} className="text-amber-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold ${primaryText}`}>{skill.name}</span>
-                        <span className="text-[10px] font-bold" style={{ color: labelColor }}>{skill.level}%</span>
-                      </div>
+                      <span className={`text-xs font-bold block ${primaryText}`}>{skill}</span>
                     </div>
-                    <SkillLevelBadge level={skill.level} />
-                  </div>
-                  <PremiumProgressBar value={skill.level} color="amber" height={4} />
-                  <div className="flex items-center justify-between mt-2.5">
-                    <span className="text-[9px] flex items-center gap-1" style={{ color: labelColor }}>
-                      <Users size={9} /> {skill.endorsements} endorsements
-                    </span>
                   </div>
                 </motion.div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </GlassCard>
     </div>
   );
 }
 
-// ─── ACTIVITY TAB ────────────────────────────────────────────────────────────
-
 function ActivityTab() {
   const theme = useTheme();
   const isDark = theme === "dark";
-  const primaryText = isDark ? "text-white" : "text-slate-900";
-  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
-  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
-      {/* Contribution Heatmap */}
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={BarChart3} title="Contribution Heatmap" subtitle="Your coding consistency" />
-          <div className="flex gap-[3px] flex-wrap mt-2">
-            {CONTRIBUTION_DATA.map((level, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.005 }}
-                whileHover={{ scale: 1.5 }}
-                className="w-3.5 h-3.5 rounded-[3px] cursor-default"
-                title={`${level} contributions`}
-                style={{
-                  background: level === 0 
-                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
-                    : level === 1 ? "rgba(245,158,11,0.2)" 
-                    : level === 2 ? "rgba(245,158,11,0.4)" 
-                    : level === 3 ? "rgba(245,158,11,0.65)" 
-                    : "rgba(245,158,11,0.9)",
-                }}
-              />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-[9px]" style={{ color: labelColor }}>
-            <span>Less</span>
-            {[0, 1, 2, 3, 4].map((l) => (
-              <div key={l} className="w-3 h-3 rounded-sm"
-                style={{
-                  background: l === 0 
-                    ? (isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)")
-                    : l === 1 ? "rgba(245,158,11,0.2)" 
-                    : l === 2 ? "rgba(245,158,11,0.4)" 
-                    : l === 3 ? "rgba(245,158,11,0.65)" 
-                    : "rgba(245,158,11,0.9)",
-                }}
-              />
-            ))}
-            <span>More</span>
-          </div>
+          <EmptyState
+            title="No contributions yet"
+            description="Start coding to fill your contribution heatmap."
+            illustration={<BarChart3 className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
 
-      {/* Weekly & Monthly Activity */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <GlassCard>
           <div className="p-6">
             <SectionHeader icon={Calendar} title="Weekly Activity" subtitle="Hours per day" />
-            <div className="space-y-3 mt-2">
-              {WEEKLY_ACTIVITY.map((item, i) => (
-                <motion.div
-                  key={item.day}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="flex items-center gap-3"
-                >
-                  <span className="text-[10px] font-bold w-8" style={{ color: labelColor }}>{item.day}</span>
-                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" 
-                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)" }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(item.hours / 8) * 100}%` }}
-                      transition={{ duration: 0.8, delay: i * 0.05 }}
-                      className="h-full rounded-full"
-                      style={{ background: "linear-gradient(90deg, #f59e0b, #ea580c)" }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-bold w-8 text-right ${primaryText}`}>{item.hours}h</span>
-                </motion.div>
-              ))}
-            </div>
+            <EmptyState
+              title="No activity data"
+              description="Weekly activity will be tracked as you use the platform."
+              illustration={<Calendar className="w-8 h-8" />}
+            />
           </div>
         </GlassCard>
 
         <GlassCard>
           <div className="p-6">
             <SectionHeader icon={TrendingUp} title="Monthly Growth" subtitle="Progress over time" />
-            <div className="space-y-3 mt-2">
-              {MONTHLY_GROWTH.map((item, i) => (
-                <motion.div
-                  key={item.month}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="flex items-center gap-3"
-                >
-                  <span className="text-[10px] font-bold w-8" style={{ color: labelColor }}>{item.month}</span>
-                  <div className="flex-1 h-2.5 rounded-full overflow-hidden" 
-                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)" }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${item.value}%` }}
-                      transition={{ duration: 0.8, delay: i * 0.08 }}
-                      className="h-full rounded-full"
-                      style={{ background: "linear-gradient(90deg, #06b6d4, #3b82f6)" }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-bold w-8 text-right ${primaryText}`}>{item.value}%</span>
-                </motion.div>
-              ))}
-            </div>
+            <EmptyState
+              title="No growth data"
+              description="Monthly progress will appear as you continue learning."
+              illustration={<TrendingUp className="w-8 h-8" />}
+            />
           </div>
         </GlassCard>
       </div>
 
-      {/* Community Contributions */}
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Users} title="Community Contributions" subtitle="Your impact on the community" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-            {[
-              { label: "Discussion Posts", val: 48, icon: MessageSquare, color: "text-blue-400", gradient: "from-blue-500 to-indigo-500" },
-              { label: "Questions Answered", val: 124, icon: Lightbulb, color: "text-amber-400", gradient: "from-amber-500 to-orange-500" },
-              { label: "Helpful Replies", val: 256, icon: Heart, color: "text-rose-400", gradient: "from-rose-500 to-pink-500" },
-              { label: "Resources Shared", val: 38, icon: Bookmark, color: "text-purple-400", gradient: "from-purple-500 to-indigo-500" },
-              { label: "Study Notes", val: 22, icon: FileText, color: "text-emerald-400", gradient: "from-emerald-500 to-teal-500" },
-              { label: "Community Likes", val: 892, icon: Star, color: "text-orange-400", gradient: "from-orange-500 to-amber-500" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                variants={scaleIn}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-                whileHover={{ y: -3, scale: 1.02 }}
-                className="p-4 rounded-[16px] border text-center transition-colors shadow-sm"
-                style={{ 
-                  borderColor: customBorder, 
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
-                }}
-              >
-                <div className={`w-9 h-9 rounded-xl mx-auto flex items-center justify-center bg-gradient-to-br ${item.gradient} mb-2`}>
-                  <item.icon size={16} className="text-white" />
-                </div>
-                <span className={`text-xl font-extrabold block ${primaryText}`}>
-                  <AnimatedCounter value={item.val} />
-                </span>
-                <span className="text-[9px]" style={{ color: labelColor }}>{item.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Portfolio Gallery */}
-      <GlassCard>
-        <div className="p-6">
-          <SectionHeader icon={ImageIcon} title="Portfolio Gallery" subtitle="Visual showcase" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-            {[
-              { title: "Dashboard UI", gradient: "from-amber-500/20 to-orange-500/10" },
-              { title: "ML Model Viz", gradient: "from-purple-500/20 to-blue-500/10" },
-              { title: "Research Poster", gradient: "from-cyan-500/20 to-teal-500/10" },
-              { title: "Mobile App", gradient: "from-emerald-500/20 to-green-500/10" },
-              { title: "API Docs", gradient: "from-rose-500/20 to-pink-500/10" },
-              { title: "Conference Talk", gradient: "from-blue-500/20 to-indigo-500/10" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -4, scale: 1.03 }}
-                className={`h-28 rounded-[16px] bg-gradient-to-br ${item.gradient} border flex items-center justify-center cursor-pointer transition-all relative overflow-hidden group shadow-sm`}
-                style={{ borderColor: customBorder }}
-              >
-                <span className="text-[10px] font-bold text-white/70 relative z-10">{item.title}</span>
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <Eye size={18} className="text-white" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <EmptyState
+            title="No community contributions yet"
+            description="Engage with the community through discussions, Q&A, and sharing resources."
+            illustration={<Users className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
     </div>
   );
 }
 
-// ─── ACHIEVEMENTS TAB ────────────────────────────────────────────────────────
-
 function AchievementsTab() {
   const theme = useTheme();
   const isDark = theme === "dark";
-  const primaryText = isDark ? "text-white" : "text-slate-900";
-  const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)";
-  const customBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   return (
     <div className="space-y-5">
       <GlassCard>
         <div className="p-6">
           <SectionHeader icon={Trophy} title="Community Achievements" subtitle="Your earned badges and milestones" gradient />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
-            {MOCK_ACHIEVEMENTS.map((ach, i) => {
-              const Icon = ach.icon;
-              return (
-                <motion.div
-                  key={i}
-                  variants={scaleIn}
-                  initial="hidden"
-                  animate="visible"
-                  custom={i}
-                  whileHover={{ y: -6, scale: 1.04, boxShadow: isDark ? "0 15px 30px rgba(0,0,0,0.3)" : "0 15px 20px rgba(0,0,0,0.05)" }}
-                  className="p-5 rounded-[20px] border text-center space-y-3 transition-colors shadow-sm"
-                  style={{ 
-                    borderColor: customBorder, 
-                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
-                  }}
-                >
-                  <motion.div
-                    initial={{ scale: 0, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15, delay: i * 0.05 }}
-                    className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ${ach.bg} ${ach.border} border`}
-                  >
-                    <Icon size={24} className={ach.color} />
-                  </motion.div>
-                  <span className={`text-xs font-bold block ${primaryText}`}>{ach.name}</span>
-                  <span className="text-[9px] block leading-relaxed" style={{ color: labelColor }}>{ach.desc}</span>
-                  <PremiumBadge variant={
-                    ach.rarity === "Legendary" ? "amber" :
-                    ach.rarity === "Epic" ? "purple" :
-                    ach.rarity === "Rare" ? "cyan" : "green"
-                  }>
-                    {ach.rarity}
-                  </PremiumBadge>
-                </motion.div>
-              );
-            })}
-          </div>
+          <EmptyState
+            title="No achievements yet"
+            description="Complete challenges, contribute to the community, and earn badges."
+            illustration={<Trophy className="w-8 h-8" />}
+          />
         </div>
       </GlassCard>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total Badges", val: 24, icon: Award, color: "text-amber-400", gradient: "from-amber-500 to-orange-500" },
-          { label: "Legendary", val: 3, icon: Crown, color: "text-purple-400", gradient: "from-purple-500 to-indigo-500" },
-          { label: "Epic", val: 8, icon: Star, color: "text-cyan-400", gradient: "from-cyan-500 to-blue-500" },
-          { label: "This Month", val: 4, prefix: "+", icon: TrendingUp, color: "text-emerald-400", gradient: "from-emerald-500 to-teal-500" },
-        ].map((s, i) => (
-          <motion.div
-            key={i}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={i}
-            whileHover={{ y: -3, scale: 1.02 }}
-            className="p-4 rounded-[20px] border flex items-center gap-3 transition-colors shadow-sm"
-            style={{ 
-              borderColor: customBorder, 
-              background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.5)" 
-            }}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${s.gradient} shrink-0`}>
-              <s.icon size={16} className="text-white" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase block" style={{ color: labelColor }}>{s.label}</span>
-              <span className={`text-xl font-extrabold ${primaryText}`}>
-                <AnimatedCounter value={s.val} prefix={s.prefix || ""} />
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
     </div>
   );
 }
