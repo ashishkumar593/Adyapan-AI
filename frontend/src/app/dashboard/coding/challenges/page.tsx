@@ -297,7 +297,28 @@ export default function CodingChallengesPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-x-hidden">
+    <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
+      <FloatingOrbs />
+
+      {/* Top Navbar */}
+      <DashboardTopNav
+        user={user}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onComingSoon={showComingSoon}
+        onViewProfile={handleViewProfile}
+        onAdyChat={handleAdyChat}
+        onViewTool={handleViewTool}
+        onMenuToggle={() => setSidebarOpen(prev => !prev)}
+        notifications={notifications}
+        setNotifications={setNotifications}
+        unreadCount={unreadCount}
+        onMarkAllRead={() => {}}
+        onClearAll={() => {}}
+        onPremium={handlePremium}
+        onViewSettings={() => handleViewTool("settings")}
+      />
+
       {/* Sidebar Navigation */}
       <DashboardSidebar
         onComingSoon={showComingSoon}
@@ -308,28 +329,7 @@ export default function CodingChallengesPage() {
         setSidebarOpen={setSidebarOpen}
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto">
-        {/* Top Navbar */}
-        <DashboardTopNav
-          user={user}
-          theme={theme}
-          onThemeToggle={handleThemeToggle}
-          onComingSoon={showComingSoon}
-          onViewProfile={handleViewProfile}
-          onAdyChat={handleAdyChat}
-          onViewTool={handleViewTool}
-          onMenuToggle={() => setSidebarOpen(prev => !prev)}
-          notifications={notifications}
-          setNotifications={setNotifications}
-          unreadCount={unreadCount}
-          onMarkAllRead={() => {}}
-          onClearAll={() => {}}
-          onPremium={handlePremium}
-          onViewSettings={() => handleViewTool("settings")}
-        />
-
-        <main className="relative flex-1 p-6 md:p-8">
-          <FloatingOrbs />
+      <main className="dash-main relative z-10 font-sans px-4 md:px-8 py-6">
 
           {/* Gamified Celebration Modal */}
           <AnimatePresence>
@@ -830,7 +830,6 @@ export default function CodingChallengesPage() {
             )}
           </AnimatePresence>
         </main>
-      </div>
     </div>
   );
 }
