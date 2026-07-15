@@ -3,24 +3,15 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, Award, Users, Globe, Share2, MessageSquare,
-  ExternalLink, Star, BookOpen, Code2, FileText, Trophy, Target,
-  TrendingUp, Calendar, Clock, Eye, Heart, Download, ArrowUpRight,
-  Zap, Brain, GraduationCap, Shield, Flame, ChevronRight, Search,
-  Bookmark, Award as AwardIcon, Lightbulb, Layers, GitBranch, Play,
-  Quote, BadgeCheck, Rocket, Coffee, Crown, Medal, Sparkles, BrainCircuit,
-  BarChart3, Activity, Folder, Image as ImageIcon, Presentation,
-  Edit3, Save, X, Upload, Trash2, ArrowLeft, Link2, Camera,
-  CheckCircle2, AlertCircle, Loader2, Briefcase, MapPin, Phone, Mail,
-  RefreshCw, Settings, ChevronDown, AtSign
+  User, Award, Globe, ExternalLink, Star, BookOpen, Code2, FileText,
+  Target, Calendar, Download, GraduationCap, Layers, Edit3, Save, X,
+  Upload, Trash2, ArrowLeft, Link2, Camera, CheckCircle2, AlertCircle,
+  Loader2, Briefcase, MapPin, Phone, Mail, RefreshCw, AtSign
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getDiceBearUrl } from "@/lib/avatar";
-import {
-  PremiumCard, PremiumButton, PremiumBadge, PremiumProgressRing,
-  PremiumProgressBar, AnimatedSkeleton
-} from "@/components/ui/PremiumComponents";
+import { AnimatedSkeleton } from "@/components/ui/PremiumComponents";
 import { useTheme } from "@/hooks/useTheme";
 
 // ─── Profile Interface ─────────────────────────────────────────────────────
