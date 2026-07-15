@@ -604,7 +604,7 @@ export function CodingChallengesView() {
             <div className="flex flex-col h-full overflow-hidden">
               
               {/* Challenge Details header */}
-              <div className="p-4 border-b flex items-center justify-between gap-4 flex-wrap z-10 ml-10 lg:ml-0" style={{ borderColor: sidebarBorder }}>
+              <div className="p-4 border-b flex items-center justify-between gap-4 flex-wrap z-10 ml-14 lg:ml-0" style={{ borderColor: sidebarBorder }}>
                 <div className="flex items-center gap-3">
                   <h1 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>
                     {activeChallenge.title}

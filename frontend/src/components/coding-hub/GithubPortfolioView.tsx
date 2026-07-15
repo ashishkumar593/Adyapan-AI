@@ -592,7 +592,7 @@ export function GithubPortfolioView() {
           {/* Top Preview navigation tabs */}
           <div className="p-3 border-b flex items-center justify-between gap-4 flex-wrap z-10" style={{ borderColor: sidebarBorder }}>
             {/* Sidebar toggle button helper space */}
-            <div className="flex items-center gap-2 ml-10 lg:ml-0">
+            <div className="flex items-center gap-2 ml-14 lg:ml-0">
               <span className="font-semibold text-sm tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
                 Preview Window
               </span>
