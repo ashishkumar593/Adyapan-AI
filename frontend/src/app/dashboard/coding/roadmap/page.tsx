@@ -271,7 +271,7 @@ export default function CodingRoadmapPage() {
   const optionStyle = { background: isDark ? "#0e1025" : "#ffffff", color: isDark ? "#e5e7eb" : "#1f2937" };
 
   return (
-    <div className="flex min-h-screen font-sans" style={{ background: "var(--background)", color: "var(--foreground)" }}>
+    <div className="relative overflow-hidden font-sans" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       <FloatingOrbs />
 
       <DashboardSidebar
