@@ -148,9 +148,9 @@ function FieldDisplay({ label, value, c, icon }: {
 }
 
 // ─── Form Input ────────────────────────────────────────────────────────────
-function FormInput({ label, value, onChange, placeholder, c, type = "text", hint, icon }: {
+function FormInput({ label, value, onChange, placeholder, c, type = "text", hint, icon, disabled }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string;
-  c: Record<string, string>; type?: string; hint?: string; icon?: React.ReactNode;
+  c: Record<string, string>; type?: string; hint?: string; icon?: React.ReactNode; disabled?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
@@ -160,9 +160,10 @@ function FormInput({ label, value, onChange, placeholder, c, type = "text", hint
       </label>
       {hint && <p className="text-[10px]" style={{ color: c.textMuted }}>{hint}</p>}
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl text-xs font-medium outline-none transition-all duration-200"
+        disabled={disabled}
+        className="w-full px-4 py-3 rounded-xl text-xs font-medium outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: c.inputBg, border: `1px solid ${c.border}`, color: c.text }}
-        onFocus={e => e.currentTarget.style.borderColor = c.primary}
+        onFocus={e => { if (!disabled) e.currentTarget.style.borderColor = c.primary; }}
         onBlur={e => e.currentTarget.style.borderColor = c.border}
       />
     </div>
@@ -617,7 +618,9 @@ export function ProfileView({ onViewDashboard }: { onViewDashboard: () => void }
                 {/* Personal Info */}
                 <ProfileSection title="Personal Information" icon={<User size={16} />} c={c}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput label="Full Name" value={profile?.user?.name ?? ""} onChange={() => {}} placeholder="" c={c} icon={<User size={11} />} disabled />
                     <FormInput label="Username" value={f.username} onChange={setField("username")} placeholder="@username" c={c} icon={<AtSign size={11} />} />
+                    <FormInput label="Email" value={profile?.user?.email ?? ""} onChange={() => {}} placeholder="" c={c} icon={<Mail size={11} />} disabled />
                     <FormInput label="Phone" value={f.phone} onChange={setField("phone")} placeholder="+91 XXXXX XXXXX" c={c} icon={<Phone size={11} />} />
                     <FormInput label="Location" value={f.location} onChange={setField("location")} placeholder="City, Country" c={c} icon={<MapPin size={11} />} />
                   </div>
