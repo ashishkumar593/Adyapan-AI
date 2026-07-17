@@ -41,19 +41,29 @@ export async function getUserPrisma(userId: string): Promise<any> {
 
   // Dynamic self-healing migration guard: ensure database contains user tables
   try {
-    await client.userQuestionProgress.findFirst().catch(async (err: any) => {
+    let needsRemigration = false;
+    await client.uploadedResume.findFirst().catch((err: any) => {
       if (err?.code === "P2021" || err?.message?.includes("does not exist")) {
-        console.log(`[dynamicPrisma] User tables missing for ${userId}. Initializing schema user tables...`);
-        const { execSync } = require("child_process");
-        execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
-          env: { ...process.env, USER_DATABASE_URL: dbUrl },
-          stdio: "ignore"
-        });
-        console.log(`[dynamicPrisma] Schema user tables initialized successfully for ${userId}.`);
+        needsRemigration = true;
       } else {
         throw err;
       }
     });
+
+    if (needsRemigration) {
+      console.log(`[dynamicPrisma] Tables missing for ${userId}. Running prisma db push...`);
+      const { execSync } = require("child_process");
+      execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
+        env: { ...process.env, USER_DATABASE_URL: dbUrl },
+        stdio: "ignore"
+      });
+      console.log(`[dynamicPrisma] Schema push completed for ${userId}.`);
+      // Create a fresh client after migration
+      client.$disconnect();
+      const freshClient = createPrismaClient(dbUrl);
+      clientCache.set(userId, freshClient);
+      return freshClient;
+    }
   } catch (err: any) {
     console.error(`[dynamicPrisma] Migration guard check failed for user ${userId}:`, err.message || err);
   }

@@ -186,19 +186,27 @@ export async function uploadAndParseResume(req: Request, res: Response, next: Ne
       throw httpError(400, "The file is empty. Please upload a valid resume.");
     }
 
+    console.log(`[Resume Upload] Starting upload for user ${userId}: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`);
+
     // 1. Extract text
+    console.log(`[Resume Upload] Step 1: Extracting text...`);
     const extractedText = await extractTextFromFile(file);
 
     // 2. Upload to Cloudinary
+    console.log(`[Resume Upload] Step 2: Uploading to Cloudinary...`);
     const { url: cloudinaryUrl } = await uploadToCloudinary(file);
+    console.log(`[Resume Upload] Step 2: Cloudinary URL: ${cloudinaryUrl}`);
 
     // 3. AI extraction
+    console.log(`[Resume Upload] Step 3: Running AI extraction...`);
     const profile = await extractProfileWithAI(extractedText);
+    console.log(`[Resume Upload] Step 3: AI extraction complete. Name: ${profile.name}, Skills: ${profile.skills.length}`);
 
     // 4. Calculate scores
     const analysis = calculateCompleteness(profile);
 
     // 5. Get next version number
+    console.log(`[Resume Upload] Step 4: Storing in database...`);
     const userPrisma = await getUserPrismaFromRequest(req);
     const existingCount = await userPrisma.uploadedResume.count({ where: { userId } });
     const versionNumber = existingCount + 1;
