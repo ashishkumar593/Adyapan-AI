@@ -18,9 +18,10 @@ const uploadMemory = multer({
 export const uploadChatFile = uploadMemory.single("file");
 
 async function parsePdf(buffer: Buffer): Promise<string> {
-  const pdfParse = require("pdf-parse/lib/pdf-parse");
-  const parsed = await pdfParse(buffer);
-  return parsed.text;
+  const { PDFParse } = require("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  const result = await parser.getText();
+  return typeof result === "string" ? result : result.text || "";
 }
 
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {

@@ -9,10 +9,10 @@ import mammoth from "mammoth";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function parsePdf(buffer: Buffer): Promise<string> {
-  // pdf-parse v2 has a known init bug — load the internal module directly
-  const pdfParse = require("pdf-parse/lib/pdf-parse");
-  const parsed = await pdfParse(buffer);
-  return parsed.text;
+  const { PDFParse } = require("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  const result = await parser.getText();
+  return typeof result === "string" ? result : result.text || "";
 }
 
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {

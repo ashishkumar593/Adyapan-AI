@@ -5,24 +5,10 @@ import { generateJSON, MODELS } from "../lib/ai/openrouter";
 import { env } from "../config/env";
 import multer from "multer";
 async function parsePdfNonBlocking(buffer: Buffer): Promise<string> {
-  const pdfParse = require("pdf-parse/lib/pdf-parse");
-  const pagerender = async (pageData: any) => {
-    await new Promise((resolve) => setImmediate(resolve));
-    const textContent = await pageData.getTextContent();
-    let lastY, text = "";
-    for (const item of textContent.items) {
-      if (lastY === item.transform[5] || !lastY) {
-        text += item.str;
-      } else {
-        text += "\n" + item.str;
-      }
-      lastY = item.transform[5];
-    }
-    return text;
-  };
-
-  const data = await pdfParse(buffer, { pagerender });
-  return data.text;
+  const { PDFParse } = require("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  const result = await parser.getText();
+  return typeof result === "string" ? result : result.text || "";
 }
 import mammoth from "mammoth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
