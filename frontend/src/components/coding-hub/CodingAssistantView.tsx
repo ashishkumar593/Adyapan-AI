@@ -24,13 +24,31 @@ import { renderMarkdown } from "@/utils/renderMarkdown";
 type Step = "mode" | "input" | "result";
 type Mode = "generate" | "explain" | "project";
 
+const ACCENT = "#f59e0b";
+const ACCENT_DARK = "#d97706";
+const ACCENT_LIGHT = "#fbbf24";
+
+const C = {
+  cardBg: (d: boolean) => d ? "rgba(15,12,40,0.7)" : "rgba(255,255,255,0.85)",
+  cardBorder: (d: boolean) => d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
+  inputBg: (d: boolean) => d ? "rgba(10,8,28,0.8)" : "#ffffff",
+  inputBorder: (d: boolean) => d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)",
+  textPrimary: (d: boolean) => d ? "#ffffff" : "#1a1a2e",
+  textSecondary: (d: boolean) => d ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)",
+  textMuted: (d: boolean) => d ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)",
+  divider: (d: boolean) => d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+  headerBg: (d: boolean) => d ? "rgba(7,7,21,0.92)" : "rgba(255,255,255,0.92)",
+  btnGhost: (d: boolean) => d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+  btnGhostBorder: (d: boolean) => d ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+  btnGhostText: (d: boolean) => d ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
+  pageBg: (d: boolean) => d ? "#070715" : "#faf7f2",
+};
+
 const MODES: {
   id: Mode;
   title: string;
   description: string;
   icon: React.ReactNode;
-  color: string;
-  placeholder: string;
   fields: { name: string; label: string; placeholder: string; type: "textarea" | "input" }[];
 }[] = [
   {
@@ -38,8 +56,6 @@ const MODES: {
     title: "Generate Code",
     description: "Describe what you want to build and get production-ready code",
     icon: <Code2 size={28} />,
-    color: "#f59e0b",
-    placeholder: "e.g., Build a REST API with JWT authentication, rate limiting, and role-based access control",
     fields: [
       { name: "prompt", label: "What do you want to build?", placeholder: "Describe your code requirement in detail...", type: "textarea" },
     ],
@@ -49,8 +65,6 @@ const MODES: {
     title: "Explain Code",
     description: "Paste any code and get a detailed line-by-line explanation",
     icon: <Lightbulb size={28} />,
-    color: "#f59e0b",
-    placeholder: "Paste your code here...",
     fields: [
       { name: "code", label: "Paste your code", placeholder: "// Paste your code here...", type: "textarea" },
     ],
@@ -60,8 +74,6 @@ const MODES: {
     title: "Create Project",
     description: "Get a full project plan with architecture, tech stack, and roadmap",
     icon: <FolderKanban size={28} />,
-    color: "#f59e0b",
-    placeholder: "e.g., Real-time chat application with React, Socket.io, and Express",
     fields: [
       { name: "projectName", label: "Project Name / Topic", placeholder: "e.g., Real-time Chat App", type: "input" },
       { name: "description", label: "Description (optional)", placeholder: "Describe the project goals, features, and requirements...", type: "textarea" },
@@ -78,6 +90,7 @@ export default function CodingAssistantView() {
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<unknown>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const modeConfig = MODES.find((m) => m.id === selectedMode);
 
@@ -149,8 +162,6 @@ export default function CodingAssistantView() {
     toast.success("Copied to clipboard");
   };
 
-  const currentColor = modeConfig?.color || "#f59e0b";
-
   return (
     <div
       className="relative flex flex-col overflow-hidden w-full"
@@ -158,53 +169,82 @@ export default function CodingAssistantView() {
         margin: "-1.25rem",
         width: "calc(100% + 2.5rem)",
         height: "calc(100% + 2.5rem)",
-        background: isDark ? "#070715" : "#f0f4ff",
-        color: isDark ? "#fff" : "#1a1a2e",
+        background: C.pageBg(isDark),
+        color: C.textPrimary(isDark),
       }}
     >
       <ChatBackground isDark={isDark} />
 
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           className="px-6 py-4 border-b flex items-center justify-between flex-shrink-0"
           style={{
-            borderColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
-            background: isDark ? "rgba(7,7,21,0.9)" : "rgba(240,244,255,0.9)",
-            backdropFilter: "blur(12px)",
+            borderColor: C.divider(isDark),
+            background: C.headerBg(isDark),
+            backdropFilter: "blur(16px)",
           }}
         >
           <div className="flex items-center gap-3">
-            {step !== "mode" && (
-              <motion.button
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                onClick={handleBack}
-                className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer border"
-                style={{
-                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                  borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                }}
-              >
-                <ArrowLeft size={16} style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)" }} />
-              </motion.button>
-            )}
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
+            <AnimatePresence mode="wait">
+              {step !== "mode" && (
+                <motion.button
+                  key="back"
+                  initial={{ opacity: 0, x: -12, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -12, scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  onClick={handleBack}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer border"
+                  style={{
+                    background: C.btnGhost(isDark),
+                    borderColor: C.btnGhostBorder(isDark),
+                  }}
+                  whileHover={{ scale: 1.1, background: `${ACCENT}15` }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <ArrowLeft size={16} style={{ color: ACCENT }} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            <motion.div
+              className="w-9 h-9 rounded-xl flex items-center justify-center relative"
               style={{
-                background: `linear-gradient(135deg, ${currentColor}30, ${currentColor}08)`,
-                border: `1px solid ${currentColor}40`,
-                color: currentColor,
+                background: `linear-gradient(135deg, ${ACCENT}25, ${ACCENT_DARK}10)`,
+                border: `1px solid ${ACCENT}35`,
+                color: ACCENT,
               }}
+              whileHover={{ scale: 1.08, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
             >
               {modeConfig?.icon || <Code2 size={18} />}
-            </div>
+              <motion.div
+                className="absolute inset-0 rounded-xl"
+                style={{ background: ACCENT, zIndex: -1, opacity: 0.08 }}
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              />
+            </motion.div>
+
             <div>
-              <h1 className="text-sm font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                {step === "mode" ? "CodeForge Assistant" : modeConfig?.title}
-              </h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {/* Step indicators */}
+              <AnimatePresence mode="wait">
+                <motion.h1
+                  key={step === "mode" ? "home" : modeConfig?.title}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm font-bold tracking-tight"
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
+                >
+                  {step === "mode" ? "CodeForge Assistant" : modeConfig?.title}
+                </motion.h1>
+              </AnimatePresence>
+              <div className="flex items-center gap-1.5 mt-1">
                 {(["mode", "input", "result"] as Step[]).map((s) => {
                   const steps = ["mode", "input", "result"];
                   const currentIdx = steps.indexOf(step);
@@ -212,18 +252,14 @@ export default function CodingAssistantView() {
                   const isActive = thisIdx === currentIdx;
                   const isDone = thisIdx < currentIdx;
                   return (
-                    <span
+                    <motion.span
                       key={s}
-                      className="w-5 h-1 rounded-full transition-all duration-300"
-                      style={{
-                        background: isActive
-                          ? currentColor
-                          : isDone
-                          ? `${currentColor}60`
-                          : isDark
-                          ? "rgba(255,255,255,0.1)"
-                          : "rgba(0,0,0,0.1)",
+                      className="h-1 rounded-full"
+                      animate={{
+                        width: isActive ? 22 : 10,
+                        background: isActive ? ACCENT : isDone ? `${ACCENT}70` : C.btnGhostBorder(isDark),
                       }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   );
                 })}
@@ -232,26 +268,30 @@ export default function CodingAssistantView() {
           </div>
 
           <div className="flex items-center gap-2">
-            {step !== "mode" && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border cursor-pointer"
-                style={{
-                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                  borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                  color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <RotateCcw size={12} />
-                Start Over
-              </motion.button>
-            )}
+            <AnimatePresence>
+              {step !== "mode" && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8, x: 10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, x: 10 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  onClick={handleReset}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border cursor-pointer"
+                  style={{
+                    background: C.btnGhost(isDark),
+                    borderColor: C.btnGhostBorder(isDark),
+                    color: C.btnGhostText(isDark),
+                  }}
+                  whileHover={{ scale: 1.04, color: ACCENT, borderColor: `${ACCENT}40` }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <RotateCcw size={12} />
+                  Start Over
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* Content area */}
         <div className="flex-1 overflow-y-auto min-h-0">
@@ -260,79 +300,106 @@ export default function CodingAssistantView() {
             {step === "mode" && (
               <motion.div
                 key="mode"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="max-w-4xl mx-auto px-6 py-12"
               >
                 <div className="text-center mb-10">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-                    style={{
-                      background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.1))",
-                      border: "1.5px solid rgba(245,158,11,0.3)",
-                      boxShadow: "0 0 30px rgba(245,158,11,0.1)",
-                    }}
-                  >
-                    <Code2 size={30} style={{ color: "#f59e0b" }} />
-                  </motion.div>
-                  <h1
+                  <div className="relative inline-block mb-5">
+                    <motion.div
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center relative z-10"
+                      style={{
+                        background: `linear-gradient(135deg, ${ACCENT}20, ${ACCENT_DARK}10)`,
+                        border: `1.5px solid ${ACCENT}35`,
+                      }}
+                    >
+                      <Code2 size={30} style={{ color: ACCENT }} />
+                    </motion.div>
+                    <motion.div
+                      className="absolute -inset-3 rounded-3xl blur-xl"
+                      style={{ background: ACCENT, opacity: 0.1 }}
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.18, 0.1] }}
+                      transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                    />
+                  </div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
                     className="text-3xl font-extrabold tracking-tight mb-2"
                     style={{ fontFamily: "'Outfit', sans-serif" }}
                   >
-                    Adyapan{" "}
-                    <span style={{ color: "#f59e0b" }}>CodeForge</span>
-                  </h1>
-                  <p className="text-sm max-w-md mx-auto" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)" }}>
+                    Adyapan <span style={{ color: ACCENT }}>CodeForge</span>
+                  </motion.h1>
+                  <motion.p
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-sm max-w-md mx-auto"
+                    style={{ color: C.textSecondary(isDark) }}
+                  >
                     Choose what you want to do
-                  </p>
+                  </motion.p>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   {MODES.map((m, i) => (
                     <motion.button
                       key={m.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 24 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + i * 0.1 }}
+                      transition={{ delay: 0.2 + i * 0.1, type: "spring", stiffness: 300, damping: 24 }}
                       onClick={() => handleSelectMode(m.id)}
-                      className="text-left p-6 rounded-2xl border transition-all cursor-pointer group"
+                      className="text-left p-6 rounded-2xl border cursor-pointer group relative overflow-hidden"
                       style={{
-                        background: isDark ? "rgba(8,6,25,0.5)" : "rgba(255,255,255,0.7)",
-                        borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                        background: C.cardBg(isDark),
+                        borderColor: C.cardBorder(isDark),
                       }}
                       whileHover={{
-                        scale: 1.02,
-                        borderColor: `${m.color}50`,
-                        boxShadow: `0 8px 30px ${m.color}12`,
+                        scale: 1.025,
+                        borderColor: `${ACCENT}50`,
+                        boxShadow: `0 12px 40px ${ACCENT}12`,
                       }}
-                      whileTap={{ scale: 0.98 }}
+                      whileTap={{ scale: 0.975 }}
                     >
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all"
+                      <motion.div
+                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                         style={{
-                          background: `${m.color}15`,
-                          color: m.color,
-                          border: `1px solid ${m.color}30`,
+                          background: `radial-gradient(circle at 50% 0%, ${ACCENT}08 0%, transparent 70%)`,
+                        }}
+                      />
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 relative z-10"
+                        style={{
+                          background: `${ACCENT}12`,
+                          color: ACCENT,
+                          border: `1px solid ${ACCENT}25`,
                         }}
                       >
                         {m.icon}
                       </div>
-                      <h3 className="text-base font-bold mb-1.5" style={{ color: isDark ? "#fff" : "#1a1a2e" }}>
+                      <h3 className="text-base font-bold mb-1.5 relative z-10" style={{ color: C.textPrimary(isDark) }}>
                         {m.title}
                       </h3>
-                      <p className="text-xs leading-relaxed" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)" }}>
+                      <p className="text-xs leading-relaxed relative z-10" style={{ color: C.textSecondary(isDark) }}>
                         {m.description}
                       </p>
-                      <div
-                        className="flex items-center gap-1 mt-4 text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ color: m.color }}
+                      <motion.div
+                        className="flex items-center gap-1 mt-4 text-[11px] font-bold relative z-10"
+                        style={{ color: ACCENT }}
+                        initial={{ opacity: 0, x: -5 }}
+                        whileHover={{ opacity: 1, x: 0 }}
                       >
-                        Get Started <ArrowRight size={13} />
-                      </div>
+                        <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-[-4px] group-hover:translate-x-0">
+                          Get Started
+                        </span>
+                        <ArrowRight size={13} className="opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1" />
+                      </motion.div>
                     </motion.button>
                   ))}
                 </div>
@@ -343,100 +410,122 @@ export default function CodingAssistantView() {
             {step === "input" && modeConfig && (
               <motion.div
                 key="input"
-                initial={{ opacity: 0, x: 40 }}
+                initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="max-w-3xl mx-auto px-6 py-10"
               >
                 <div className="space-y-5">
-                  {modeConfig.fields.map((field) => (
-                    <div key={field.name}>
+                  {modeConfig.fields.map((field, i) => (
+                    <motion.div
+                      key={field.name}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + i * 0.08 }}
+                    >
                       <label
                         className="block text-xs font-bold uppercase tracking-wider mb-2"
-                        style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)" }}
+                        style={{ color: C.textSecondary(isDark) }}
                       >
                         {field.label}
                       </label>
-                      {field.type === "textarea" ? (
-                        <textarea
-                          value={formValues[field.name] || ""}
-                          onChange={(e) => setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                          placeholder={field.placeholder}
-                          className="w-full rounded-xl border p-4 text-sm leading-relaxed resize-none outline-none transition-all"
-                          style={{
-                            background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.8)",
-                            borderColor: `${currentColor}25`,
-                            color: isDark ? "#fff" : "#1a1a2e",
-                            minHeight: field.name === "code" ? "200px" : "120px",
-                          }}
-                          rows={field.name === "code" ? 10 : 5}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = `${currentColor}60`;
-                            e.currentTarget.style.boxShadow = `0 0 0 3px ${currentColor}10`;
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = `${currentColor}25`;
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                        />
-                      ) : (
-                        <input
-                          value={formValues[field.name] || ""}
-                          onChange={(e) => setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                          placeholder={field.placeholder}
-                          className="w-full rounded-xl border p-4 text-sm outline-none transition-all"
-                          style={{
-                            background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.8)",
-                            borderColor: `${currentColor}25`,
-                            color: isDark ? "#fff" : "#1a1a2e",
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = `${currentColor}60`;
-                            e.currentTarget.style.boxShadow = `0 0 0 3px ${currentColor}10`;
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = `${currentColor}25`;
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSubmit();
-                            }
-                          }}
-                        />
-                      )}
-                    </div>
+                      <motion.div
+                        className="relative rounded-xl overflow-hidden"
+                        animate={{
+                          boxShadow: focusedField === field.name
+                            ? `0 0 0 2px ${ACCENT}30, 0 4px 20px ${ACCENT}08`
+                            : "0 1px 3px rgba(0,0,0,0.05)",
+                        }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        {field.type === "textarea" ? (
+                          <textarea
+                            value={formValues[field.name] || ""}
+                            onChange={(e) => setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                            placeholder={field.placeholder}
+                            className="w-full p-4 text-sm leading-relaxed resize-none outline-none transition-colors duration-200"
+                            style={{
+                              background: C.inputBg(isDark),
+                              border: `1.5px solid ${focusedField === field.name ? `${ACCENT}60` : C.inputBorder(isDark)}`,
+                              color: C.textPrimary(isDark),
+                              minHeight: field.name === "code" ? "200px" : "120px",
+                              borderRadius: "0.75rem",
+                            }}
+                            rows={field.name === "code" ? 10 : 5}
+                            onFocus={() => setFocusedField(field.name)}
+                            onBlur={() => setFocusedField(null)}
+                          />
+                        ) : (
+                          <input
+                            value={formValues[field.name] || ""}
+                            onChange={(e) => setFormValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                            placeholder={field.placeholder}
+                            className="w-full p-4 text-sm outline-none transition-colors duration-200"
+                            style={{
+                              background: C.inputBg(isDark),
+                              border: `1.5px solid ${focusedField === field.name ? `${ACCENT}60` : C.inputBorder(isDark)}`,
+                              color: C.textPrimary(isDark),
+                              borderRadius: "0.75rem",
+                            }}
+                            onFocus={() => setFocusedField(field.name)}
+                            onBlur={() => setFocusedField(null)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit();
+                              }
+                            }}
+                          />
+                        )}
+                      </motion.div>
+                    </motion.div>
                   ))}
                 </div>
 
-                <div className="flex justify-end mt-6">
+                <motion.div
+                  className="flex justify-end mt-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
                   <motion.button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold cursor-pointer"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold cursor-pointer relative overflow-hidden"
                     style={{
-                      background: loading ? `${currentColor}50` : currentColor,
+                      background: loading ? `${ACCENT}60` : `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,
                       color: "#000",
-                      boxShadow: `0 4px 16px ${currentColor}30`,
-                      opacity: loading ? 0.7 : 1,
+                      boxShadow: loading ? "none" : `0 4px 20px ${ACCENT}30`,
                     }}
-                    whileHover={!loading ? { scale: 1.03, boxShadow: `0 6px 24px ${currentColor}40` } : {}}
-                    whileTap={!loading ? { scale: 0.97 } : {}}
+                    whileHover={!loading ? { scale: 1.04, boxShadow: `0 8px 30px ${ACCENT}45` } : {}}
+                    whileTap={!loading ? { scale: 0.96 } : {}}
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Play size={14} fill="currentColor" />
-                        Generate
-                      </>
+                    {loading && (
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          background: `linear-gradient(90deg, transparent, ${ACCENT_LIGHT}30, transparent)`,
+                        }}
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      />
                     )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {loading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Play size={14} fill="currentColor" />
+                          Generate
+                        </>
+                      )}
+                    </span>
                   </motion.button>
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
@@ -447,6 +536,7 @@ export default function CodingAssistantView() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="max-w-4xl mx-auto px-6 py-8"
               >
                 {selectedMode === "generate" && <GenerateResult result={result as Record<string, string>} isDark={isDark} onCopy={handleCopy} />}
@@ -487,46 +577,59 @@ function GenerateResult({
 
   return (
     <div className="space-y-4">
-      {sections.map((s) => (
-        <div
+      {sections.map((s, i) => (
+        <motion.div
           key={s.key}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-2xl border overflow-hidden"
           style={{
-            background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.9)",
-            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+            background: C.cardBg(isDark),
+            borderColor: C.cardBorder(isDark),
           }}
         >
           <div
             className="flex items-center justify-between px-4 py-3 border-b"
-            style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+            style={{ borderColor: C.divider(isDark) }}
           >
             <span
               className="text-[10px] uppercase font-black tracking-widest"
-              style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)" }}
+              style={{ color: C.textSecondary(isDark) }}
             >
               {s.label}
             </span>
             <motion.button
               onClick={() => copyField(s.key, s.value)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-colors duration-200"
               style={{
-                background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-                color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
+                background: copiedField === s.key ? `${ACCENT}15` : C.btnGhost(isDark),
+                color: copiedField === s.key ? ACCENT : C.btnGhostText(isDark),
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
             >
-              {copiedField === s.key ? <Check size={12} className="text-amber-400" /> : <Copy size={12} />}
-              {copiedField === s.key ? "Copied" : "Copy"}
+              <AnimatePresence mode="wait">
+                {copiedField === s.key ? (
+                  <motion.span key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                    <Check size={12} />
+                  </motion.span>
+                ) : (
+                  <motion.span key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                    <Copy size={12} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {copiedField === s.key ? "Copied!" : "Copy"}
             </motion.button>
           </div>
           <div
             className="p-4 text-sm leading-relaxed overflow-x-auto max-h-[500px] overflow-y-auto"
-            style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)" }}
+            style={{ color: C.textPrimary(isDark) }}
           >
             {renderMarkdown(s.value, isDark)}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -536,59 +639,65 @@ function ExplainResult({ result, isDark }: { result: Record<string, string>; isD
   return (
     <div className="space-y-4">
       {result.explanation && (
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-2xl border overflow-hidden"
           style={{
-            background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.9)",
-            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+            background: C.cardBg(isDark),
+            borderColor: C.cardBorder(isDark),
           }}
         >
           <div
             className="px-4 py-3 border-b"
-            style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+            style={{ borderColor: C.divider(isDark) }}
           >
             <span
               className="text-[10px] uppercase font-black tracking-widest"
-              style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)" }}
+              style={{ color: C.textSecondary(isDark) }}
             >
               Explanation
             </span>
           </div>
           <div
             className="p-5 text-sm leading-relaxed"
-            style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)" }}
+            style={{ color: C.textPrimary(isDark) }}
           >
             {renderMarkdown(result.explanation, isDark)}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {result.complexity && (
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
           className="rounded-2xl border p-4 flex items-center gap-3"
           style={{
-            background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.9)",
-            borderColor: "rgba(245,158,11,0.2)",
+            background: C.cardBg(isDark),
+            borderColor: `${ACCENT}25`,
           }}
         >
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(245,158,11,0.12)" }}
+            style={{ background: `${ACCENT}12` }}
           >
-            <Terminal size={16} style={{ color: "#f59e0b" }} />
+            <Terminal size={16} style={{ color: ACCENT }} />
           </div>
           <div>
             <span
               className="text-[10px] font-bold uppercase tracking-wider block"
-              style={{ color: "#f59e0b" }}
+              style={{ color: ACCENT }}
             >
               Complexity
             </span>
-            <span className="text-xs font-mono" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>
+            <span className="text-xs font-mono" style={{ color: C.textPrimary(isDark) }}>
               {result.complexity}
             </span>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -604,62 +713,79 @@ function ProjectResult({ result, isDark }: { result: Record<string, unknown>; is
   return (
     <div className="space-y-4">
       {architecture && (
-        <ResultCard title="Architecture" isDark={isDark}>
-          <div className="text-sm leading-relaxed" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)" }}>
+        <ResultCard title="Architecture" isDark={isDark} delay={0}>
+          <div className="text-sm leading-relaxed" style={{ color: C.textPrimary(isDark) }}>
             {renderMarkdown(architecture, isDark)}
           </div>
         </ResultCard>
       )}
 
       {techStack && techStack.length > 0 && (
-        <ResultCard title="Tech Stack" isDark={isDark}>
+        <ResultCard title="Tech Stack" isDark={isDark} delay={0.1}>
           <div className="flex flex-wrap gap-2">
             {techStack.map((t: string, i: number) => (
-              <span
+              <motion.span
                 key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15 + i * 0.04 }}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold"
                 style={{
-                  background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
-                  color: "#f59e0b",
-                  border: "1px solid rgba(245,158,11,0.2)",
+                  background: isDark ? `${ACCENT}12` : `${ACCENT}10`,
+                  color: ACCENT,
+                  border: `1px solid ${ACCENT}20`,
                 }}
               >
                 {t}
-              </span>
+              </motion.span>
             ))}
           </div>
         </ResultCard>
       )}
 
       {folderStructure && (
-        <ResultCard title="Folder Structure" isDark={isDark}>
-          <div className="text-sm leading-relaxed" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)" }}>
+        <ResultCard title="Folder Structure" isDark={isDark} delay={0.2}>
+          <div className="text-sm leading-relaxed" style={{ color: C.textPrimary(isDark) }}>
             {renderMarkdown(folderStructure, isDark)}
           </div>
         </ResultCard>
       )}
 
       {features && features.length > 0 && (
-        <ResultCard title="Features" isDark={isDark}>
+        <ResultCard title="Features" isDark={isDark} delay={0.3}>
           <div className="space-y-2">
             {features.map((f: string, i: number) => (
-              <div key={i} className="flex items-start gap-2 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>
-                <span className="text-amber-500 font-bold mt-0.5">&#10003;</span>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 + i * 0.04 }}
+                className="flex items-start gap-2 text-xs"
+                style={{ color: C.textPrimary(isDark) }}
+              >
+                <span style={{ color: ACCENT }} className="font-bold mt-0.5">&#10003;</span>
                 <span>{f}</span>
-              </div>
+              </motion.div>
             ))}
           </div>
         </ResultCard>
       )}
 
       {roadmap && roadmap.length > 0 && (
-        <ResultCard title="Roadmap" isDark={isDark}>
+        <ResultCard title="Roadmap" isDark={isDark} delay={0.4}>
           <div className="space-y-2">
-            {roadmap.map((step: string, i: number) => (
-              <div key={i} className="flex items-start gap-2 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>
-                <span className="text-amber-500 font-bold mt-0.5">{i + 1}.</span>
-                <span>{step}</span>
-              </div>
+            {roadmap.map((s: string, i: number) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.45 + i * 0.04 }}
+                className="flex items-start gap-2 text-xs"
+                style={{ color: C.textPrimary(isDark) }}
+              >
+                <span style={{ color: ACCENT }} className="font-bold mt-0.5">{i + 1}.</span>
+                <span>{s}</span>
+              </motion.div>
             ))}
           </div>
         </ResultCard>
@@ -671,32 +797,37 @@ function ProjectResult({ result, isDark }: { result: Record<string, unknown>; is
 function ResultCard({
   title,
   isDark,
+  delay = 0,
   children,
 }: {
   title: string;
   isDark: boolean;
+  delay?: number;
   children: React.ReactNode;
 }) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="rounded-2xl border overflow-hidden"
       style={{
-        background: isDark ? "rgba(8,6,25,0.6)" : "rgba(255,255,255,0.9)",
-        borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+        background: C.cardBg(isDark),
+        borderColor: C.cardBorder(isDark),
       }}
     >
       <div
         className="px-4 py-3 border-b"
-        style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+        style={{ borderColor: C.divider(isDark) }}
       >
         <span
           className="text-[10px] uppercase font-black tracking-widest"
-          style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)" }}
+          style={{ color: C.textSecondary(isDark) }}
         >
           {title}
         </span>
       </div>
       <div className="p-4">{children}</div>
-    </div>
+    </motion.div>
   );
 }
