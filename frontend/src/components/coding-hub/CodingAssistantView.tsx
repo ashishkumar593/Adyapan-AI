@@ -38,7 +38,7 @@ const MODES: {
     title: "Generate Code",
     description: "Describe what you want to build and get production-ready code",
     icon: <Code2 size={28} />,
-    color: "#10b981",
+    color: "#f59e0b",
     placeholder: "e.g., Build a REST API with JWT authentication, rate limiting, and role-based access control",
     fields: [
       { name: "prompt", label: "What do you want to build?", placeholder: "Describe your code requirement in detail...", type: "textarea" },
@@ -60,7 +60,7 @@ const MODES: {
     title: "Create Project",
     description: "Get a full project plan with architecture, tech stack, and roadmap",
     icon: <FolderKanban size={28} />,
-    color: "#0ea5e9",
+    color: "#f59e0b",
     placeholder: "e.g., Real-time chat application with React, Socket.io, and Express",
     fields: [
       { name: "projectName", label: "Project Name / Topic", placeholder: "e.g., Real-time Chat App", type: "input" },
@@ -149,7 +149,7 @@ export default function CodingAssistantView() {
     toast.success("Copied to clipboard");
   };
 
-  const currentColor = modeConfig?.color || "#10b981";
+  const currentColor = modeConfig?.color || "#f59e0b";
 
   return (
     <div
@@ -272,19 +272,19 @@ export default function CodingAssistantView() {
                     transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                     className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
                     style={{
-                      background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(14,165,233,0.1))",
-                      border: "1.5px solid rgba(16,185,129,0.3)",
-                      boxShadow: "0 0 30px rgba(16,185,129,0.1)",
+                      background: "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.1))",
+                      border: "1.5px solid rgba(245,158,11,0.3)",
+                      boxShadow: "0 0 30px rgba(245,158,11,0.1)",
                     }}
                   >
-                    <Code2 size={30} style={{ color: "#10b981" }} />
+                    <Code2 size={30} style={{ color: "#f59e0b" }} />
                   </motion.div>
                   <h1
                     className="text-3xl font-extrabold tracking-tight mb-2"
                     style={{ fontFamily: "'Outfit', sans-serif" }}
                   >
                     Adyapan{" "}
-                    <span style={{ color: "#10b981" }}>CodeForge</span>
+                    <span style={{ color: "#f59e0b" }}>CodeForge</span>
                   </h1>
                   <p className="text-sm max-w-md mx-auto" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)" }}>
                     Choose what you want to do
@@ -516,7 +516,7 @@ function GenerateResult({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {copiedField === s.key ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              {copiedField === s.key ? <Check size={12} className="text-amber-400" /> : <Copy size={12} />}
               {copiedField === s.key ? "Copied" : "Copy"}
             </motion.button>
           </div>
@@ -619,9 +619,9 @@ function ProjectResult({ result, isDark }: { result: Record<string, unknown>; is
                 key={i}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold"
                 style={{
-                  background: isDark ? "rgba(14,165,233,0.1)" : "rgba(14,165,233,0.06)",
-                  color: "#0ea5e9",
-                  border: "1px solid rgba(14,165,233,0.2)",
+                  background: isDark ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
+                  color: "#f59e0b",
+                  border: "1px solid rgba(245,158,11,0.2)",
                 }}
               >
                 {t}
@@ -644,7 +644,7 @@ function ProjectResult({ result, isDark }: { result: Record<string, unknown>; is
           <div className="space-y-2">
             {features.map((f: string, i: number) => (
               <div key={i} className="flex items-start gap-2 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>
-                <span className="text-emerald-500 font-bold mt-0.5">&#10003;</span>
+                <span className="text-amber-500 font-bold mt-0.5">&#10003;</span>
                 <span>{f}</span>
               </div>
             ))}
@@ -657,7 +657,7 @@ function ProjectResult({ result, isDark }: { result: Record<string, unknown>; is
           <div className="space-y-2">
             {roadmap.map((step: string, i: number) => (
               <div key={i} className="flex items-start gap-2 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>
-                <span className="text-sky-500 font-bold mt-0.5">{i + 1}.</span>
+                <span className="text-amber-500 font-bold mt-0.5">{i + 1}.</span>
                 <span>{step}</span>
               </div>
             ))}
