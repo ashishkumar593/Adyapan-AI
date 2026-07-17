@@ -24,7 +24,7 @@ import {
   DashboardSidebar,
   DashboardTopNav,
   AdyapanUser
-} from "../../user/page";
+} from "@/app/dashboard/user/page";
 import {
   Chart as ChartJS,
   CategoryScale,
