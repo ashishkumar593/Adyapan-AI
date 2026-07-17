@@ -241,7 +241,7 @@ export default function CodingAssistantView() {
                   className="text-sm font-bold tracking-tight"
                   style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
-                  {step === "mode" ? "CodeForge Assistant" : modeConfig?.title}
+                  {step === "mode" ? "Coding Assistant" : modeConfig?.title}
                 </motion.h1>
               </AnimatePresence>
               <div className="flex items-center gap-1.5 mt-1">
@@ -334,7 +334,7 @@ export default function CodingAssistantView() {
                     className="text-3xl font-extrabold tracking-tight mb-2"
                     style={{ fontFamily: "'Outfit', sans-serif" }}
                   >
-                    Adyapan <span style={{ color: ACCENT }}>CodeForge</span>
+                    Adyapan <span style={{ color: ACCENT }}>Coding</span>
                   </motion.h1>
                   <motion.p
                     initial={{ opacity: 0, y: 8 }}
