@@ -1647,7 +1647,7 @@ function RecommendationLoadingProgress() {
 
 function AIDailyBriefing({ brief }: { brief: { text?: string; metrics?: { scoreChange?: string; strongestArea?: string; urgentRevision?: string } } | null }) {
   const [typedText, setTypedText] = useState("");
-  const fullText = (brief?.text || "").replace(/God morning/gi, "Good morning").replace(/God afternoon/gi, "Good afternoon").replace(/God evening/gi, "Good evening");
+  const fullText = (brief?.text || "").replace(/go[od]d?\s+(morning|afternoon|evening|day)/gi, (match, p1) => "Good " + p1.toLowerCase());
 
 
   useEffect(() => {

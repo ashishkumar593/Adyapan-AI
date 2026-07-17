@@ -27,14 +27,21 @@ function adjustGreetingByTime(text: string, timezone: string): string {
     greeting = "Good morning";
   }
 
-  // Regex to match any case-insensitive variant of God/Good morning/afternoon/evening/day at the start
-  const greetingRegex = /^(?:go[od]d?\s+(?:morning|afternoon|evening|day))(!|\b)/i;
+  // Replace any case-insensitive variant of God/Good morning/afternoon/evening/day
+  const greetingRegex = /go[od]d?\s+(morning|afternoon|evening|day)/gi;
   
-  if (greetingRegex.test(text.trim())) {
-    return text.replace(greetingRegex, `${greeting}$1`);
-  }
-  
-  return `${greeting}! ${text}`;
+  // First, normalize all "God/Good" to "Good"
+  let adjusted = text.replace(greetingRegex, (match, p1) => {
+    return `Good ${p1.toLowerCase()}`;
+  });
+
+  // Now adjust the time of day based on current timezone greeting
+  const timezoneGreetingRegex = /go[od]d?\s+(?:morning|afternoon|evening|day)/i;
+  adjusted = adjusted.replace(timezoneGreetingRegex, (match) => {
+    return greeting;
+  });
+
+  return adjusted;
 }
 
 export async function generateRecommendations(req: Request, res: Response): Promise<void> {
