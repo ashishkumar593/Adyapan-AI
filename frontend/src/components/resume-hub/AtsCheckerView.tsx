@@ -549,7 +549,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
         grid: { color: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
         pointLabels: {
           color: theme === "dark" ? "#9ca3af" : "#475569",
-          font: { size: 11, weight: "600" as const },
+          font: { size: 11, weight: "bold" as const },
         },
         angleLines: { color: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
       },
@@ -562,7 +562,7 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
     plugins: { legend: { display: false } },
     scales: {
       y: { beginAtZero: true, ticks: { color: theme === "dark" ? "#9ca3af" : "#475569", font: { size: 11 } }, grid: { color: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" } },
-      x: { ticks: { color: theme === "dark" ? "#9ca3af" : "#475569", font: { size: 11, weight: "600" as const } }, grid: { display: false } },
+      x: { ticks: { color: theme === "dark" ? "#9ca3af" : "#475569", font: { size: 11, weight: "bold" as const } }, grid: { display: false } },
     },
   };
 
