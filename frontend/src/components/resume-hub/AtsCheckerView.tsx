@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
@@ -258,6 +259,8 @@ function FloatingOrbs({ theme }: { theme: string }) {
 function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChange: (v: string) => void; theme: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const d = theme === "dark";
 
   useEffect(() => {
@@ -268,9 +271,71 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + window.scrollY + 8, left: r.left + window.scrollX, width: r.width });
+    }
+  }, [open]);
+
+  const dropdown = open && dropPos ? createPortal(
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        className="fixed rounded-xl overflow-hidden"
+        style={{
+          top: dropPos.top,
+          left: dropPos.left,
+          width: dropPos.width,
+          zIndex: 99999,
+          background: d ? "rgba(15,20,35,0.98)" : "#ffffff",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: `1px solid ${d ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+          boxShadow: d
+            ? "0 16px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4)"
+            : "0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)",
+          maxHeight: "260px",
+          overflowY: "auto",
+        }}
+      >
+        {ROLES.map((r) => (
+          <motion.button
+            key={r}
+            whileHover={{
+              backgroundColor: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
+            }}
+            onClick={() => { onChange(r); setOpen(false); }}
+            className="w-full flex items-center gap-2.5 px-4 py-3 text-left transition-colors"
+            style={{
+              background: r === value
+                ? d ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)"
+                : "transparent",
+              color: d ? "#e5e7eb" : "#0f172a",
+              borderBottom: `1px solid ${d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
+            }}
+          >
+            <span className="text-base w-7 text-center">{ROLE_ICONS[r] || "🎯"}</span>
+            <span className="text-sm font-medium flex-1">{r}</span>
+            {r === value && (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={AP.spring}>
+                <CheckCircle size={14} style={{ color: "#f59e0b" }} />
+              </motion.span>
+            )}
+          </motion.button>
+        ))}
+      </motion.div>
+    </AnimatePresence>,
+    document.body
+  ) : null;
+
   return (
     <div ref={ref} className="relative">
       <motion.button
+        ref={btnRef}
         whileHover={{ scale: 1.01, borderColor: "rgba(245,158,11,0.5)" }}
         whileTap={{ scale: 0.99 }}
         onClick={() => setOpen(p => !p)}
@@ -290,53 +355,7 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
           <ChevronDown size={14} style={{ color: d ? "#6b7280" : "#94a3b8" }} />
         </motion.span>
       </motion.button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute z-50 w-full mt-2 rounded-xl overflow-hidden"
-            style={{
-              background: d ? "rgba(15,20,35,0.97)" : "#ffffff",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: `1px solid ${d ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-              boxShadow: d
-                ? "0 16px 48px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)"
-                : "0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)",
-            }}
-          >
-            {ROLES.map((r) => (
-              <motion.button
-                key={r}
-                whileHover={{
-                  backgroundColor: d ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.06)",
-                }}
-                onClick={() => { onChange(r); setOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-left transition-colors"
-                style={{
-                  background: r === value
-                    ? d ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)"
-                    : "transparent",
-                  color: d ? "#e5e7eb" : "#0f172a",
-                  borderBottom: `1px solid ${d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
-                }}
-              >
-                <span className="text-base w-7 text-center">{ROLE_ICONS[r] || "🎯"}</span>
-                <span className="text-sm font-medium flex-1">{r}</span>
-                {r === value && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={AP.spring}>
-                    <CheckCircle size={14} style={{ color: "#f59e0b" }} />
-                  </motion.span>
-                )}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {dropdown}
     </div>
   );
 }
