@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { Trophy, Lock } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface MilestoneItem {
   id: string;
@@ -47,9 +48,42 @@ function ConfettiBurst({ x, y }: { x: number; y: number }) {
   );
 }
 
+// Sparkle animation for unlocked milestone hover
+function SparkleEffect() {
+  const sparkles = Array.from({ length: 6 });
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+      {sparkles.map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 rounded-full bg-amber-400"
+          style={{
+            left: `${20 + Math.random() * 60}%`,
+            top: `${20 + Math.random() * 60}%`,
+          }}
+          animate={{
+            y: [0, -15, -30],
+            x: [0, (Math.random() - 0.5) * 20],
+            opacity: [0, 1, 0],
+            scale: [0, 1.2, 0],
+          }}
+          transition={{
+            duration: 1.2,
+            repeat: Infinity,
+            delay: i * 0.2,
+            ease: "easeOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
   const [confetti, setConfetti] = useState<{ x: number; y: number; key: number } | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const theme = useTheme();
+  const isDark = theme === "dark";
 
   const handleUnlockedClick = useCallback((e: React.MouseEvent, id: string, unlocked: boolean) => {
     if (!unlocked) return;
@@ -62,6 +96,19 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
 
   const unlockedCount = milestones.filter((m) => m.unlocked).length;
   const nextMilestone = milestones.find((m) => !m.unlocked);
+
+  const C = {
+    text: isDark ? "#f3f4f6" : "#0f172a",
+    textSec: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)",
+    textMuted: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.5)",
+    textDim: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.4)",
+    textDimmer: isDark ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.35)",
+    textDimmest: isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.25)",
+    trackBg: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+    lockedBg: isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.015)",
+    lockedBorder: isDark ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.05)",
+    lockOverlay: isDark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.5)",
+  };
 
   return (
     <div className="space-y-4">
@@ -79,14 +126,14 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">Next Milestone</span>
-                <span className="text-[10px] font-bold text-white/50">Locked</span>
+                <span className="text-[10px] font-bold" style={{ color: C.textMuted }}>Locked</span>
               </div>
-              <h4 className="text-sm font-extrabold text-white mt-1">{nextMilestone.title}</h4>
-              <p className="text-xs text-white/60 mt-0.5">{nextMilestone.description}</p>
+              <h4 className="text-sm font-extrabold mt-1" style={{ color: C.text }}>{nextMilestone.title}</h4>
+              <p className="text-xs mt-0.5" style={{ color: C.textSec }}>{nextMilestone.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40 font-medium">Goal Focus: Increase concept coverage & practice</span>
+            <span className="text-xs font-medium" style={{ color: C.textDim }}>Goal Focus: Increase concept coverage & practice</span>
           </div>
         </motion.div>
       )}
@@ -94,10 +141,10 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
       {/* Header stats */}
       <div className="flex items-center gap-3 mb-2">
         <Trophy size={18} className="text-amber-400" />
-        <span className="text-sm font-bold text-white/60">
+        <span className="text-sm font-bold" style={{ color: C.textSec }}>
           <span className="text-amber-400 font-black">{unlockedCount}</span> / {milestones.length} Achievements Unlocked
         </span>
-        <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: C.trackBg }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${(unlockedCount / milestones.length) * 100}%` }}
@@ -119,18 +166,26 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
             onClick={(e) => handleUnlockedClick(e, milestone.id, milestone.unlocked)}
             onHoverStart={() => setHoveredId(milestone.id)}
             onHoverEnd={() => setHoveredId(null)}
-            className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border text-center cursor-pointer select-none transition-all duration-200 ${
-              milestone.unlocked
-                ? "border-amber-400/30 bg-amber-400/[0.06] hover:border-amber-400/50"
-                : "border-white/[0.05] bg-white/[0.01] opacity-50 cursor-default"
-            }`}
+            className="relative flex flex-col items-center gap-2 p-4 rounded-2xl border text-center cursor-pointer select-none transition-all duration-200"
+            style={{
+              borderColor: milestone.unlocked ? "rgba(245,158,11,0.3)" : C.lockedBorder,
+              backgroundColor: milestone.unlocked ? "rgba(245,158,11,0.06)" : C.lockedBg,
+              opacity: milestone.unlocked ? 1 : 0.5,
+              cursor: milestone.unlocked ? "pointer" : "default",
+            }}
           >
             {/* Lock overlay */}
             {!milestone.unlocked && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 z-10">
+              <div
+                className="absolute inset-0 flex items-center justify-center rounded-2xl z-10"
+                style={{ backgroundColor: C.lockOverlay }}
+              >
                 <Lock size={20} className="text-white/30" />
               </div>
             )}
+
+            {/* Sparkle effect on unlocked hover */}
+            {milestone.unlocked && hoveredId === milestone.id && <SparkleEffect />}
 
             {/* Unlock glow */}
             {milestone.unlocked && (
@@ -151,10 +206,10 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
 
             {/* Content */}
             <div>
-              <p className={`text-xs font-bold leading-tight ${milestone.unlocked ? "text-white" : "text-white/30"}`}>
+              <p className="text-xs font-bold leading-tight" style={{ color: milestone.unlocked ? C.text : C.textDimmer }}>
                 {milestone.title}
               </p>
-              <p className={`text-[10px] mt-0.5 leading-tight ${milestone.unlocked ? "text-white/50" : "text-white/20"}`}>
+              <p className="text-[10px] mt-0.5 leading-tight" style={{ color: milestone.unlocked ? C.textMuted : C.textDimmest }}>
                 {milestone.description}
               </p>
             </div>
@@ -181,4 +236,3 @@ export function MilestoneSystem({ milestones }: MilestoneSystemProps) {
     </div>
   );
 }
-

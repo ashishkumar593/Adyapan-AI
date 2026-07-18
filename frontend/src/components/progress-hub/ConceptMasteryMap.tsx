@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Brain } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface ConceptMasteryItem {
   conceptName: string;
@@ -25,7 +26,7 @@ const STATUS_CONFIG = {
   "Weak Area": { color: "#ef4444", bg: "rgba(239,68,68,0.12)", label: "Weak Area", stroke: "#ef4444" },
 };
 
-function MasteryRing({ score, status, size = 64 }: { score: number; status: string; size?: number }) {
+function MasteryRing({ score, status, size = 64, isDark = true }: { score: number; status: string; size?: number; isDark?: boolean }) {
   const cfg = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG["Weak Area"];
   const radius = size / 2 - 6;
   const circumference = 2 * Math.PI * radius;
@@ -34,7 +35,7 @@ function MasteryRing({ score, status, size = 64 }: { score: number; status: stri
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
-      <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+      <circle cx={center} cy={center} r={radius} fill="none" stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"} strokeWidth="5" />
       <motion.circle
         cx={center}
         cy={center}
@@ -54,12 +55,15 @@ function MasteryRing({ score, status, size = 64 }: { score: number; status: stri
 }
 
 export function ConceptMasteryMap({ concepts }: ConceptMasteryMapProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   if (concepts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Brain size={48} className="text-white/20 mb-4" />
-        <p className="text-white/40 font-semibold">No concept mastery data yet</p>
-        <p className="text-white/25 text-sm mt-1">Start studying topics to see concept mastery mapping</p>
+        <Brain size={48} style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.2)" }} className="mb-4" />
+        <p className="font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)" }}>No concept mastery data yet</p>
+        <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>Start studying topics to see concept mastery mapping</p>
       </div>
     );
   }
@@ -104,20 +108,20 @@ export function ConceptMasteryMap({ concepts }: ConceptMasteryMapProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04, duration: 0.4 }}
-              whileHover={{ scale: 1.04, y: -2 }}
+              whileHover={{ scale: 1.04, y: -2, boxShadow: `0 0 20px ${cfg.stroke}20` }}
               className="flex flex-col items-center gap-2 p-4 rounded-2xl border cursor-default transition-all duration-200"
               style={{ borderColor: `${cfg.stroke}25`, background: `${cfg.bg}` }}
             >
               <div className="relative">
-                <MasteryRing score={concept.masteryScore} status={concept.status} size={56} />
+                <MasteryRing score={concept.masteryScore} status={concept.status} size={56} isDark={isDark} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-xs font-black" style={{ color: cfg.color }}>{concept.masteryScore}%</span>
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-xs font-bold text-white leading-tight">{concept.conceptName}</p>
+                <p className="text-xs font-bold leading-tight" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>{concept.conceptName}</p>
                 {concept.topicName && (
-                  <p className="text-[10px] text-white/35 mt-0.5">{concept.topicName}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>{concept.topicName}</p>
                 )}
               </div>
               <span
@@ -133,4 +137,3 @@ export function ConceptMasteryMap({ concepts }: ConceptMasteryMapProps) {
     </div>
   );
 }
-

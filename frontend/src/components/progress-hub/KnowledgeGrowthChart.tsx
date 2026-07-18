@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { TrendingUp } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface GrowthDataPoint {
   period: string;
@@ -23,7 +24,7 @@ const METRICS = [
   { key: "documentsStudied", label: "Documents", color: "#3b82f6" },
 ];
 
-function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof METRICS }) {
+function BarChart({ data, metrics, isDark }: { data: GrowthDataPoint[]; metrics: typeof METRICS; isDark: boolean }) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; item: GrowthDataPoint } | null>(null);
 
   // Find max value across selected metrics
@@ -40,7 +41,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
       <div className="flex">
         <div className="w-8 flex flex-col justify-between text-right pr-2">
           {[maxVal, Math.round(maxVal * 0.5), 0].map((v) => (
-            <span key={v} className="text-[10px] text-white/25 font-semibold">{v}</span>
+            <span key={v} className="text-[10px] font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>{v}</span>
           ))}
         </div>
 
@@ -49,7 +50,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
           {/* Grid lines */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="w-full h-px bg-white/[0.04]" />
+              <div key={i} className="w-full h-px" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)" }} />
             ))}
           </div>
 
@@ -76,7 +77,10 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
                       initial={{ height: 0 }}
                       animate={{ height: `${Math.max(h, 2)}%` }}
                       transition={{ duration: 0.8, delay: di * 0.05 + mi * 0.02, ease: "easeOut" }}
-                      whileHover={{ backgroundColor: m.color }}
+                      whileHover={{
+                        backgroundColor: m.color,
+                        boxShadow: `0 0 12px ${m.color}40`,
+                      }}
                     />
                   );
                 })}
@@ -88,7 +92,7 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
           <div className="flex gap-2 px-1 mt-1">
             {data.map((item) => (
               <div key={item.period} className="flex-1 text-center">
-                <span className="text-[9px] text-white/25 font-semibold truncate block">{item.period}</span>
+                <span className="text-[9px] font-semibold truncate block" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>{item.period}</span>
               </div>
             ))}
           </div>
@@ -100,15 +104,20 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
         <motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed z-50 bg-[#111120] border border-white/10 rounded-xl p-3 shadow-2xl text-xs pointer-events-none"
-          style={{ left: tooltip.x - 70, top: tooltip.y - 120 }}
+          className="fixed z-50 border rounded-xl p-3 shadow-2xl text-xs pointer-events-none"
+          style={{
+            left: tooltip.x - 70,
+            top: tooltip.y - 120,
+            backgroundColor: isDark ? "#111120" : "#ffffff",
+            borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.1)",
+          }}
         >
-          <p className="text-white/60 font-bold mb-2">{tooltip.item.period}</p>
+          <p className="font-bold mb-2" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)" }}>{tooltip.item.period}</p>
           {metrics.map((m) => (
             <div key={m.key} className="flex items-center gap-2 mb-1">
               <div className="w-2 h-2 rounded-full" style={{ background: m.color }} />
-              <span className="text-white/60">{m.label}:</span>
-              <span className="text-white font-bold">{tooltip.item[m.key as keyof GrowthDataPoint]}</span>
+              <span style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)" }}>{m.label}:</span>
+              <span className="font-bold" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>{tooltip.item[m.key as keyof GrowthDataPoint]}</span>
             </div>
           ))}
         </motion.div>
@@ -118,6 +127,8 @@ function BarChart({ data, metrics }: { data: GrowthDataPoint[]; metrics: typeof 
 }
 
 export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
   const [activeMetrics, setActiveMetrics] = useState<Set<string>>(
     new Set(["conceptsLearned", "questionsPracticed"])
   );
@@ -125,9 +136,9 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <TrendingUp size={48} className="text-white/20 mb-4" />
-        <p className="text-white/40 font-semibold">No growth data yet</p>
-        <p className="text-white/25 text-sm mt-1">Keep studying to see your knowledge growth over time</p>
+        <TrendingUp size={48} style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.2)" }} className="mb-4" />
+        <p className="font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)" }}>No growth data yet</p>
+        <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>Keep studying to see your knowledge growth over time</p>
       </div>
     );
   }
@@ -156,14 +167,17 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => toggleMetric(m.key)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 ${
-              activeMetrics.has(m.key)
-                ? "border-white/20 text-white"
-                : "border-white/[0.06] text-white/30 hover:text-white/50"
-            }`}
-            style={activeMetrics.has(m.key) ? { backgroundColor: `${m.color}15`, borderColor: `${m.color}40` } : {}}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200"
+            style={activeMetrics.has(m.key) ? {
+              backgroundColor: `${m.color}15`,
+              borderColor: `${m.color}40`,
+              color: isDark ? "#f3f4f6" : "#0f172a",
+            } : {
+              borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)",
+              color: isDark ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.35)",
+            }}
           >
-            <div className="w-2 h-2 rounded-full" style={{ background: activeMetrics.has(m.key) ? m.color : "rgba(255,255,255,0.2)" }} />
+            <div className="w-2 h-2 rounded-full" style={{ background: activeMetrics.has(m.key) ? m.color : (isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.2)") }} />
             {m.label}
           </motion.button>
         ))}
@@ -176,7 +190,7 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <BarChart data={data} metrics={selectedMetrics} />
+        <BarChart data={data} metrics={selectedMetrics} isDark={isDark} />
       </motion.div>
 
       {/* Summary stats */}
@@ -187,14 +201,19 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
           return (
             <div
               key={m.key}
-              className={`text-center p-3 rounded-xl border transition-all ${
-                isActive ? "border-white/10 bg-white/[0.03]" : "border-white/[0.04] opacity-40"
-              }`}
+              className="text-center p-3 rounded-xl border transition-all"
+              style={isActive ? {
+                borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)",
+                backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
+              } : {
+                borderColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(15,23,42,0.04)",
+                opacity: 0.4,
+              }}
             >
-              <div className="text-xl font-black" style={{ color: isActive ? m.color : "rgba(255,255,255,0.3)" }}>
+              <div className="text-xl font-black" style={{ color: isActive ? m.color : (isDark ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.3)") }}>
                 {total}
               </div>
-              <div className="text-[10px] text-white/35 font-semibold mt-0.5">{m.label}</div>
+              <div className="text-[10px] font-semibold mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>{m.label}</div>
             </div>
           );
         })}
@@ -202,4 +221,3 @@ export function KnowledgeGrowthChart({ data }: KnowledgeGrowthChartProps) {
     </div>
   );
 }
-

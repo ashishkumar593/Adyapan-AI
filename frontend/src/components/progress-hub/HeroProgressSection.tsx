@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TrendingUp, Target, Zap, BookOpen, BarChart3, Flame } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 interface HeroProgressSectionProps {
   overallProgress: number;
@@ -55,9 +56,26 @@ export function HeroProgressSection({
   masteryScore,
   masteryGrade,
 }: HeroProgressSectionProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
   const colors = LEVEL_COLORS[learningLevel] || LEVEL_COLORS[1];
   const circumference = 2 * Math.PI * 56;
   const strokeDash = ((100 - overallProgress) / 100) * circumference;
+
+  const C = {
+    border: isDark ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)",
+    cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.75)",
+    cardBgHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.9)",
+    ringTrack: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+    text: isDark ? "#f3f4f6" : "#0f172a",
+    textSec: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.55)",
+    textMuted: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.45)",
+    textSub: isDark ? "rgba(255,255,255,0.8)" : "rgba(15,23,42,0.8)",
+    labelBg: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+    labelBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)",
+    statCardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)",
+    statCardBorder: isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)",
+  };
 
   const stats = [
     { icon: BookOpen, label: "Topics Completed", value: topicsCompleted, color: "text-violet-400" },
@@ -71,7 +89,8 @@ export function HeroProgressSection({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8"
+      className="relative overflow-hidden rounded-3xl backdrop-blur-xl p-8 transition-colors duration-500"
+      style={{ border: `1px solid ${C.border}`, backgroundColor: C.cardBg }}
     >
       {/* Background glow */}
       <div
@@ -85,7 +104,7 @@ export function HeroProgressSection({
           <div className="relative">
             <svg width="144" height="144" className="rotate-[-90deg]" viewBox="0 0 128 128">
               {/* Background ring */}
-              <circle cx="64" cy="64" r="56" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+              <circle cx="64" cy="64" r="56" fill="none" stroke={C.ringTrack} strokeWidth="8" />
               {/* Progress ring */}
               <motion.circle
                 cx="64"
@@ -107,12 +126,20 @@ export function HeroProgressSection({
                 </linearGradient>
               </defs>
             </svg>
+            {/* Glow pulse animation overlay */}
+            <motion.div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.3, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              style={{ boxShadow: `0 0 30px ${colors.glow}40, 0 0 60px ${colors.glow}20` }}
+            />
             {/* Center content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-black text-white">
+              <span className="text-4xl font-black" style={{ color: C.text }}>
                 <CountUp target={overallProgress} />%
               </span>
-              <span className="text-xs text-white/50 font-semibold mt-1">Progress</span>
+              <span className="text-xs font-semibold mt-1" style={{ color: C.textSec }}>Progress</span>
             </div>
           </div>
 
@@ -131,20 +158,23 @@ export function HeroProgressSection({
         {/* Main Info */}
         <div className="flex-1 text-center lg:text-left">
           <div className="flex items-center gap-2 justify-center lg:justify-start mb-2">
-            <TrendingUp size={16} className="text-white/40" />
-            <span className="text-xs font-bold text-white/40 tracking-widest uppercase">Learning Progress Overview</span>
+            <TrendingUp size={16} style={{ color: C.textMuted }} />
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: C.textMuted }}>Learning Progress Overview</span>
           </div>
 
-          <h1 className="text-3xl lg:text-4xl font-black text-white mb-2 leading-tight">
+          <h1 className="text-3xl lg:text-4xl font-black mb-2 leading-tight" style={{ color: C.text }}>
             Your Learning Journey
           </h1>
-          <p className="text-white/50 text-sm mb-1">
-            Mastery Score: <span className="text-white/80 font-bold">{masteryScore}%</span>{" "}
+          <p className="text-sm mb-1" style={{ color: C.textSec }}>
+            Mastery Score: <span className="font-bold" style={{ color: C.textSub }}>{masteryScore}%</span>{" "}
             · Grade: <span className="font-bold" style={{ color: colors.ring }}>{masteryGrade}</span>
           </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-6"
+            style={{ backgroundColor: C.labelBg, border: `1px solid ${C.labelBorder}` }}
+          >
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-bold text-white/70">{status}</span>
+            <span className="text-xs font-bold" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(15,23,42,0.7)" }}>{status}</span>
           </div>
 
           {/* Stats Grid */}
@@ -155,14 +185,16 @@ export function HeroProgressSection({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
-                className="flex flex-col items-center lg:items-start gap-1 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                whileHover={{ scale: 1.04, boxShadow: isDark ? "0 0 20px rgba(255,255,255,0.03)" : "0 0 20px rgba(0,0,0,0.04)" }}
+                className="flex flex-col items-center lg:items-start gap-1 p-4 rounded-2xl transition-colors duration-300 cursor-default"
+                style={{ backgroundColor: C.statCardBg, border: `1px solid ${C.statCardBorder}` }}
               >
                 <s.icon size={18} className={s.color} />
                 <div className={`text-2xl font-black ${s.color}`}>
                   <CountUp target={s.value} duration={1200} />
                   {s.label === "Day Streak" && <span className="text-base">🔥</span>}
                 </div>
-                <span className="text-[11px] text-white/40 font-semibold leading-tight">{s.label}</span>
+                <span className="text-[11px] font-semibold leading-tight" style={{ color: C.textMuted }}>{s.label}</span>
               </motion.div>
             ))}
           </div>
@@ -171,4 +203,3 @@ export function HeroProgressSection({
     </motion.div>
   );
 }
-

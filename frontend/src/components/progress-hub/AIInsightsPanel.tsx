@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Sparkles, BookOpen, RotateCcw, Brain, Target, ArrowRight, Lightbulb } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface RecommendationItem {
   type: "study" | "revise" | "practice" | "improve";
@@ -31,6 +32,22 @@ const PRIORITY_BADGE = {
 };
 
 export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
+  const C = {
+    text: isDark ? "#f3f4f6" : "#0f172a",
+    textSec: isDark ? "rgba(255,255,255,0.7)" : "rgba(15,23,42,0.7)",
+    textMuted: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.5)",
+    textDim: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)",
+    insightBg: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.7)",
+    insightBorder: isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)",
+    insightHover: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.9)",
+    iconBg: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+    actionBg: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+    actionBorder: isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)",
+  };
+
   return (
     <div className="space-y-8">
       {/* AI Insights */}
@@ -40,7 +57,7 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
             <div className="p-1.5 rounded-lg bg-amber-400/10">
               <Lightbulb size={16} className="text-amber-400" />
             </div>
-            <h3 className="text-sm font-bold text-white/70">AI Insights</h3>
+            <h3 className="text-sm font-bold" style={{ color: C.textSec }}>AI Insights</h3>
           </div>
           <div className="space-y-3">
             {insights.map((insight, i) => (
@@ -49,12 +66,16 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="flex gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors"
+                className="flex gap-3 p-4 rounded-2xl transition-colors"
+                style={{
+                  backgroundColor: C.insightBg,
+                  border: `1px solid ${C.insightBorder}`,
+                }}
               >
                 <div className="flex-shrink-0 mt-0.5">
                   <Sparkles size={14} className="text-amber-400" />
                 </div>
-                <p className="text-sm text-white/70 leading-relaxed">{insight}</p>
+                <p className="text-sm leading-relaxed" style={{ color: C.textSec }}>{insight}</p>
               </motion.div>
             ))}
           </div>
@@ -68,7 +89,7 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
             <div className="p-1.5 rounded-lg bg-violet-400/10">
               <Brain size={16} className="text-violet-400" />
             </div>
-            <h3 className="text-sm font-bold text-white/70">Next Learning Actions</h3>
+            <h3 className="text-sm font-bold" style={{ color: C.textSec }}>Next Learning Actions</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {recommendations.map((rec, i) => {
@@ -81,9 +102,19 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                   whileHover={{ scale: 1.02, y: -2 }}
-                  className={`group relative p-5 rounded-2xl border bg-gradient-to-br ${cfg.bg} ${cfg.border} cursor-default transition-all duration-300`}
+                  className={`group relative p-5 rounded-2xl border bg-gradient-to-br ${cfg.bg} ${cfg.border} cursor-default transition-all duration-300 overflow-hidden`}
                   style={{ boxShadow: `0 4px 20px ${cfg.glow}10` }}
                 >
+                  {/* Hover shimmer */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(105deg, transparent 40%, ${cfg.glow}08 45%, ${cfg.glow}15 50%, ${cfg.glow}08 55%, transparent 60%)`,
+                      backgroundSize: "200% 100%",
+                      animation: "shimmerSlide 2s ease-in-out infinite",
+                    }}
+                  />
+
                   {/* Hover glow */}
                   <div
                     className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -94,7 +125,7 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded-lg bg-white/5`}>
+                        <div className="p-1.5 rounded-lg" style={{ backgroundColor: C.iconBg }}>
                           <IconComponent size={14} className={cfg.color} />
                         </div>
                         <span className={`text-xs font-black ${cfg.color} uppercase tracking-wider`}>{rec.title}</span>
@@ -105,13 +136,16 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
                     </div>
 
                     {/* Recommendation */}
-                    <p className="text-sm font-bold text-white mb-1.5">{rec.recommendation}</p>
-                    <p className="text-xs text-white/50 mb-3 leading-relaxed">{rec.reason}</p>
+                    <p className="text-sm font-bold mb-1.5" style={{ color: C.text }}>{rec.recommendation}</p>
+                    <p className="text-xs mb-3 leading-relaxed" style={{ color: C.textMuted }}>{rec.reason}</p>
 
                     {/* Action */}
-                    <div className={`flex items-start gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06]`}>
+                    <div
+                      className="flex items-start gap-2 p-2.5 rounded-xl"
+                      style={{ backgroundColor: C.actionBg, border: `1px solid ${C.actionBorder}` }}
+                    >
                       <ArrowRight size={12} className={`${cfg.color} flex-shrink-0 mt-0.5`} />
-                      <p className="text-[11px] text-white/60 leading-relaxed">{rec.action}</p>
+                      <p className="text-[11px] leading-relaxed" style={{ color: C.textDim }}>{rec.action}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -120,7 +154,13 @@ export function AIInsightsPanel({ insights, recommendations }: AIInsightsPanelPr
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes shimmerSlide {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </div>
   );
 }
-

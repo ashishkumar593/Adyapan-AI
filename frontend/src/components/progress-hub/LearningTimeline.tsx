@@ -3,6 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { FileText, Clock, HelpCircle, RotateCcw, Layers, Map } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface TimelineEvent {
   date: string;
@@ -27,7 +28,7 @@ const TYPE_STYLES = {
   milestone: { color: "from-orange-500 to-red-500", icon: Clock, glow: "#f97316" },
 };
 
-function TimelineItem({ event, index }: { event: TimelineEvent; index: number }) {
+function TimelineItem({ event, index, isDark }: { event: TimelineEvent; index: number; isDark: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
   const style = TYPE_STYLES[event.type] || TYPE_STYLES.note;
@@ -47,40 +48,51 @@ function TimelineItem({ event, index }: { event: TimelineEvent; index: number })
           initial={{ scale: 0 }}
           animate={inView ? { scale: 1 } : {}}
           transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-          className={`w-10 h-10 rounded-full bg-gradient-to-br ${style.color} flex items-center justify-center shadow-lg`}
+          className={`w-10 h-10 rounded-full bg-gradient-to-br ${style.color} flex items-center justify-center shadow-lg relative`}
           style={{ boxShadow: `0 0 16px ${style.glow}40` }}
         >
-          <span className="text-sm">{event.icon}</span>
+          {/* Pulse animation for active dot */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ background: `radial-gradient(circle, ${style.glow}30, transparent)` }}
+          />
+          <span className="text-sm relative z-10">{event.icon}</span>
         </motion.div>
         {/* Line */}
-        <div className="w-0.5 h-full bg-white/[0.06] mt-1" />
+        <div className="w-0.5 h-full mt-1" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} />
       </div>
 
       {/* Card */}
       <motion.div
         whileHover={{ x: 4 }}
-        className="flex-1 mb-6 pb-6 border-b border-white/[0.04] last:border-0"
+        className="flex-1 mb-6 pb-6 last:border-0"
+        style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)"}` }}
       >
         <div className="flex items-center gap-2 mb-1">
-          <IconComponent size={12} className="text-white/40" />
-          <span className="text-[11px] font-bold text-white/40 tracking-wider">{event.displayDate}</span>
+          <IconComponent size={12} style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.4)" }} />
+          <span className="text-[11px] font-bold tracking-wider" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.45)" }}>{event.displayDate}</span>
         </div>
-        <h4 className="text-sm font-bold text-white group-hover:text-white/90 transition-colors leading-tight">
+        <h4 className="text-sm font-bold leading-tight" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>
           {event.title}
         </h4>
-        <p className="text-xs text-white/40 mt-0.5 leading-relaxed">{event.description}</p>
+        <p className="text-xs mt-0.5 leading-relaxed" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.45)" }}>{event.description}</p>
       </motion.div>
     </motion.div>
   );
 }
 
 export function LearningTimeline({ events }: LearningTimelineProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Clock size={48} className="text-white/20 mb-4" />
-        <p className="text-white/40 font-semibold">Your timeline is empty</p>
-        <p className="text-white/25 text-sm mt-1">Start using AI tools to build your learning journey</p>
+        <Clock size={48} style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.2)" }} className="mb-4" />
+        <p className="font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)" }}>Your timeline is empty</p>
+        <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>Start using AI tools to build your learning journey</p>
       </div>
     );
   }
@@ -89,10 +101,9 @@ export function LearningTimeline({ events }: LearningTimelineProps) {
     <div className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
       <div className="space-y-0">
         {events.map((event, i) => (
-          <TimelineItem key={`${event.date}-${i}`} event={event} index={i} />
+          <TimelineItem key={`${event.date}-${i}`} event={event} index={i} isDark={isDark} />
         ))}
       </div>
     </div>
   );
 }
-

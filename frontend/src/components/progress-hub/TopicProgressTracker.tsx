@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, AlertCircle, TrendingUp, Brain } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface TopicProgressItem {
   topicName: string;
@@ -35,12 +36,15 @@ function daysSince(isoDate: string): string {
 }
 
 export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   if (topics.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Brain size={48} className="text-white/20 mb-4" />
-        <p className="text-white/40 font-semibold">No topics tracked yet</p>
-        <p className="text-white/25 text-sm mt-1">Upload a document and use AI tools to start tracking topics</p>
+        <Brain size={48} style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.2)" }} className="mb-4" />
+        <p className="font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)" }}>No topics tracked yet</p>
+        <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>Upload a document and use AI tools to start tracking topics</p>
       </div>
     );
   }
@@ -60,7 +64,11 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08, duration: 0.5 }}
             whileHover={{ scale: 1.01, y: -2 }}
-            className="group relative p-5 rounded-2xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 cursor-default"
+            className="group relative p-5 rounded-2xl transition-all duration-300 cursor-default"
+            style={{
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"}`,
+              backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.7)",
+            }}
           >
             {/* Hover glow */}
             <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r ${cfg.barColor} blur-xl`} style={{ opacity: 0.03 }} />
@@ -69,8 +77,8 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-base font-bold text-white group-hover:text-white transition-colors">{topic.topicName}</h3>
-                  <p className="text-xs text-white/40 mt-0.5 flex items-center gap-1">
+                  <h3 className="text-base font-bold" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>{topic.topicName}</h3>
+                  <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.45)" }}>
                     <Clock size={10} /> {daysSince(topic.lastActivity)}
                   </p>
                 </div>
@@ -83,17 +91,28 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
               {/* Progress bar */}
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-white/50">Progress</span>
+                  <span className="text-xs font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.5)" }}>Progress</span>
                   <span className={`text-sm font-black ${cfg.color}`}>{topic.progressPercentage}%</span>
                 </div>
-                <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-2.5 rounded-full overflow-hidden"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)" }}
+                >
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${topic.progressPercentage}%` }}
                     transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 + i * 0.05 }}
-                    className={`h-full rounded-full bg-gradient-to-r ${cfg.barColor} relative`}
+                    className={`h-full rounded-full bg-gradient-to-r ${cfg.barColor} relative overflow-hidden`}
                   >
-                    <div className="absolute inset-0 animate-pulse opacity-50 rounded-full bg-white/30" />
+                    {/* Shimmer effect */}
+                    <motion.div
+                      className="absolute inset-0"
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1.5 + i * 0.1 }}
+                      style={{
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+                      }}
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -101,25 +120,25 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
               {/* Stats row */}
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="font-bold text-white/70">{topic.conceptsCovered}/{topic.totalConcepts}</span>
-                  <span className="text-white/35">Concepts</span>
+                  <span className="font-bold" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(15,23,42,0.7)" }}>{topic.conceptsCovered}/{topic.totalConcepts}</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>Concepts</span>
                 </div>
-                <div className="w-px h-8 bg-white/10" />
+                <div className="w-px h-8" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }} />
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="font-bold text-white/70">{topic.questionsPracticed}</span>
-                  <span className="text-white/35">Questions</span>
+                  <span className="font-bold" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(15,23,42,0.7)" }}>{topic.questionsPracticed}</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>Questions</span>
                 </div>
-                <div className="w-px h-8 bg-white/10" />
+                <div className="w-px h-8" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }} />
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="font-bold text-white/70">{topic.masteryScore}%</span>
-                  <span className="text-white/35">Mastery</span>
+                  <span className="font-bold" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(15,23,42,0.7)" }}>{topic.masteryScore}%</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>Mastery</span>
                 </div>
-                <div className="w-px h-8 bg-white/10" />
+                <div className="w-px h-8" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }} />
                 <div className="flex flex-col items-center gap-0.5">
                   <span className={`font-bold ${topic.revisionStatus ? "text-emerald-400" : "text-amber-400"}`}>
                     {topic.revisionStatus ? "✓ Done" : "Pending"}
                   </span>
-                  <span className="text-white/35">Revision</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.35)" }}>Revision</span>
                 </div>
               </div>
             </div>
@@ -129,4 +148,3 @@ export function TopicProgressTracker({ topics }: TopicProgressTrackerProps) {
     </div>
   );
 }
-

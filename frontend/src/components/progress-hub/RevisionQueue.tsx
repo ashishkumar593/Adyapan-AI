@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { AlertTriangle, Clock, ChevronRight, RotateCcw } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface RevisionQueueItem {
   topicName: string;
@@ -43,12 +44,15 @@ const PRIORITY_CONFIG = {
 };
 
 export function RevisionQueue({ queue }: RevisionQueueProps) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   if (queue.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <RotateCcw size={48} className="text-emerald-400/40 mb-4" />
-        <p className="text-white/40 font-semibold">You are all caught up!</p>
-        <p className="text-white/25 text-sm mt-1">No topics need revision right now. Keep studying!</p>
+        <p className="font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)" }}>You are all caught up!</p>
+        <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.3)" }}>No topics need revision right now. Keep studying!</p>
       </div>
     );
   }
@@ -70,7 +74,7 @@ export function RevisionQueue({ queue }: RevisionQueueProps) {
             <Clock size={11} /> {medCount} Medium Priority
           </span>
         )}
-        <span className="text-xs text-white/30">{queue.length} topics need revision</span>
+        <span className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.35)" }}>{queue.length} topics need revision</span>
       </div>
 
       {/* Cards */}
@@ -85,6 +89,9 @@ export function RevisionQueue({ queue }: RevisionQueueProps) {
               transition={{ delay: i * 0.08, duration: 0.5 }}
               whileHover={{ x: 4, scale: 1.01 }}
               className={`group flex items-center gap-4 p-4 rounded-2xl border ${cfg.border} ${cfg.bg} transition-all duration-200 cursor-default`}
+              style={item.priority === "High" ? {
+                animation: "urgencyPulse 3s ease-in-out infinite",
+              } : {}}
             >
               {/* Priority indicator */}
               <div className="flex-shrink-0 w-1.5 h-12 rounded-full bg-gradient-to-b" style={{ background: `linear-gradient(to bottom, ${cfg.glow}, ${cfg.glow}40)` }} />
@@ -92,25 +99,25 @@ export function RevisionQueue({ queue }: RevisionQueueProps) {
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="text-sm font-bold text-white">{item.topicName}</h4>
+                  <h4 className="text-sm font-bold" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>{item.topicName}</h4>
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${cfg.badge}`}>
                     {item.priority} Priority
                   </span>
                 </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                <div className="flex items-center gap-3 mt-1 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.45)" }}>
                   <span className="flex items-center gap-1">
                     <Clock size={10} />
                     Last revised {item.daysSince} days ago
                   </span>
                   <span>·</span>
-                  <span>Mastery: <span className="font-bold text-white/60">{item.masteryScore}%</span></span>
+                  <span>Mastery: <span className="font-bold" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)" }}>{item.masteryScore}%</span></span>
                 </div>
               </div>
 
               {/* Days since badge */}
               <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                 <span className={`text-2xl font-black ${cfg.color}`}>{item.daysSince}</span>
-                <span className="text-[9px] text-white/30 font-semibold">DAYS</span>
+                <span className="text-[9px] font-semibold" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.3)" }}>DAYS</span>
               </div>
 
               {/* Arrow */}
@@ -119,7 +126,14 @@ export function RevisionQueue({ queue }: RevisionQueueProps) {
           );
         })}
       </div>
+
+      {/* Urgency pulse animation for high priority */}
+      <style>{`
+        @keyframes urgencyPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+          50% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+        }
+      `}</style>
     </div>
   );
 }
-

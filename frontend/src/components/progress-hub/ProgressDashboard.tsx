@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
+import { useTheme } from "@/hooks/useTheme";
 import { HeroProgressSection } from "./HeroProgressSection";
 import { TopicProgressTracker, type TopicProgressItem } from "./TopicProgressTracker";
 import { ConceptMasteryMap, type ConceptMasteryItem } from "./ConceptMasteryMap";
@@ -54,6 +55,8 @@ const LOADING_STEPS = [
 
 function LoadingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
+  const theme = useTheme();
+  const isDark = theme === "dark";
 
   useEffect(() => {
     const timers = LOADING_STEPS.map((_, i) =>
@@ -79,7 +82,7 @@ function LoadingScreen() {
         </div>
       </motion.div>
 
-      <h3 className="text-lg font-bold text-white mb-6">Analyzing Your Learning Journey</h3>
+      <h3 className="text-lg font-bold mb-6" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>Analyzing Your Learning Journey</h3>
 
       <div className="w-full max-w-sm space-y-3">
         {LOADING_STEPS.map((step, i) => (
@@ -99,8 +102,9 @@ function LoadingScreen() {
                   ? "bg-emerald-500"
                   : i === currentStep
                   ? "bg-violet-500 animate-pulse"
-                  : "bg-white/10"
+                  : ""
               }`}
+              style={i >= currentStep && i !== currentStep ? { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" } : {}}
             >
               {i < currentStep && (
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -108,7 +112,7 @@ function LoadingScreen() {
                 </svg>
               )}
             </motion.div>
-            <span className={`text-sm font-semibold ${i <= currentStep ? "text-white/80" : "text-white/20"}`}>
+            <span className="text-sm font-semibold" style={{ color: i <= currentStep ? (isDark ? "rgba(255,255,255,0.8)" : "rgba(15,23,42,0.8)") : (isDark ? "rgba(255,255,255,0.2)" : "rgba(15,23,42,0.25)") }}>
               {step}
             </span>
           </motion.div>
@@ -121,6 +125,8 @@ function LoadingScreen() {
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState({ onCalculate }: { onCalculate: () => void }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -141,8 +147,8 @@ function EmptyState({ onCalculate }: { onCalculate: () => void }) {
       >
         🎓
       </motion.div>
-      <h2 className="text-2xl font-black text-white mb-3">Your Learning Journey Starts Here</h2>
-      <p className="text-white/50 text-sm max-w-md mb-8 leading-relaxed">
+      <h2 className="text-2xl font-black mb-3" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>Your Learning Journey Starts Here</h2>
+      <p className="text-sm max-w-md mb-8 leading-relaxed" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.55)" }}>
         Upload your first document and use AI tools to unlock intelligent progress tracking, 
         concept mastery mapping, and personalized learning insights.
       </p>
@@ -170,6 +176,9 @@ function Section({
   children: React.ReactNode;
   id?: string;
 }) {
+  const theme = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <motion.section
       id={id}
@@ -177,13 +186,17 @@ function Section({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="p-6 rounded-3xl border border-white/[0.07] bg-white/[0.02] backdrop-blur-sm"
+      className="p-6 rounded-3xl backdrop-blur-sm transition-colors duration-500"
+      style={{
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"}`,
+        backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.75)",
+      }}
     >
       <div className="flex items-center gap-3 mb-6">
         <div className={`p-2 rounded-xl ${iconColor.replace("text-", "bg-").replace("400", "400/10").replace("500", "500/10")}`}>
           <Icon size={18} className={iconColor} />
         </div>
-        <h2 className="text-base font-bold text-white">{title}</h2>
+        <h2 className="text-base font-bold" style={{ color: isDark ? "#f3f4f6" : "#0f172a" }}>{title}</h2>
       </div>
       {children}
     </motion.section>
@@ -197,6 +210,8 @@ export function ProgressDashboard() {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const theme = useTheme();
+  const isDark = theme === "dark";
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -249,7 +264,12 @@ export function ProgressDashboard() {
             whileTap={{ scale: 0.96 }}
             onClick={handleCalculate}
             disabled={calculating}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs font-bold text-white/60 hover:text-white hover:bg-white/[0.07] transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            style={{
+              backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"}`,
+              color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.6)",
+            }}
           >
             <RefreshCw size={13} className={calculating ? "animate-spin" : ""} />
             {calculating ? "Recalculating..." : "Recalculate"}
@@ -263,7 +283,7 @@ export function ProgressDashboard() {
         ) : error ? (
           <motion.div key="error" className="text-center py-16">
             <p className="text-red-400 font-semibold">{error}</p>
-            <button onClick={fetchDashboard} className="mt-4 text-sm text-white/50 underline">
+            <button onClick={fetchDashboard} className="mt-4 text-sm underline" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(15,23,42,0.5)" }}>
               Try again
             </button>
           </motion.div>
@@ -329,4 +349,3 @@ export function ProgressDashboard() {
     </div>
   );
 }
-
