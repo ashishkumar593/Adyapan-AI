@@ -1376,6 +1376,7 @@ model ResumeImprovement {
   appliedCount     Int      @default(0) @map("applied_count")
   totalCount       Int      @default(0) @map("total_count")
   createdAt        DateTime @default(now()) @map("created_at")
+  resume           Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([resumeId])
@@ -1393,6 +1394,7 @@ model ResumeVersion {
   atsScoreBefore  Int?     @map("ats_score_before")
   atsScoreAfter   Int?     @map("ats_score_after")
   createdAt       DateTime @default(now()) @map("created_at")
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([resumeId])
