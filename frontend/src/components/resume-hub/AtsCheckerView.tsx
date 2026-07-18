@@ -7,58 +7,40 @@ import type { ResumeHubViewType } from "@/types/resume";
 import {
   ArrowLeft, Upload, FileText, CheckCircle, XCircle, AlertTriangle,
   Star, Sparkles, RefreshCw, MessageCircle, Send, X, ChevronRight,
-  Download, Save, Eye, RotateCcw, Target, BarChart3, Search,
-  BookOpen, Code2, Briefcase, GraduationCap, Award, Link2,
-  Sun, Moon, Zap, FileCheck2, Plus, Lightbulb,
-  History, GitCompare, Users, Shield, TrendingUp, TrendingDown,
-  AlertCircle, CheckSquare, CircleDot, ChevronDown, ChevronUp,
-  PieChart, Activity, Brain, Eye as EyeIcon, FileSearch,
+  ChevronDown, ChevronUp, Download, Save, Eye, RotateCcw, Target,
+  BarChart3, Search, BookOpen, Code2, Briefcase, GraduationCap,
+  Award, Link2, Zap, FileCheck2, Lightbulb, Users, Shield,
+  TrendingUp, TrendingDown, AlertCircle, CheckSquare, CircleDot,
+  Brain, GitCompare, History, FileSearch, Activity, PieChart,
+  Circle,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { EmptyState } from "@/components/ui/PremiumComponents";
-
-// ─── Chart.js ──────────────────────────────────────────────────────────────
 import {
   Chart as ChartJS,
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip as ChartTooltip,
-  Legend as ChartLegend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
+  RadialLinearScale, PointElement, LineElement, Filler,
+  Tooltip as CT, Legend as CL, CategoryScale, LinearScale, BarElement,
 } from "chart.js";
 import { Radar, Bar } from "react-chartjs-2";
 
 ChartJS.register(
-  RadialLinearScale, PointElement, LineElement, Filler,
-  ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement
+  RadialLinearScale, PointElement, LineElement, Filler, CT, CL,
+  CategoryScale, LinearScale, BarElement
 );
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
 
-interface ATSSectionScore {
-  score: number;
-  suggestions: string[];
-}
+interface SectionScore { score: number; suggestions: string[]; }
 
 interface ATSDeepAnalysis {
-  score: number;
-  scoreLabel: string;
-  keywordsFound: string[];
-  keywordsMissing: string[];
-  readability: string;
-  length: string;
-  formatting: string;
-  recruiterScore: number;
+  score: number; scoreLabel: string;
+  keywordsFound: string[]; keywordsMissing: string[];
+  readability: string; length: string; formatting: string; recruiterScore: number;
   sectionScores: {
-    summary: ATSSectionScore;
-    skills: ATSSectionScore;
-    experience: ATSSectionScore;
-    projects: ATSSectionScore;
-    education: ATSSectionScore;
+    summary: SectionScore; skills: SectionScore; experience: SectionScore;
+    projects: SectionScore; education: SectionScore;
   };
   keywordAnalysis: { found: string[]; missing: string[] };
   formattingCheck: {
@@ -69,29 +51,20 @@ interface ATSDeepAnalysis {
     summary: number; projects: number; skills: number;
     experience: number; education: number;
   };
-  recommendations: string[];
-  formattingIssues: string[];
-  strengths: string[];
+  recommendations: string[]; formattingIssues: string[]; strengths: string[];
 }
 
 interface ATSIntelligence {
   recruiterView: {
-    firstImpression: string;
-    topStrengths: string[];
-    redFlags: string[];
-    interviewWorthy: boolean;
-    hiringDecision: string;
+    firstImpression: string; topStrengths: string[];
+    redFlags: string[]; interviewWorthy: boolean; hiringDecision: string;
   };
   insights: {
-    strengths: string[];
-    weaknesses: string[];
-    risks: string[];
-    opportunities: string[];
+    strengths: string[]; weaknesses: string[];
+    risks: string[]; opportunities: string[];
   };
   missingSections: Array<{
-    section: string;
-    importance: "critical" | "important" | "nice-to-have";
-    reason: string;
+    section: string; importance: "critical" | "important" | "nice-to-have"; reason: string;
   }>;
   structureAnalysis: {
     isAtsCompatible: boolean;
@@ -110,405 +83,173 @@ interface ATSIntelligence {
     links: { present: boolean; score: number; notes: string[] };
   };
   readabilityAnalysis: {
-    overallGrade: string;
-    sentenceLength: string;
-    bulletUsage: string;
-    formattingConsistency: string;
-    scanningEase: string;
-    recruiterFriendliness: string;
+    overallGrade: string; sentenceLength: string; bulletUsage: string;
+    formattingConsistency: string; scanningEase: string; recruiterFriendliness: string;
   };
   improvementRecommendations: Array<{
-    priority: "high" | "medium" | "low";
-    category: string;
-    title: string;
-    description: string;
-    impact: string;
+    priority: "high" | "medium" | "low"; category: string;
+    title: string; description: string; impact: string;
   }>;
   jobTargetAnalysis?: {
-    role: string;
-    matchScore: number;
-    alignedSkills: string[];
-    gapSkills: string[];
-    roleSpecificAdvice: string[];
+    role: string; matchScore: number; alignedSkills: string[];
+    gapSkills: string[]; roleSpecificAdvice: string[];
   };
 }
 
 interface ATSSuggestion {
-  id: string;
-  section: string;
-  title: string;
-  description: string;
-  impact: "high" | "medium" | "low";
-  original: string;
-  improved: string;
+  id: string; section: string; title: string; description: string;
+  impact: "high" | "medium" | "low"; original: string; improved: string;
 }
 
-interface ResumeBrief {
-  id: string;
-  title: string;
-  template: string;
-  updatedAt: string;
-}
+interface ResumeBrief { id: string; title: string; template: string; updatedAt: string; }
+interface ATSReportBrief { id: string; score: number; createdAt: string; resume?: { title: string }; }
 
-interface ATSReportBrief {
-  id: string;
-  score: number;
-  createdAt: string;
-  resume?: { title: string };
-}
+interface Props { setView: (v: ResumeHubViewType) => void; }
 
-interface AtsCheckerViewProps {
-  setView: (v: ResumeHubViewType) => void;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Theme Colors ──────────────────────────────────────────────────────────────
-
-const mkColors = (theme: string) => {
-  const isDark = theme === "dark";
+const mkC = (t: string) => {
+  const d = t === "dark";
   return {
-    isDark,
-    text: isDark ? "#e5e7eb" : "#0f172a", textSec: isDark ? "#9ca3af" : "#475569", textMuted: isDark ? "#828fa3" : "#5f6368",
-    bg: isDark ? "rgba(255,255,255,0.025)" : "linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #e8edf5 100%)",
-    bgHover: isDark ? "rgba(255,255,255,0.04)" : "#f1f5f9",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-    border: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", borderHover: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-    borderFocus: isDark ? "rgba(245,158,11,0.45)" : "rgba(245,158,11,0.5)", inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
-    cardBg: isDark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
-    cardShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-    amber: "#f59e0b", amberBg: isDark ? "rgba(245,158,11,0.07)" : "rgba(245,158,11,0.08)", amberBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(245,158,11,0.25)",
-    green: "#10b981", greenBg: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)",
-    red: "#ef4444", redBg: isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.08)",
-    blue: "#3b82f6", blueBg: isDark ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.08)",
-    purple: "#8b5cf6", purpleBg: isDark ? "rgba(139,92,246,0.1)" : "rgba(139,92,246,0.08)",
-    chatBg: isDark ? "#0a0e14" : "#f8fafc",
-    divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
-    pill: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", pillBorder: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    d,
+    tx: d ? "#e5e7eb" : "#0f172a",
+    tx2: d ? "#9ca3af" : "#475569",
+    txM: d ? "#6b7280" : "#94a3b8",
+    bg: d ? "rgba(255,255,255,0.025)" : "linear-gradient(160deg,#f8fafc 0%,#f1f5f9 40%,#e8edf5 100%)",
+    sf: d ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+    sfH: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+    bd: d ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)",
+    bdH: d ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+    cb: d ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.85)",
+    cs: d ? "none" : "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
+    am: "#f59e0b", amBg: d ? "rgba(245,158,11,0.08)" : "rgba(245,158,11,0.06)",
+    gn: "#10b981", gnBg: d ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.06)",
+    rd: "#ef4444", rdBg: d ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.06)",
+    bl: "#3b82f6", blBg: d ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.06)",
+    pp: "#8b5cf6", ppBg: d ? "rgba(139,92,246,0.1)" : "rgba(139,92,246,0.06)",
+    dv: d ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
+    chat: d ? "#0a0e14" : "#f8fafc",
   };
 };
 
-// ─── Animated CountUp ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// MICRO-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function CountUp({ end, duration = 1.5, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, v => Math.round(v));
-  const [display, setDisplay] = useState(0);
-
+function CountUp({ end, dur = 1.5, suf = "" }: { end: number; dur?: number; suf?: string }) {
+  const mv = useMotionValue(0);
+  const rd = useTransform(mv, v => Math.round(v));
+  const [v, setV] = useState(0);
   useEffect(() => {
-    const controls = animate(count, end, { duration, ease: "easeOut" });
-    const unsub = rounded.on("change", v => setDisplay(v));
-    return () => { controls.stop(); unsub(); };
-  }, [end, duration, count, rounded]);
-
-  return <>{display}{suffix}</>;
+    const c = animate(mv, end, { duration: dur, ease: "easeOut" });
+    const u = rd.on("change", n => setV(n));
+    return () => { c.stop(); u(); };
+  }, [end, dur, mv, rd]);
+  return <>{v}{suf}</>;
 }
 
-// ─── Screen Components ─────────────────────────────────────────────────────────
-
-function LoadingDots() {
+function Dots() {
   return (
     <span className="inline-flex gap-1">
       {[0, 1, 2].map(i => (
-        <motion.span
-          key={i}
-          className="w-1.5 h-1.5 rounded-full bg-amber-500"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-        />
+        <motion.span key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: "#f59e0b" }}
+          animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
       ))}
     </span>
   );
 }
 
-function ScoreRing({ score, size = 144, strokeWidth = 8, color }: { score: number; size?: number; strokeWidth?: number; color?: string }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (score / 100) * circumference;
-  const ringColor = color || (score >= 80 ? "#10b981" : score >= 60 ? "#f59e0b" : "#ef4444");
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg className="w-full h-full transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="transparent" className="text-black/5 dark:text-white/5" />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={radius} fill="transparent"
-          stroke={ringColor} strokeWidth={strokeWidth} strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="absolute text-center flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold" style={{ color: "var(--text-primary)" }}>
-          <CountUp end={score} duration={1.5} />
-        </span>
-        <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "var(--text-muted)" }}>ATS Score</span>
-      </div>
-    </div>
-  );
-}
-
-const TARGET_ROLES = [
+const ROLES = [
   "Software Engineer", "Full Stack Developer", "Frontend Developer",
   "Backend Developer", "Data Analyst", "Data Scientist", "AI Engineer",
   "DevOps Engineer", "Cloud Engineer", "Product Manager",
 ];
 
-// ===============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANIMATION VARIANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const AP = {
+  page: { init: { opacity: 0, y: 24 }, in: { opacity: 1, y: 0 }, out: { opacity: 0, y: -24 } },
+  card: { init: { opacity: 0, y: 16, scale: 0.97 }, in: { opacity: 1, y: 0, scale: 1 } },
+  fade: { init: { opacity: 0 }, in: { opacity: 1 } },
+  stagger: { in: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } } },
+  spring: { type: "spring" as const, stiffness: 260, damping: 20 },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
-// ===============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
 
-export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
+export function AtsCheckerView({ setView }: Props) {
   const theme = useTheme();
-  const c = mkColors(theme);
+  const c = mkC(theme);
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (custom: number = 0) => ({
-      opacity: 1, y: 0,
-      transition: { duration: 0.4, delay: custom * 0.08, ease: "easeOut" as const },
-    }),
-  };
+  // ── State ──────────────────────────────────────────────────────────────────
+  type Screen = "home" | "jd" | "loading" | "dashboard" | "history" | "compare" | "final";
+  const [screen, setScreen] = useState<Screen>("home");
+  const [tab, setTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights" | "fixes">("overview");
 
-  const scaleIn = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: (custom: number = 0) => ({
-      opacity: 1, scale: 1,
-      transition: { duration: 0.3, delay: custom * 0.08, ease: "easeOut" as const },
-    }),
-  };
-
-  const staggerContainer = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
-  };
-
-  const cardHover = { y: -4, scale: 1.01 };
-  const buttonHover = { scale: 1.04 };
-  const buttonTap = { scale: 0.96 };
-
-  const springIcon = {
-    hidden: { scale: 0, rotate: -20 },
-    visible: { scale: 1, rotate: 0, transition: { type: "spring" as const, stiffness: 200, damping: 12 } },
-  };
-
-  // Screen state
-  const [screen, setScreen] = useState<"home" | "jd" | "loading" | "dashboard" | "intelligence" | "suggestions" | "final" | "history" | "compare">("home");
-  const [activeTab, setActiveTab] = useState<"overview" | "sections" | "keywords" | "recruiter" | "insights" | "improvements">("overview");
-  const [targetRole, setTargetRole] = useState("Software Engineer");
+  const [role, setRole] = useState("Software Engineer");
   const [file, setFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [drag, setDrag] = useState(false);
   const [resumes, setResumes] = useState<ResumeBrief[]>([]);
-  const [selectedResumeId, setSelectedResumeId] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const [selId, setSelId] = useState("");
+  const [jd, setJd] = useState("");
   const [jdFile, setJdFile] = useState<File | null>(null);
-  const [includeJD, setIncludeJD] = useState<"yes" | "skip" | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState(0);
-  const [analysis, setAnalysis] = useState<ATSDeepAnalysis | null>(null);
-  const [analysisRaw, setAnalysisRaw] = useState<ATSDeepAnalysis | null>(null);
-  const [intelligence, setIntelligence] = useState<ATSIntelligence | null>(null);
-  const [suggestions, setSuggestions] = useState<ATSSuggestion[]>([]);
-  const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set());
-  const [updatedScore, setUpdatedScore] = useState(0);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
-  const [history, setHistory] = useState<ATSReportBrief[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [compareMode, setCompareMode] = useState(false);
-  const [compareA, setCompareA] = useState("");
-  const [compareB, setCompareB] = useState("");
-  const [compareResult, setCompareResult] = useState<any>(null);
-  const [compareLoading, setCompareLoading] = useState(false);
-  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const jdFileRef = useRef<HTMLInputElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [incJD, setIncJD] = useState<"yes" | "skip" | null>(null);
 
-  const loadingSteps = [
+  const [loading, setLoading] = useState(false);
+  const [loadStep, setLoadStep] = useState(0);
+  const [analysis, setAnalysis] = useState<ATSDeepAnalysis | null>(null);
+  const [intel, setIntel] = useState<ATSIntelligence | null>(null);
+  const [suggestions, setSuggestions] = useState<ATSSuggestion[]>([]);
+  const [applied, setApplied] = useState<Set<string>>(new Set());
+  const [updScore, setUpdScore] = useState(0);
+
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState<{ role: string; content: string }[]>([]);
+  const [chatIn, setChatIn] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+
+  const [history, setHistory] = useState<ATSReportBrief[]>([]);
+  const [histLoad, setHistLoad] = useState(false);
+  const [cmpA, setCmpA] = useState("");
+  const [cmpB, setCmpB] = useState("");
+  const [cmpRes, setCmpRes] = useState<any>(null);
+  const [cmpBusy, setCmpBusy] = useState(false);
+
+  const [expandedRec, setExpandedRec] = useState<number | null>(null);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const jdRef = useRef<HTMLInputElement>(null);
+  const chatEnd = useRef<HTMLDivElement>(null);
+
+  const loadSteps = [
     "Uploading Resume", "Extracting Text", "Evaluating ATS Structure",
     "Analyzing Keywords", "Checking Sections", "Reviewing Formatting",
     "Generating Insights", "Preparing Recommendations",
   ];
 
-  // Load resumes list
   useEffect(() => {
-    api.get("/resume/list").then(res => {
-      setResumes(res.data.resumes || []);
-    }).catch(() => {});
+    api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
   }, []);
+  useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const sc = (s: number) => s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444";
+  const scBg = (s: number) => s >= 80 ? "rgba(16,185,129,0.1)" : s >= 60 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)";
+  const scLb = (s: number) => s >= 90 ? "Excellent" : s >= 80 ? "Very Good" : s >= 65 ? "Good" : s >= 50 ? "Fair" : "Poor";
+  const hov = { y: -3, scale: 1.008 };
+  const btnH = { scale: 1.04 };
+  const btnT = { scale: 0.96 };
 
-  // ─── File handlers ───────────────────────────────────────────────────────────
-
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragging(true); };
-  const handleDragLeave = () => setDragging(false);
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f && (f.type === "application/pdf" || f.name.endsWith(".docx") || f.name.endsWith(".doc"))) {
-      setFile(f);
-    }
-  };
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setFile(e.target.files[0]);
-  };
-
-  // ─── Analyze ────────────────────────────────────────────────────────────────
-
-  const startAnalysis = async () => {
-    setLoading(true);
-    setLoadingStep(0);
-
-    const stepInterval = setInterval(() => {
-      setLoadingStep(prev => Math.min(prev + 1, loadingSteps.length - 1));
-    }, 700);
-
-    try {
-      const fd = new FormData();
-      if (file) fd.append("resume", file);
-      if (selectedResumeId) fd.append("resumeId", selectedResumeId);
-      fd.append("targetRole", targetRole);
-      if (includeJD === "yes") {
-        if (jdFile) fd.append("jobDescription", await jdFile.text());
-        else if (jobDescription) fd.append("jobDescription", jobDescription);
-      }
-
-      // Run both analyses in parallel
-      const [atsRes, intelRes] = await Promise.allSettled([
-        api.post("/ats/analyze", fd, { headers: { "Content-Type": "multipart/form-data" } }),
-        api.post("/ats/intelligence", fd, { headers: { "Content-Type": "multipart/form-data" } }),
-      ]);
-
-      clearInterval(stepInterval);
-      setLoadingStep(loadingSteps.length - 1);
-
-      if (atsRes.status === "fulfilled" && atsRes.value.data.analysis) {
-        setAnalysis(atsRes.value.data.analysis);
-        setAnalysisRaw(atsRes.value.data.analysis);
-        setUpdatedScore(atsRes.value.data.analysis.score);
-      }
-      if (intelRes.status === "fulfilled" && intelRes.value.data.intelligence) {
-        setIntelligence(intelRes.value.data.intelligence);
-      }
-
-      await new Promise(r => setTimeout(r, 600));
-      setScreen("dashboard");
-
-      // Generate suggestions in background
-      if (atsRes.status === "fulfilled") {
-        generateSuggestions(atsRes.value.data.analysis);
-      }
-    } catch (err) {
-      clearInterval(stepInterval);
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Please try again.";
-      alert(`Failed to analyze resume. ${msg}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateSuggestions = async (analysisData?: ATSDeepAnalysis) => {
-    try {
-      const res = await api.post("/ats/suggestions", {
-        targetRole,
-        analysis: analysisData || analysis,
-        resumeId: selectedResumeId || undefined,
-      });
-      if (res.data.suggestions) setSuggestions(res.data.suggestions);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // ─── Apply suggestion ───────────────────────────────────────────────────────
-
-  const handleApplySuggestion = async (sugg: ATSSuggestion) => {
-    try {
-      const res = await api.post("/ats/apply-improvement", {
-        section: sugg.section,
-        originalContent: sugg.original,
-        suggestionText: sugg.description,
-      });
-      if (res.data.improved) {
-        setAppliedSuggestions(prev => new Set(prev).add(sugg.id));
-        setUpdatedScore(prev => Math.min(100, prev + Math.round(Math.random() * 3 + 1)));
-      }
-    } catch (err) { console.error(err); }
-  };
-
-  const handleUndoSuggestion = (id: string) => {
-    setAppliedSuggestions(prev => { const next = new Set(prev); next.delete(id); return next; });
-    setUpdatedScore(prev => Math.max(0, prev - Math.round(Math.random() * 2 + 1)));
-  };
-
-  // ─── AI Chat ─────────────────────────────────────────────────────────────────
-
-  const handleSendChat = async () => {
-    if (!chatInput.trim()) return;
-    const msg = chatInput.trim();
-    setChatInput("");
-    setChatMessages(prev => [...prev, { role: "user", content: msg }]);
-    setChatLoading(true);
-    try {
-      const res = await api.post("/ats/chat", {
-        message: msg,
-        resumeId: selectedResumeId || undefined,
-        analysis: analysisRaw,
-      });
-      if (res.data.reply) {
-        setChatMessages(prev => [...prev, { role: "assistant", content: res.data.reply }]);
-      }
-    } catch {
-      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't process that. Please try again." }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
-  // ─── History ─────────────────────────────────────────────────────────────────
-
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await api.get("/ats/history");
-      setHistory(res.data.reports || []);
-    } catch { /* ignore */ }
-    finally { setHistoryLoading(false); }
-  }, []);
-
-  // ─── Compare ─────────────────────────────────────────────────────────────────
-
-  const runCompare = async () => {
-    if (!compareA || !compareB) return;
-    setCompareLoading(true);
-    try {
-      const res = await api.post("/ats/compare", {
-        resumeIdA: compareA, resumeIdB: compareB, targetRole,
-      });
-      setCompareResult(res.data.comparison);
-    } catch { /* ignore */ }
-    finally { setCompareLoading(false); }
-  };
-
-  // ─── Score helpers ──────────────────────────────────────────────────────────
-
-  const scoreColor = (s: number) => s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444";
-  const scoreBg = (s: number) => s >= 80 ? "rgba(16,185,129,0.1)" : s >= 60 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)";
-  const scoreLabel = (s: number) => s >= 90 ? "Excellent" : s >= 80 ? "Very Good" : s >= 65 ? "Good" : s >= 50 ? "Fair" : "Poor";
-
-  // ─── Chart Data ─────────────────────────────────────────────────────────────
-
+  // ── Chart config ───────────────────────────────────────────────────────────
   const radarData = analysis ? {
     labels: ["Summary", "Skills", "Experience", "Projects", "Education"],
     datasets: [{
-      label: "Section Scores",
       data: [
         analysis.sectionScores.summary.score * 10,
         analysis.sectionScores.skills.score * 10,
@@ -516,11 +257,10 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
         analysis.sectionScores.projects.score * 10,
         analysis.sectionScores.education.score * 10,
       ],
-      backgroundColor: "rgba(245,158,11,0.15)",
+      backgroundColor: "rgba(245,158,11,0.12)",
       borderColor: "#f59e0b",
       borderWidth: 2,
       pointBackgroundColor: "#f59e0b",
-      pointBorderColor: "#f59e0b",
       pointRadius: 4,
     }],
   } : null;
@@ -528,1325 +268,1087 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
   const barData = analysis ? {
     labels: ["Found", "Missing"],
     datasets: [{
-      label: "Keywords",
       data: [analysis.keywordAnalysis.found.length, analysis.keywordAnalysis.missing.length],
       backgroundColor: ["rgba(16,185,129,0.7)", "rgba(239,68,68,0.7)"],
       borderColor: ["#10b981", "#ef4444"],
       borderWidth: 1,
-      borderRadius: 6,
+      borderRadius: 8,
     }],
   } : null;
 
-  const radarOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
+  const radarOpts = {
+    responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
       r: {
-        beginAtZero: true,
-        max: 100,
+        beginAtZero: true, max: 100,
         ticks: { display: false, stepSize: 20 },
-        grid: { color: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
+        grid: { color: c.d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" },
         pointLabels: {
-          color: theme === "dark" ? "#9ca3af" : "#475569",
+          color: c.d ? "#9ca3af" : "#475569",
           font: { size: 11, weight: "bold" as const },
         },
-        angleLines: { color: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
+        angleLines: { color: c.d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" },
       },
     },
   };
 
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
+  const barOpts = {
+    responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      y: { beginAtZero: true, ticks: { color: theme === "dark" ? "#9ca3af" : "#475569", font: { size: 11 } }, grid: { color: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" } },
-      x: { ticks: { color: theme === "dark" ? "#9ca3af" : "#475569", font: { size: 11, weight: "bold" as const } }, grid: { display: false } },
+      y: { beginAtZero: true, ticks: { color: c.d ? "#9ca3af" : "#475569", font: { size: 11 } }, grid: { color: c.d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" } },
+      x: { ticks: { color: c.d ? "#9ca3af" : "#475569", font: { size: 11, weight: "bold" as const } }, grid: { display: false } },
     },
   };
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setDrag(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f && (f.type === "application/pdf" || f.name.endsWith(".docx") || f.name.endsWith(".doc"))) setFile(f);
+  };
+
+  const startAnalysis = async () => {
+    setLoading(true); setLoadStep(0);
+    const iv = setInterval(() => setLoadStep(p => Math.min(p + 1, loadSteps.length - 1)), 700);
+    try {
+      const fd = new FormData();
+      if (file) fd.append("resume", file);
+      if (selId) fd.append("resumeId", selId);
+      fd.append("targetRole", role);
+      if (incJD === "yes") {
+        if (jdFile) fd.append("jobDescription", await jdFile.text());
+        else if (jd) fd.append("jobDescription", jd);
+      }
+      const hdrs = { "Content-Type": "multipart/form-data" };
+      const [aR, iR] = await Promise.allSettled([
+        api.post("/ats/analyze", fd, { headers: hdrs }),
+        api.post("/ats/intelligence", fd, { headers: hdrs }),
+      ]);
+      clearInterval(iv); setLoadStep(loadSteps.length - 1);
+      if (aR.status === "fulfilled" && aR.value.data.analysis) {
+        setAnalysis(aR.value.data.analysis);
+        setUpdScore(aR.value.data.analysis.score);
+      }
+      if (iR.status === "fulfilled" && iR.value.data.intelligence) setIntel(iR.value.data.intelligence);
+      await new Promise(r => setTimeout(r, 600));
+      setScreen("dashboard");
+      if (aR.status === "fulfilled") genSuggestions(aR.value.data.analysis);
+    } catch (err) {
+      clearInterval(iv);
+      alert(`Failed to analyze. ${err instanceof Error ? err.message : "Try again."}`);
+    } finally { setLoading(false); }
+  };
+
+  const genSuggestions = async (a?: ATSDeepAnalysis) => {
+    try {
+      const r = await api.post("/ats/suggestions", { targetRole: role, analysis: a || analysis, resumeId: selId || undefined });
+      if (r.data.suggestions) setSuggestions(r.data.suggestions);
+    } catch {}
+  };
+
+  const applySugg = async (s: ATSSuggestion) => {
+    try {
+      const r = await api.post("/ats/apply-improvement", { section: s.section, originalContent: s.original, suggestionText: s.description });
+      if (r.data.improved) { setApplied(p => new Set(p).add(s.id)); setUpdScore(p => Math.min(100, p + Math.round(Math.random() * 3 + 1))); }
+    } catch {}
+  };
+
+  const sendChat = async () => {
+    if (!chatIn.trim()) return;
+    const m = chatIn.trim(); setChatIn("");
+    setChatMsgs(p => [...p, { role: "user", content: m }]); setChatBusy(true);
+    try {
+      const r = await api.post("/ats/chat", { message: m, resumeId: selId || undefined, analysis });
+      if (r.data.reply) setChatMsgs(p => [...p, { role: "assistant", content: r.data.reply }]);
+    } catch { setChatMsgs(p => [...p, { role: "assistant", content: "Sorry, couldn't process that." }]); }
+    finally { setChatBusy(false); }
+  };
+
+  const loadHistory = async () => {
+    setHistLoad(true);
+    try { const r = await api.get("/ats/history"); setHistory(r.data.reports || []); } catch {}
+    finally { setHistLoad(false); }
+  };
+
+  const runCompare = async () => {
+    if (!cmpA || !cmpB) return;
+    setCmpBusy(true);
+    try { const r = await api.post("/ats/compare", { resumeIdA: cmpA, resumeIdB: cmpB, targetRole: role }); setCmpRes(r.data.comparison); } catch {}
+    finally { setCmpBusy(false); }
+  };
+
+  const resetAll = () => {
+    setScreen("home"); setAnalysis(null); setIntel(null); setFile(null);
+    setSelId(""); setSuggestions([]); setApplied(new Set());
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHARED CARD WRAPPER
+  // ═══════════════════════════════════════════════════════════════════════════
+  const Card = ({ children, className = "", style = {}, ...motionProps }: any) => (
+    <motion.div
+      variants={AP.card} initial="init" animate="in"
+      transition={{ duration: 0.35 }}
+      whileHover={hov}
+      className={`rounded-2xl ${className}`}
+      style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs, ...style }}
+      {...motionProps}
+    >{children}</motion.div>
+  );
+
+  const Pill = ({ color, children }: { color: string; children: React.ReactNode }) => (
+    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full" style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}>{children}</span>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col antialiased min-h-[calc(100vh-120px)]" style={{ color: c.text, background: c.bg, backgroundAttachment: "fixed", "--card-shadow": c.cardShadow } as React.CSSProperties}>
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.divider}` }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col min-h-[calc(100vh-120px)] antialiased"
+      style={{ color: c.tx, background: c.bg, backgroundAttachment: "fixed" }}>
+
+      {/* ─── HEADER ──────────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 flex items-center gap-2.5 px-5 pt-3 pb-2" style={{ borderBottom: `1px solid ${c.dv}` }}>
         {screen !== "home" && (
-          <motion.button
-            whileHover={buttonHover} whileTap={buttonTap}
-            onClick={() => {
-              if (screen === "intelligence") setScreen("dashboard");
-              else if (screen === "history" || screen === "compare") setScreen("home");
-              else setScreen("home");
-            }}
+          <motion.button whileHover={btnH} whileTap={btnT}
+            onClick={() => { if (screen === "dashboard") setScreen("home"); else if (screen === "history" || screen === "compare") setScreen("home"); else setScreen("home"); }}
             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-          >
+            style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }}>
             <ArrowLeft size={15} />
           </motion.button>
         )}
-        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={AP.spring}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)" }}>
           <BarChart3 size={18} style={{ color: "#000" }} />
         </motion.div>
         <div className="flex-1 min-w-0">
-          <motion.h1 key={screen} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-            className="text-base font-extrabold leading-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
-            {screen === "home" ? "ATS Intelligence Engine" :
-             screen === "jd" ? "Job Description" :
-             screen === "loading" ? "Analyzing Resume" :
-             screen === "dashboard" ? "ATS Dashboard" :
-             screen === "intelligence" ? "Deep Intelligence" :
-             screen === "suggestions" ? "AI Suggestions" :
-             screen === "history" ? "Analysis History" :
-             screen === "compare" ? "Resume Comparison" :
-             "Resume Improved"}
+          <motion.h1 key={screen} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+            className="text-base font-extrabold" style={{ fontFamily: "'Outfit',sans-serif" }}>
+            {screen === "home" ? "ATS Intelligence Engine" : screen === "jd" ? "Job Description" :
+             screen === "loading" ? "Analyzing..." : screen === "dashboard" ? "ATS Dashboard" :
+             screen === "history" ? "Analysis History" : screen === "compare" ? "Resume Comparison" : "Complete"}
           </motion.h1>
-          <motion.p key={`p-${screen}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-            className="text-xs leading-tight" style={{ color: c.textMuted }}>
+          <p className="text-[11px]" style={{ color: c.txM }}>
             {screen === "home" ? "Analyze your resume like a real ATS system" :
-             screen === "jd" ? "Compare against a job description for targeted analysis" :
-             screen === "loading" ? "Running comprehensive ATS intelligence analysis..." :
-             screen === "dashboard" ? "Detailed ATS audit with recruiter insights" :
-             screen === "intelligence" ? "Recruiter perspective, missing sections, and structure analysis" :
-             screen === "suggestions" ? "AI-powered improvements ranked by impact" :
-             screen === "history" ? "Your past ATS analysis reports" :
-             screen === "compare" ? "Compare two resume versions side by side" :
-             "Your resume has been improved"}
-          </motion.p>
+             screen === "jd" ? "Compare against a job description" :
+             screen === "loading" ? "Running comprehensive analysis..." :
+             screen === "dashboard" ? "Detailed audit with recruiter insights" :
+             screen === "history" ? "Your past analysis reports" :
+             screen === "compare" ? "Compare two resume versions" : "Resume improved"}
+          </p>
         </div>
         {screen === "home" && (
           <div className="flex gap-1.5 shrink-0">
-            <motion.button
-              whileHover={buttonHover} whileTap={buttonTap}
-              onClick={() => { setScreen("history"); loadHistory(); }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}
-              title="History"
-            >
+            <motion.button whileHover={btnH} whileTap={btnT} onClick={() => { setScreen("history"); loadHistory(); }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.txM }} title="History">
               <History size={14} />
             </motion.button>
-            <motion.button
-              whileHover={buttonHover} whileTap={buttonTap}
-              onClick={() => setScreen("compare")}
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}
-              title="Compare Resumes"
-            >
+            <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("compare")}
+              className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.txM }} title="Compare">
               <GitCompare size={14} />
             </motion.button>
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-4" style={{ paddingRight: 20 }}>
-      <AnimatePresence mode="wait">
+      <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <AnimatePresence mode="wait">
 
-        {/* ─────── SCREEN: HOME ─────── */}
-        {screen === "home" && (
-          <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
-            {/* Target Role */}
-            <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>Target Job Role</label>
-              <div className="relative">
-                <select
-                  value={targetRole}
-                  onChange={e => setTargetRole(e.target.value)}
-                  className="w-full p-3 rounded-xl text-sm outline-none appearance-none cursor-pointer"
-                  style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                >
-                  {TARGET_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.textMuted }} />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12 }}>
-              {resumes.length > 0 && (
-                <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-                  <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                    <FileText size={16} className="inline mr-2" style={{ color: c.amber }} />Choose Existing Resume
-                  </h3>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {resumes.map(r => (
-                      <motion.button key={r.id} whileHover={cardHover} whileTap={{ scale: 0.99 }}
-                        onClick={() => { setSelectedResumeId(r.id); setFile(null); }}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
-                        style={{
-                          background: selectedResumeId === r.id ? "rgba(245,158,11,0.1)" : c.surface,
-                          border: `1px solid ${selectedResumeId === r.id ? "rgba(245,158,11,0.3)" : c.border}`,
-                          color: c.text,
-                        }}
-                      >
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)" }}>
-                          <FileText size={14} style={{ color: c.amber }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold truncate">{r.title}</div>
-                          <div className="text-[10px]" style={{ color: c.textMuted }}>{r.template} · {new Date(r.updatedAt).toLocaleDateString()}</div>
-                        </div>
-                        {selectedResumeId === r.id && <CheckCircle size={16} style={{ color: c.amber }} />}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
+          {/* ═══════ HOME ═══════ */}
+          {screen === "home" && (
+            <motion.div key="home" {...AP.page} transition={{ duration: 0.3 }} className="space-y-5 pt-5">
+              {/* Empty state */}
+              {!file && !selId && resumes.length === 0 && (
+                <EmptyState
+                  title="Upload a resume to generate ATS analysis"
+                  description="Upload your resume or create one with Resume Builder to get started."
+                  actionLabel="Resume Builder"
+                  onAction={() => setView("resume-builder")}
+                  illustration={<BarChart3 size={32} />}
+                />
               )}
 
-              <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-                <h3 className="text-sm font-bold mb-3" style={{ color: c.text }}>
-                  <Upload size={16} className="inline mr-2" style={{ color: c.amber }} />Upload Resume
-                </h3>
-                <div
-                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                  onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
-                  style={{ borderColor: dragging ? c.amber : c.border, background: dragging ? "rgba(245,158,11,0.05)" : c.surface }}
-                >
-                  <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
-                  {file ? (
-                    <div className="space-y-2">
-                      <motion.span variants={springIcon} initial="hidden" animate="visible"><FileText size={32} className="mx-auto" style={{ color: c.amber }} /></motion.span>
-                      <p className="text-sm font-bold" style={{ color: c.text }}>{file.name}</p>
-                      <p className="text-xs" style={{ color: c.textMuted }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      <motion.button whileHover={buttonHover} whileTap={buttonTap}
-                        onClick={e => { e.stopPropagation(); setFile(null); setSelectedResumeId(""); }}
-                        className="text-xs font-bold mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
-                        style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
-                      ><X size={12} /> Remove</motion.button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <motion.span variants={springIcon} initial="hidden" animate="visible"><Upload size={40} className="mx-auto" style={{ color: c.textMuted }} /></motion.span>
-                      <p className="text-sm font-bold" style={{ color: c.text }}>Drag & drop your resume here</p>
-                      <p className="text-xs" style={{ color: c.textMuted }}>Supports PDF, DOCX up to 5MB</p>
-                    </div>
-                  )}
+              {/* Role Selector */}
+              <Card className="p-5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: c.tx2 }}>Target Job Role</label>
+                <div className="relative">
+                  <select value={role} onChange={e => setRole(e.target.value)}
+                    className="w-full p-3 rounded-xl text-sm outline-none appearance-none cursor-pointer"
+                    style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }}>
+                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.txM }} />
                 </div>
-              </div>
-            </div>
+              </Card>
 
-            <motion.button
-              whileHover={buttonHover} whileTap={buttonTap}
-              disabled={!file && !selectedResumeId}
-              onClick={() => setScreen("jd")}
-              className="w-full py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all"
-              style={{
-                background: !file && !selectedResumeId ? c.surface : "linear-gradient(135deg, #f59e0b, #d97706)",
-                color: !file && !selectedResumeId ? c.textMuted : "#000",
-                border: !file && !selectedResumeId ? `1px solid ${c.border}` : "none",
-              }}
-            >
-              <Zap size={14} /> Continue to Analysis <ChevronRight size={16} />
-            </motion.button>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: JOB DESCRIPTION ─────── */}
-        {screen === "jd" && (
-          <motion.div key="jd" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
-            <div className="p-6 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-              <motion.span variants={springIcon} initial="hidden" animate="visible"><Target size={40} className="mx-auto mb-4" style={{ color: c.amber }} /></motion.span>
-              <h2 className="text-lg font-bold mb-2" style={{ color: c.text }}>Compare with Job Description?</h2>
-              <p className="text-sm mb-6" style={{ color: c.textSec }}>Adds targeted keyword matching and role-specific gap analysis.</p>
-              <div className="flex gap-3 justify-center">
-                <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setIncludeJD("yes")}
-                  className="px-6 py-2 rounded-lg font-bold text-xs"
-                  style={{ background: includeJD === "yes" ? c.amber : c.surface, color: includeJD === "yes" ? "#000" : c.text, border: `1px solid ${includeJD === "yes" ? c.amber : c.border}` }}
-                >Yes, include JD</motion.button>
-                <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setIncludeJD("skip")}
-                  className="px-6 py-2 rounded-lg font-bold text-xs"
-                  style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-                >Skip</motion.button>
-              </div>
-            </div>
-
-            {includeJD === "yes" && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                className="p-5 rounded-2xl space-y-4" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-              >
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>Paste Job Description</label>
-                  <textarea value={jobDescription} onChange={e => setJobDescription(e.target.value)} rows={6}
-                    placeholder="Paste the job description here..."
-                    className="w-full p-3 rounded-xl text-sm outline-none resize-none"
-                    style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                    onFocus={e => e.currentTarget.style.borderColor = c.amber}
-                    onBlur={e => e.currentTarget.style.borderColor = c.border}
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px" style={{ background: c.border }} />
-                  <span className="text-xs font-bold" style={{ color: c.textMuted }}>OR</span>
-                  <div className="flex-1 h-px" style={{ background: c.border }} />
-                </div>
-                <div onClick={() => jdFileRef.current?.click()}
-                  className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer"
-                  style={{ borderColor: c.border, background: c.surface }}
-                >
-                  <input ref={jdFileRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden"
-                    onChange={e => { if (e.target.files?.[0]) setJdFile(e.target.files[0]); }} />
-                  {jdFile ? <p className="text-sm font-bold" style={{ color: c.text }}>{jdFile.name}</p> : (
-                    <div><Upload size={24} className="mx-auto mb-1" style={{ color: c.textMuted }} /><p className="text-xs" style={{ color: c.textMuted }}>Upload JD file</p></div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            <div className="flex gap-3">
-              <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("home")}
-                className="flex-1 py-2 rounded-lg font-bold text-xs" style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}>Back</motion.button>
-              <motion.button whileHover={buttonHover} whileTap={buttonTap} disabled={includeJD === null} onClick={startAnalysis}
-                className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{
-                  background: includeJD === null ? c.surface : "linear-gradient(135deg, #f59e0b, #d97706)",
-                  color: includeJD === null ? c.textMuted : "#000",
-                  border: includeJD === null ? `1px solid ${c.border}` : "none",
-                }}
-              ><Zap size={16} /> Analyze Resume</motion.button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: LOADING ─────── */}
-        {screen === "loading" && (
-          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-lg mx-auto">
-            <div className="p-8 rounded-2xl text-center" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
-                style={{ border: `3px solid ${c.border}`, borderTopColor: c.amber }}
-              ><BarChart3 size={24} style={{ color: c.amber }} /></motion.div>
-              <h2 className="text-lg font-bold mb-6" style={{ color: c.text }}>Analyzing Resume...</h2>
-              <div className="space-y-3 text-left">
-                {loadingSteps.map((step, i) => (
-                  <motion.div key={step} className="flex items-center gap-3 p-2.5 rounded-xl"
-                    style={{ background: i <= loadingStep ? "rgba(245,158,11,0.05)" : "transparent", border: `1px solid ${i <= loadingStep ? "rgba(245,158,11,0.15)" : "transparent"}` }}
-                  >
-                    {i < loadingStep ? <CheckCircle size={18} style={{ color: c.green }} /> :
-                     i === loadingStep ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                       className="w-4 h-4 rounded-full border-2" style={{ borderColor: `${c.amber} transparent ${c.amber} ${c.amber}` }} /> :
-                     <div className="w-4 h-4 rounded-full" style={{ background: c.surface, border: `1px solid ${c.border}` }} />}
-                    <span className="text-sm" style={{ color: i <= loadingStep ? c.text : c.textMuted, fontWeight: i <= loadingStep ? 600 : 400 }}>{step}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: DASHBOARD ─────── */}
-        {screen === "dashboard" && analysis && (
-          <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-
-            {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
-              {[
-                { id: "overview", label: "Overview", icon: <BarChart3 size={13} /> },
-                { id: "sections", label: "Sections", icon: <FileSearch size={13} /> },
-                { id: "keywords", label: "Keywords", icon: <Search size={13} /> },
-                { id: "recruiter", label: "Recruiter", icon: <Users size={13} /> },
-                { id: "insights", label: "Insights", icon: <Brain size={13} /> },
-                { id: "improvements", label: "Fixes", icon: <Lightbulb size={13} /> },
-              ].map(tab => (
-                <motion.button key={tab.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all"
-                  style={{
-                    background: activeTab === tab.id ? "linear-gradient(135deg, #f59e0b, #d97706)" : "transparent",
-                    color: activeTab === tab.id ? "#000" : c.textMuted,
-                  }}
-                >{tab.icon} {tab.label}</motion.button>
-              ))}
-            </div>
-
-            {/* ── Tab: Overview ── */}
-            {activeTab === "overview" && (
-              <motion.div key="tab-overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                {/* Score + Charts Row */}
-                <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Score Gauge */}
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="flex-shrink-0 p-6 rounded-2xl flex flex-col items-center justify-center text-center"
-                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow, minWidth: 220 }}
-                  >
-                    <ScoreRing score={analysis.score} />
-                    <div className="inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mt-2"
-                      style={{ background: scoreBg(analysis.score), color: scoreColor(analysis.score) }}
-                    >{scoreLabel(analysis.score)}</div>
-                    {intelligence?.recruiterView && (
-                      <div className="mt-3 flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full" style={{ background: intelligence.recruiterView.interviewWorthy ? c.green : c.red }} />
-                        <span className="text-[10px] font-bold" style={{ color: intelligence.recruiterView.interviewWorthy ? c.green : c.red }}>
-                          {intelligence.recruiterView.interviewWorthy ? "Interview Worthy" : "Needs Improvement"}
-                        </span>
-                      </div>
-                    )}
-                  </motion.div>
-
-                  {/* Charts */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}
-                      className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    >
-                      <h3 className="text-xs font-bold mb-3" style={{ color: c.text }}>Section Scores</h3>
-                      <div style={{ height: 200 }}>
-                        {radarData && <Radar data={radarData} options={radarOptions} />}
-                      </div>
-                    </motion.div>
-                    <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}
-                      className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    >
-                      <h3 className="text-xs font-bold mb-3" style={{ color: c.text }}>Keyword Coverage</h3>
-                      <div style={{ height: 200 }}>
-                        {barData && <Bar data={barData} options={barOptions} />}
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { icon: <Search size={14} />, label: "Keywords Found", value: String(analysis.keywordsFound.length), color: c.green },
-                    { icon: <AlertTriangle size={14} />, label: "Keywords Missing", value: String(analysis.keywordsMissing.length), color: c.red },
-                    { icon: <FileCheck2 size={14} />, label: "Readability", value: analysis.readability, color: c.amber },
-                    { icon: <BarChart3 size={14} />, label: "Recruiter Score", value: `${analysis.recruiterScore}/10`, color: c.blue },
-                  ].map((item, i) => (
-                    <motion.div key={item.label} variants={fadeUp} initial="hidden" animate="visible" custom={i} whileHover={cardHover}
-                      className="p-3.5 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span style={{ color: item.color }}>{item.icon}</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textMuted }}>{item.label}</span>
-                      </div>
-                      <div className="text-lg font-extrabold" style={{ color: c.text }}>{item.value}</div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Strength Bars */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-4" style={{ color: c.text }}>Resume Strength</h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Summary", value: analysis.strengthBars.summary, color: "#8b5cf6" },
-                      { label: "Skills", value: analysis.strengthBars.skills, color: "#3b82f6" },
-                      { label: "Experience", value: analysis.strengthBars.experience, color: c.amber },
-                      { label: "Projects", value: analysis.strengthBars.projects, color: "#10b981" },
-                      { label: "Education", value: analysis.strengthBars.education, color: "#ec4899" },
-                    ].map(bar => (
-                      <div key={bar.label}>
-                        <div className="flex justify-between text-[10px] font-semibold mb-1">
-                          <span style={{ color: c.textSec }}>{bar.label}</span>
-                          <span style={{ color: bar.color }}>{bar.value}%</span>
-                        </div>
-                        <div className="h-2 rounded-full overflow-hidden" style={{ background: c.surface }}>
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${bar.value}%` }} transition={{ duration: 1, delay: 0.2 }}
-                            className="h-full rounded-full" style={{ background: bar.color }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Formatting Check */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <FileCheck2 size={14} style={{ color: c.amber }} /> ATS Formatting Check
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    {[
-                      { label: "One Page", value: analysis.formattingCheck.onePage },
-                      { label: "Fonts Consistent", value: analysis.formattingCheck.fontsConsistent },
-                      { label: "ATS Friendly", value: analysis.formattingCheck.atsFriendly },
-                      { label: "Headings Correct", value: analysis.formattingCheck.headingsCorrect },
-                      { label: "Contact Present", value: analysis.formattingCheck.contactPresent },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: c.surface }}>
-                        {item.value ? <CheckCircle size={14} style={{ color: c.green }} /> : <XCircle size={14} style={{ color: c.red }} />}
-                        <span className="text-[10px] font-semibold" style={{ color: c.text }}>{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("intelligence")}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                    style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.15))", color: c.purple, border: "1px solid rgba(139,92,246,0.25)" }}
-                  ><Brain size={16} /> Deep Intelligence</motion.button>
-                  <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("suggestions")}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                    style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
-                  ><Sparkles size={16} /> AI Suggestions</motion.button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── Tab: Sections ── */}
-            {activeTab === "sections" && (
-              <motion.div key="tab-sections" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { key: "summary", label: "Professional Summary", icon: <BookOpen size={16} />, data: analysis.sectionScores.summary },
-                    { key: "skills", label: "Technical Skills", icon: <Code2 size={16} />, data: analysis.sectionScores.skills },
-                    { key: "experience", label: "Work Experience", icon: <Briefcase size={16} />, data: analysis.sectionScores.experience },
-                    { key: "projects", label: "Projects", icon: <Lightbulb size={16} />, data: analysis.sectionScores.projects },
-                    { key: "education", label: "Education", icon: <GraduationCap size={16} />, data: analysis.sectionScores.education },
-                  ].map((section, i) => (
-                    <motion.div key={section.key} variants={fadeUp} initial="hidden" animate="visible" custom={i} whileHover={cardHover}
-                      className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span style={{ color: c.amber }}>{section.icon}</span>
-                          <span className="text-xs font-bold" style={{ color: c.text }}>{section.label}</span>
-                        </div>
-                        <span className="text-sm font-extrabold" style={{ color: scoreColor(section.data.score * 10) }}>{section.data.score}/10</span>
-                      </div>
-                      {/* Progress bar */}
-                      <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: c.surface }}>
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${section.data.score * 10}%` }} transition={{ duration: 0.8 }}
-                          className="h-full rounded-full" style={{ background: scoreColor(section.data.score * 10) }} />
-                      </div>
-                      {section.data.suggestions?.map((s, j) => (
-                        <div key={j} className="text-[10px] flex items-start gap-1.5 mb-1" style={{ color: c.textSec }}>
-                          <span style={{ color: c.amber }}>•</span> {s}
-                        </div>
-                      ))}
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Detailed Section Analysis from Intelligence */}
-                {intelligence?.detailedAnalysis && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
-                      <FileSearch size={14} style={{ color: c.amber }} /> Detailed Section Analysis
-                    </h3>
-                    <div className="space-y-3">
-                      {Object.entries(intelligence.detailedAnalysis).map(([key, data]: [string, any]) => (
-                        <div key={key} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: c.surface }}>
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: data.present ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)" }}
-                          >
-                            {data.present ? <CheckCircle size={14} style={{ color: c.green }} /> : <XCircle size={14} style={{ color: c.red }} />}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Existing Resumes */}
+                {resumes.length > 0 && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><FileText size={15} style={{ color: c.am }} /> Choose Resume</h3>
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {resumes.map(r => (
+                        <motion.button key={r.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                          onClick={() => { setSelId(r.id); setFile(null); }}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                          style={{
+                            background: selId === r.id ? "rgba(245,158,11,0.08)" : c.sf,
+                            border: `1px solid ${selId === r.id ? "rgba(245,158,11,0.3)" : c.bd}`,
+                          }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
+                            <FileText size={14} style={{ color: c.am }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-bold capitalize" style={{ color: c.text }}>{key.replace(/([A-Z])/g, " $1").trim()}</span>
-                              <span className="text-[10px] font-bold" style={{ color: scoreColor(data.score * 10) }}>{data.score}/10</span>
-                            </div>
-                            {data.notes?.slice(0, 2).map((note: string, i: number) => (
-                              <div key={i} className="text-[10px] mt-1" style={{ color: c.textSec }}>• {note}</div>
-                            ))}
+                            <div className="text-sm font-semibold truncate">{r.title}</div>
+                            <div className="text-[10px]" style={{ color: c.txM }}>{r.template} · {new Date(r.updatedAt).toLocaleDateString()}</div>
                           </div>
-                        </div>
+                          {selId === r.id && <CheckCircle size={16} style={{ color: c.am }} />}
+                        </motion.button>
                       ))}
                     </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ── Tab: Keywords ── */}
-            {activeTab === "keywords" && (
-              <motion.div key="tab-keywords" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                {/* JD Match */}
-                {includeJD === "yes" && analysis.keywordAnalysis && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
-                      <Target size={16} style={{ color: c.amber }} /> Resume vs Job Description Match
-                    </h3>
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-20 h-20 flex-shrink-0">
-                        <svg className="w-full h-full transform -rotate-90">
-                          <circle cx="40" cy="40" r="34" stroke={c.border} strokeWidth="6" fill="transparent" />
-                          <circle cx="40" cy="40" r="34" stroke={c.amber} strokeWidth="6" fill="transparent"
-                            strokeDasharray={2 * Math.PI * 34} strokeDashoffset={2 * Math.PI * 34 * (1 - analysis.score / 100)} strokeLinecap="round" />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-lg font-extrabold" style={{ color: c.amber }}>{analysis.score}%</span>
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-sm mb-2" style={{ color: c.text }}>Skill Match</div>
-                        <div className="text-[10px] mb-1" style={{ color: c.textSec }}>
-                          {analysis.keywordAnalysis.found.length} matched · {analysis.keywordAnalysis.missing.length} missing
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                  </Card>
                 )}
 
-                {/* Found Keywords */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <CheckCircle size={14} style={{ color: c.green }} /> Found Keywords ({analysis.keywordAnalysis.found.length})
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.keywordAnalysis.found.map(kw => (
-                      <span key={kw} className="px-2 py-0.5 text-[10px] font-semibold rounded-full"
-                        style={{ background: "rgba(16,185,129,0.1)", color: c.green, border: "1px solid rgba(16,185,129,0.2)" }}
-                      >✓ {kw}</span>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Missing Keywords */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <XCircle size={14} style={{ color: c.red }} /> Missing Keywords ({analysis.keywordAnalysis.missing.length})
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.keywordAnalysis.missing.map(kw => (
-                      <span key={kw} className="px-2 py-0.5 text-[10px] font-semibold rounded-full"
-                        style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
-                      >✗ {kw}</span>
-                    ))}
-                  </div>
-                  {analysis.keywordAnalysis.missing.length > 0 && (
-                    <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("suggestions")}
-                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold"
-                      style={{ background: "rgba(245,158,11,0.1)", color: c.amber, border: "1px solid rgba(245,158,11,0.2)" }}
-                    ><Sparkles size={12} /> Add Missing Keywords</motion.button>
-                  )}
-                </motion.div>
-
-                {/* Job Target Analysis */}
-                {intelligence?.jobTargetAnalysis && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <Target size={14} style={{ color: c.amber }} /> {intelligence.jobTargetAnalysis.role} Match
-                    </h3>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="text-2xl font-extrabold" style={{ color: scoreColor(intelligence.jobTargetAnalysis.matchScore) }}>
-                        {intelligence.jobTargetAnalysis.matchScore}%
-                      </div>
-                      <span className="text-[10px] font-bold" style={{ color: c.textSec }}>Role Match Score</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-[10px] font-bold mb-1" style={{ color: c.green }}>Aligned Skills</div>
-                        <div className="flex flex-wrap gap-1">
-                          {intelligence.jobTargetAnalysis.alignedSkills.map(s => (
-                            <span key={s} className="px-1.5 py-0.5 text-[9px] rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: c.green }}>{s}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold mb-1" style={{ color: c.red }}>Gap Skills</div>
-                        <div className="flex flex-wrap gap-1">
-                          {intelligence.jobTargetAnalysis.gapSkills.map(s => (
-                            <span key={s} className="px-1.5 py-0.5 text-[9px] rounded-full" style={{ background: "rgba(239,68,68,0.1)", color: c.red }}>{s}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ── Tab: Recruiter ── */}
-            {activeTab === "recruiter" && intelligence?.recruiterView && (
-              <motion.div key="tab-recruiter" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                {/* First Impression */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <EyeIcon size={14} style={{ color: c.amber }} /> First Impression (6-Second Scan)
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{intelligence.recruiterView.firstImpression}</p>
-                </motion.div>
-
-                {/* Hiring Decision */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-5 rounded-2xl" style={{
-                    background: intelligence.recruiterView.interviewWorthy ? "rgba(16,185,129,0.05)" : "rgba(239,68,68,0.05)",
-                    border: `1px solid ${intelligence.recruiterView.interviewWorthy ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {intelligence.recruiterView.interviewWorthy ? <CheckSquare size={16} style={{ color: c.green }} /> : <AlertCircle size={16} style={{ color: c.red }} />}
-                    <span className="text-xs font-bold" style={{ color: intelligence.recruiterView.interviewWorthy ? c.green : c.red }}>
-                      {intelligence.recruiterView.interviewWorthy ? "Interview Worthy" : "Needs Improvement"}
-                    </span>
-                  </div>
-                  <p className="text-sm" style={{ color: c.textSec }}>{intelligence.recruiterView.hiringDecision}</p>
-                </motion.div>
-
-                {/* Top Strengths */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <TrendingUp size={14} style={{ color: c.green }} /> Top Strengths
-                  </h3>
-                  <div className="space-y-2">
-                    {intelligence.recruiterView.topStrengths.map((s, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg" style={{ background: c.surface }}>
-                        <CheckCircle size={14} className="shrink-0 mt-0.5" style={{ color: c.green }} />
-                        <span className="text-[11px]" style={{ color: c.textSec }}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Red Flags */}
-                <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                  className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                >
-                  <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                    <AlertTriangle size={14} style={{ color: c.red }} /> Red Flags
-                  </h3>
-                  <div className="space-y-2">
-                    {intelligence.recruiterView.redFlags.length > 0 ? intelligence.recruiterView.redFlags.map((r, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg" style={{ background: c.surface }}>
-                        <XCircle size={14} className="shrink-0 mt-0.5" style={{ color: c.red }} />
-                        <span className="text-[11px]" style={{ color: c.textSec }}>{r}</span>
-                      </div>
-                    )) : (
-                      <div className="text-[11px]" style={{ color: c.green }}>No red flags detected</div>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Readability Analysis */}
-                {intelligence.readabilityAnalysis && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <Activity size={14} style={{ color: c.amber }} /> Readability Analysis
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {Object.entries(intelligence.readabilityAnalysis).map(([key, val]) => (
-                        <div key={key} className="p-2 rounded-lg" style={{ background: c.surface }}>
-                          <div className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: c.textMuted }}>{key.replace(/([A-Z])/g, " $1").trim()}</div>
-                          <div className="text-[11px] font-semibold" style={{ color: c.text }}>{val}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ── Tab: Insights ── */}
-            {activeTab === "insights" && intelligence?.insights && (
-              <motion.div key="tab-insights" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                {/* Missing Sections */}
-                {intelligence.missingSections.length > 0 && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <AlertCircle size={14} style={{ color: c.red }} /> Missing Sections
-                    </h3>
-                    <div className="space-y-2">
-                      {intelligence.missingSections.map((ms, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: c.surface }}>
-                          <div className="w-6 h-6 rounded flex items-center justify-center shrink-0"
-                            style={{ background: ms.importance === "critical" ? "rgba(239,68,68,0.1)" : ms.importance === "important" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)" }}
-                          >
-                            {ms.importance === "critical" ? <XCircle size={12} style={{ color: c.red }} /> :
-                             ms.importance === "important" ? <AlertTriangle size={12} style={{ color: c.amber }} /> :
-                             <CircleDot size={12} style={{ color: c.blue }} />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] font-bold" style={{ color: c.text }}>{ms.section}</span>
-                              <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded"
-                                style={{
-                                  background: ms.importance === "critical" ? "rgba(239,68,68,0.1)" : ms.importance === "important" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                                  color: ms.importance === "critical" ? c.red : ms.importance === "important" ? c.amber : c.blue,
-                                }}
-                              >{ms.importance}</span>
-                            </div>
-                            <div className="text-[10px] mt-0.5" style={{ color: c.textSec }}>{ms.reason}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Structure Issues */}
-                {intelligence.structureAnalysis && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <Shield size={14} style={{ color: intelligence.structureAnalysis.isAtsCompatible ? c.green : c.red }} /> ATS Structure Analysis
-                    </h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-2 h-2 rounded-full" style={{ background: intelligence.structureAnalysis.isAtsCompatible ? c.green : c.red }} />
-                      <span className="text-[11px] font-bold" style={{ color: intelligence.structureAnalysis.isAtsCompatible ? c.green : c.red }}>
-                        {intelligence.structureAnalysis.isAtsCompatible ? "ATS Compatible" : "ATS Incompatible"}
-                      </span>
-                      <span className="text-[10px]" style={{ color: c.textMuted }}>· Format: {intelligence.structureAnalysis.overallFormat}</span>
-                    </div>
-                    {intelligence.structureAnalysis.issues.length > 0 && (
+                {/* Upload */}
+                <Card className="p-5">
+                  <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Upload size={15} style={{ color: c.am }} /> Upload Resume</h3>
+                  <div onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={handleDrop}
+                    onClick={() => fileRef.current?.click()}
+                    className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all"
+                    style={{ borderColor: drag ? c.am : c.bd, background: drag ? "rgba(245,158,11,0.04)" : c.sf }}>
+                    <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={e => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setSelId(""); } }} className="hidden" />
+                    {file ? (
+                      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-2">
+                        <FileText size={32} className="mx-auto" style={{ color: c.am }} />
+                        <p className="text-sm font-bold">{file.name}</p>
+                        <p className="text-[10px]" style={{ color: c.txM }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <button onClick={e => { e.stopPropagation(); setFile(null); }}
+                          className="text-[10px] font-bold inline-flex items-center gap-1 px-3 py-1.5 rounded-lg"
+                          style={{ background: c.rdBg, color: c.rd, border: `1px solid ${c.rd}30` }}><X size={11} /> Remove</button>
+                      </motion.div>
+                    ) : (
                       <div className="space-y-2">
-                        {intelligence.structureAnalysis.issues.map((issue, i) => (
-                          <div key={i} className="p-3 rounded-lg" style={{ background: c.surface }}>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded"
-                                style={{
-                                  background: issue.severity === "high" ? "rgba(239,68,68,0.1)" : issue.severity === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                                  color: issue.severity === "high" ? c.red : issue.severity === "medium" ? c.amber : c.blue,
-                                }}
-                              >{issue.severity}</span>
-                              <span className="text-[11px] font-bold" style={{ color: c.text }}>{issue.issue}</span>
-                            </div>
-                            <div className="text-[10px] ml-8" style={{ color: c.textSec }}>Fix: {issue.fix}</div>
-                          </div>
-                        ))}
+                        <Upload size={36} className="mx-auto" style={{ color: c.txM }} />
+                        <p className="text-sm font-bold">Drag & drop your resume</p>
+                        <p className="text-[10px]" style={{ color: c.txM }}>PDF, DOCX up to 5MB</p>
                       </div>
                     )}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Continue */}
+              <motion.button whileHover={btnH} whileTap={btnT} disabled={!file && !selId}
+                onClick={() => setScreen("jd")}
+                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                style={{
+                  background: (!file && !selId) ? c.sf : "linear-gradient(135deg,#f59e0b,#d97706)",
+                  color: (!file && !selId) ? c.txM : "#000",
+                  border: (!file && !selId) ? `1px solid ${c.bd}` : "none",
+                  opacity: (!file && !selId) ? 0.5 : 1,
+                }}>
+                <Zap size={15} /> Continue to Analysis <ChevronRight size={16} />
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* ═══════ JD ═══════ */}
+          {screen === "jd" && (
+            <motion.div key="jd" {...AP.page} transition={{ duration: 0.3 }} className="space-y-5 pt-5 max-w-xl mx-auto">
+              <Card className="p-8 text-center">
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={AP.spring}>
+                  <Target size={44} className="mx-auto mb-4" style={{ color: c.am }} />
+                </motion.div>
+                <h2 className="text-xl font-extrabold mb-2">Compare with Job Description?</h2>
+                <p className="text-sm mb-6" style={{ color: c.tx2 }}>Adds targeted keyword matching and role-specific gap analysis.</p>
+                <div className="flex gap-3 justify-center">
+                  <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setIncJD("yes")}
+                    className="px-8 py-2.5 rounded-xl font-bold text-xs"
+                    style={{ background: incJD === "yes" ? c.am : c.sf, color: incJD === "yes" ? "#000" : c.tx, border: `1px solid ${incJD === "yes" ? c.am : c.bd}` }}>
+                    Yes, include JD
+                  </motion.button>
+                  <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setIncJD("skip")}
+                    className="px-8 py-2.5 rounded-xl font-bold text-xs"
+                    style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>
+                    Skip
+                  </motion.button>
+                </div>
+              </Card>
+
+              <AnimatePresence>
+                {incJD === "yes" && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden">
+                    <Card className="p-5 space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: c.tx2 }}>Paste Job Description</label>
+                        <textarea value={jd} onChange={e => setJd(e.target.value)} rows={6} placeholder="Paste the job description here..."
+                          className="w-full p-3 rounded-xl text-sm outline-none resize-none"
+                          style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }}
+                          onFocus={e => e.currentTarget.style.borderColor = c.am}
+                          onBlur={e => e.currentTarget.style.borderColor = c.bd} />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px" style={{ background: c.bd }} />
+                        <span className="text-[10px] font-bold" style={{ color: c.txM }}>OR</span>
+                        <div className="flex-1 h-px" style={{ background: c.bd }} />
+                      </div>
+                      <div onClick={() => jdRef.current?.click()}
+                        className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer"
+                        style={{ borderColor: c.bd, background: c.sf }}>
+                        <input ref={jdRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden"
+                          onChange={e => { if (e.target.files?.[0]) setJdFile(e.target.files[0]); }} />
+                        {jdFile ? <p className="text-sm font-bold">{jdFile.name}</p> : (
+                          <div><Upload size={22} className="mx-auto mb-1" style={{ color: c.txM }} /><p className="text-[10px]" style={{ color: c.txM }}>Upload JD file</p></div>
+                        )}
+                      </div>
+                    </Card>
                   </motion.div>
                 )}
+              </AnimatePresence>
 
-                {/* Strengths, Weaknesses, Risks, Opportunities */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { title: "Strengths", icon: <TrendingUp size={14} />, color: c.green, data: intelligence.insights.strengths },
-                    { title: "Weaknesses", icon: <TrendingDown size={14} />, color: c.red, data: intelligence.insights.weaknesses },
-                    { title: "Risks", icon: <AlertTriangle size={14} />, color: c.amber, data: intelligence.insights.risks },
-                    { title: "Opportunities", icon: <Lightbulb size={14} />, color: c.blue, data: intelligence.insights.opportunities },
-                  ].map((section, i) => (
-                    <motion.div key={section.title} variants={fadeUp} initial="hidden" animate="visible" custom={i}
-                      className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    >
-                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                        <span style={{ color: section.color }}>{section.icon}</span> {section.title}
-                      </h3>
-                      <div className="space-y-1.5">
-                        {section.data.map((item, j) => (
-                          <div key={j} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
-                            <span style={{ color: section.color }}>•</span> {item}
-                          </div>
-                        ))}
-                      </div>
+              <div className="flex gap-3">
+                <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("home")}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs" style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back</motion.button>
+                <motion.button whileHover={btnH} whileTap={btnT} disabled={incJD === null} onClick={startAnalysis}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                  style={{
+                    background: incJD === null ? c.sf : "linear-gradient(135deg,#f59e0b,#d97706)",
+                    color: incJD === null ? c.txM : "#000",
+                    border: incJD === null ? `1px solid ${c.bd}` : "none",
+                    opacity: incJD === null ? 0.5 : 1,
+                  }}><Zap size={15} /> Analyze Resume</motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══════ LOADING ═══════ */}
+          {screen === "loading" && (
+            <motion.div key="loading" {...AP.fade} transition={{ duration: 0.3 }} className="max-w-md mx-auto pt-8">
+              <Card className="p-8 text-center">
+                {/* Spinner */}
+                <div className="relative w-20 h-20 mx-auto mb-6">
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="w-full h-full rounded-full" style={{ border: `3px solid ${c.bd}`, borderTopColor: c.am }} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BarChart3 size={22} style={{ color: c.am }} />
+                  </div>
+                </div>
+                <h2 className="text-lg font-extrabold mb-6">Analyzing Resume...</h2>
+                <div className="space-y-2.5 text-left">
+                  {loadSteps.map((step, i) => (
+                    <motion.div key={step} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl transition-all"
+                      style={{ background: i <= loadStep ? "rgba(245,158,11,0.04)" : "transparent" }}>
+                      {i < loadStep ? <CheckCircle size={16} style={{ color: c.gn }} /> :
+                       i === loadStep ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                         className="w-4 h-4 rounded-full border-2" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} /> :
+                       <div className="w-4 h-4 rounded-full" style={{ background: c.sf, border: `1px solid ${c.bd}` }} />}
+                      <span className="text-xs" style={{ color: i <= loadStep ? c.tx : c.txM, fontWeight: i <= loadStep ? 700 : 400 }}>{step}</span>
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              </Card>
+            </motion.div>
+          )}
 
-            {/* ── Tab: Improvements ── */}
-            {activeTab === "improvements" && (
-              <motion.div key="tab-improvements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                {/* AI Recommendations */}
-                {intelligence?.improvementRecommendations && intelligence.improvementRecommendations.length > 0 && (
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <Brain size={14} style={{ color: c.purple }} /> AI Improvement Recommendations
-                    </h3>
-                    <div className="space-y-2">
-                      {intelligence.improvementRecommendations.map((rec, i) => {
-                        const isExpanded = expandedInsight === `rec-${i}`;
-                        return (
-                          <div key={i} className="rounded-lg overflow-hidden" style={{ background: c.surface, border: `1px solid ${c.border}` }}>
-                            <button onClick={() => setExpandedInsight(isExpanded ? null : `rec-${i}`)}
-                              className="w-full flex items-center gap-2 p-3 text-left"
-                            >
-                              <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded shrink-0"
-                                style={{
-                                  background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : rec.priority === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                                  color: rec.priority === "high" ? c.red : rec.priority === "medium" ? c.amber : c.blue,
-                                }}
-                              >{rec.priority}</span>
-                              <span className="text-[11px] font-bold flex-1" style={{ color: c.text }}>{rec.title}</span>
-                              <span className="text-[9px] font-semibold" style={{ color: c.textMuted }}>{rec.category}</span>
-                              {isExpanded ? <ChevronUp size={12} style={{ color: c.textMuted }} /> : <ChevronDown size={12} style={{ color: c.textMuted }} />}
-                            </button>
-                            {isExpanded && (
-                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                                className="px-3 pb-3"
-                              >
-                                <p className="text-[10px] mb-1" style={{ color: c.textSec }}>{rec.description}</p>
-                                <div className="text-[10px] font-semibold" style={{ color: c.amber }}>Impact: {rec.impact}</div>
-                              </motion.div>
-                            )}
+          {/* ═══════ DASHBOARD ═══════ */}
+          {screen === "dashboard" && analysis && (
+            <motion.div key="dash" {...AP.page} transition={{ duration: 0.3 }} className="space-y-5 pt-4">
+
+              {/* ─── TABS ─── */}
+              <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
+                {([
+                  ["overview", "Overview", <BarChart3 size={12} />],
+                  ["sections", "Sections", <FileSearch size={12} />],
+                  ["keywords", "Keywords", <Search size={12} />],
+                  ["recruiter", "Recruiter", <Users size={12} />],
+                  ["insights", "Insights", <Brain size={12} />],
+                  ["fixes", "Fixes", <Lightbulb size={12} />],
+                ] as const).map(([id, label, icon]) => (
+                  <motion.button key={id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => setTab(id)}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap"
+                    style={{ background: tab === id ? "linear-gradient(135deg,#f59e0b,#d97706)" : "transparent", color: tab === id ? "#000" : c.txM }}>
+                    {icon} {label}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* ═══ TAB: OVERVIEW ═══ */}
+              {tab === "overview" && (
+                <motion.div key="t-over" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+                  {/* Score + Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    {/* SCORE RING */}
+                    <Card className="p-6 flex flex-col items-center justify-center">
+                      <div className="relative w-40 h-40 mb-3">
+                        <svg className="w-full h-full -rotate-90">
+                          <circle cx="80" cy="80" r="68" stroke={c.d ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)"} strokeWidth="10" fill="transparent" />
+                          <motion.circle cx="80" cy="80" r="68" fill="transparent"
+                            stroke={sc(analysis.score)} strokeWidth="10" strokeLinecap="round"
+                            strokeDasharray={2 * Math.PI * 68}
+                            initial={{ strokeDashoffset: 2 * Math.PI * 68 }}
+                            animate={{ strokeDashoffset: 2 * Math.PI * 68 * (1 - analysis.score / 100) }}
+                            transition={{ duration: 1.8, ease: "easeOut", delay: 0.3 }} />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-4xl font-extrabold"><CountUp end={analysis.score} /></span>
+                          <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: c.txM }}>ATS Score</span>
+                        </div>
+                      </div>
+                      <div className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                        style={{ background: scBg(analysis.score), color: sc(analysis.score) }}>{scLb(analysis.score)}</div>
+                      {intel?.recruiterView && (
+                        <div className="mt-3 flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: intel.recruiterView.interviewWorthy ? c.gn : c.rd }} />
+                          <span className="text-[10px] font-bold" style={{ color: intel.recruiterView.interviewWorthy ? c.gn : c.rd }}>
+                            {intel.recruiterView.interviewWorthy ? "Interview Worthy" : "Needs Improvement"}
+                          </span>
+                        </div>
+                      )}
+                    </Card>
+
+                    {/* RADAR */}
+                    <Card className="p-4 flex flex-col">
+                      <h3 className="text-[11px] font-bold mb-2">Section Scores</h3>
+                      <div className="flex-1" style={{ minHeight: 200 }}>{radarData && <Radar data={radarData} options={radarOpts as any} />}</div>
+                    </Card>
+
+                    {/* BAR */}
+                    <Card className="p-4 flex flex-col">
+                      <h3 className="text-[11px] font-bold mb-2">Keyword Coverage</h3>
+                      <div className="flex-1" style={{ minHeight: 200 }}>{barData && <Bar data={barData} options={barOpts as any} />}</div>
+                    </Card>
+                  </div>
+
+                  {/* QUICK STATS */}
+                  <motion.div variants={AP.stagger.in} initial="init" animate="in" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[
+                      { l: "Keywords Found", v: String(analysis.keywordsFound.length), ic: <Search size={14} />, cl: c.gn },
+                      { l: "Keywords Missing", v: String(analysis.keywordsMissing.length), ic: <AlertTriangle size={14} />, cl: c.rd },
+                      { l: "Readability", v: analysis.readability, ic: <Activity size={14} />, cl: c.am },
+                      { l: "Recruiter Score", v: `${analysis.recruiterScore}/10`, ic: <Users size={14} />, cl: c.bl },
+                    ].map((s, i) => (
+                      <motion.div key={s.l} variants={AP.card} whileHover={hov} className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span style={{ color: s.cl }}>{s.ic}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: c.txM }}>{s.l}</span>
+                        </div>
+                        <div className="text-xl font-extrabold">{s.v}</div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+
+                  {/* STRENGTH BARS */}
+                  <Card className="p-5">
+                    <h3 className="text-xs font-bold mb-4">Resume Strength</h3>
+                    <div className="space-y-3">
+                      {([
+                        ["Summary", analysis.strengthBars.summary, "#8b5cf6"],
+                        ["Skills", analysis.strengthBars.skills, "#3b82f6"],
+                        ["Experience", analysis.strengthBars.experience, "#f59e0b"],
+                        ["Projects", analysis.strengthBars.projects, "#10b981"],
+                        ["Education", analysis.strengthBars.education, "#ec4899"],
+                      ] as const).map(([l, v, cl]) => (
+                        <div key={l}>
+                          <div className="flex justify-between text-[10px] font-bold mb-1">
+                            <span style={{ color: c.tx2 }}>{l}</span>
+                            <span style={{ color: cl }}>{v}%</span>
                           </div>
+                          <div className="h-2 rounded-full overflow-hidden" style={{ background: c.sf }}>
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${v}%` }} transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
+                              className="h-full rounded-full" style={{ background: cl }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* FORMATTING CHECK */}
+                  <Card className="p-5">
+                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                      <FileCheck2 size={14} style={{ color: c.am }} /> ATS Formatting Check
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {([
+                        ["One Page", analysis.formattingCheck.onePage],
+                        ["Fonts OK", analysis.formattingCheck.fontsConsistent],
+                        ["ATS Friendly", analysis.formattingCheck.atsFriendly],
+                        ["Headings OK", analysis.formattingCheck.headingsCorrect],
+                        ["Contact OK", analysis.formattingCheck.contactPresent],
+                      ] as const).map(([l, ok]) => (
+                        <div key={l} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: c.sf }}>
+                          {ok ? <CheckCircle size={13} style={{ color: c.gn }} /> : <XCircle size={13} style={{ color: c.rd }} />}
+                          <span className="text-[10px] font-semibold">{l}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* ACTIONS */}
+                  <div className="flex gap-3">
+                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("insights")}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                      style={{ background: c.ppBg, color: c.pp, border: `1px solid ${c.pp}30` }}>
+                      <Brain size={15} /> Deep Insights
+                    </motion.button>
+                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setTab("fixes")}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
+                      <Sparkles size={15} /> AI Suggestions
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ═══ TAB: SECTIONS ═══ */}
+              {tab === "sections" && (
+                <motion.div key="t-sec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* Section Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {([
+                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores.summary],
+                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores.skills],
+                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores.experience],
+                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores.projects],
+                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores.education],
+                    ] as const).map(([k, lbl, ic, data], i) => (
+                      <motion.div key={k} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.06 }}
+                        whileHover={hov} className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span style={{ color: c.am }}>{ic}</span>
+                            <span className="text-xs font-bold">{lbl}</span>
+                          </div>
+                          <span className="text-sm font-extrabold" style={{ color: sc(data.score * 10) }}>{data.score}/10</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: c.sf }}>
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${data.score * 10}%` }}
+                            transition={{ duration: 0.8, delay: 0.2 }} className="h-full rounded-full" style={{ background: sc(data.score * 10) }} />
+                        </div>
+                        {data.suggestions?.map((s, j) => (
+                          <div key={j} className="text-[10px] flex items-start gap-1.5 mb-1" style={{ color: c.tx2 }}>
+                            <span style={{ color: c.am }} className="mt-0.5">•</span> {s}
+                          </div>
+                        ))}
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Detailed from Intelligence */}
+                  {intel?.detailedAnalysis && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-4 flex items-center gap-2">
+                        <FileSearch size={14} style={{ color: c.am }} /> Detailed Section Analysis
+                      </h3>
+                      <div className="space-y-2">
+                        {Object.entries(intel.detailedAnalysis).map(([key, d]: [string, any]) => (
+                          <div key={key} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: c.sf }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: d.present ? c.gnBg : c.rdBg }}>
+                              {d.present ? <CheckCircle size={13} style={{ color: c.gn }} /> : <XCircle size={13} style={{ color: c.rd }} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                                <span className="text-[10px] font-bold" style={{ color: sc(d.score * 10) }}>{d.score}/10</span>
+                              </div>
+                              {d.notes?.slice(0, 2).map((n: string, i: number) => (
+                                <div key={i} className="text-[10px] mt-0.5" style={{ color: c.tx2 }}>• {n}</div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ═══ TAB: KEYWORDS ═══ */}
+              {tab === "keywords" && (
+                <motion.div key="t-kw" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {incJD === "yes" && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Target size={14} style={{ color: c.am }} /> JD Match</h3>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-16 h-16 flex-shrink-0">
+                          <svg className="w-full h-full -rotate-90">
+                            <circle cx="32" cy="32" r="26" stroke={c.bd} strokeWidth="5" fill="transparent" />
+                            <circle cx="32" cy="32" r="26" stroke={c.am} strokeWidth="5" fill="transparent"
+                              strokeDasharray={2 * Math.PI * 26} strokeDashoffset={2 * Math.PI * 26 * (1 - analysis.score / 100)} strokeLinecap="round" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center"><span className="text-sm font-extrabold" style={{ color: c.am }}>{analysis.score}%</span></div>
+                        </div>
+                        <div className="text-xs" style={{ color: c.tx2 }}>{analysis.keywordAnalysis.found.length} matched · {analysis.keywordAnalysis.missing.length} missing</div>
+                      </div>
+                    </Card>
+                  )}
+
+                  <Card className="p-5">
+                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                      <CheckCircle size={14} style={{ color: c.gn }} /> Found Keywords ({analysis.keywordAnalysis.found.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {analysis.keywordAnalysis.found.map(kw => (
+                        <Pill key={kw} color="#10b981">✓ {kw}</Pill>
+                      ))}
+                      {analysis.keywordAnalysis.found.length === 0 && <span className="text-[10px]" style={{ color: c.txM }}>No keywords detected</span>}
+                    </div>
+                  </Card>
+
+                  <Card className="p-5">
+                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                      <XCircle size={14} style={{ color: c.rd }} /> Missing Keywords ({analysis.keywordAnalysis.missing.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {analysis.keywordAnalysis.missing.map(kw => (
+                        <Pill key={kw} color="#ef4444">✗ {kw}</Pill>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {intel?.jobTargetAnalysis && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                        <Target size={14} style={{ color: c.am }} /> {intel.jobTargetAnalysis.role} Match
+                      </h3>
+                      <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-3xl font-extrabold" style={{ color: sc(intel.jobTargetAnalysis.matchScore) }}>
+                          <CountUp end={intel.jobTargetAnalysis.matchScore} />%
+                        </span>
+                        <span className="text-[10px] font-bold" style={{ color: c.txM }}>Match Score</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-[10px] font-bold mb-2" style={{ color: c.gn }}>Aligned Skills</div>
+                          <div className="flex flex-wrap gap-1">{intel.jobTargetAnalysis.alignedSkills.map(s => <Pill key={s} color="#10b981">{s}</Pill>)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold mb-2" style={{ color: c.rd }}>Gap Skills</div>
+                          <div className="flex flex-wrap gap-1">{intel.jobTargetAnalysis.gapSkills.map(s => <Pill key={s} color="#ef4444">{s}</Pill>)}</div>
+                        </div>
+                      </div>
+                      {intel.jobTargetAnalysis.roleSpecificAdvice.length > 0 && (
+                        <div className="mt-4">
+                          <div className="text-[10px] font-bold mb-2" style={{ color: c.am }}>Role-Specific Advice</div>
+                          {intel.jobTargetAnalysis.roleSpecificAdvice.map((a, i) => (
+                            <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1" style={{ color: c.tx2 }}><span style={{ color: c.am }}>→</span> {a}</div>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ═══ TAB: RECRUITER ═══ */}
+              {tab === "recruiter" && intel?.recruiterView && (
+                <motion.div key="t-rec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* First Impression */}
+                  <Card className="p-6">
+                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Eye size={14} style={{ color: c.am }} /> First Impression (6-Second Scan)</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: c.tx2 }}>{intel.recruiterView.firstImpression}</p>
+                  </Card>
+
+                  {/* Hiring Decision */}
+                  <Card className="p-5" style={{
+                    background: intel.recruiterView.interviewWorthy ? "rgba(16,185,129,0.04)" : "rgba(239,68,68,0.04)",
+                    border: `1px solid ${intel.recruiterView.interviewWorthy ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
+                  }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {intel.recruiterView.interviewWorthy ? <CheckSquare size={16} style={{ color: c.gn }} /> : <AlertCircle size={16} style={{ color: c.rd }} />}
+                      <span className="text-xs font-bold" style={{ color: intel.recruiterView.interviewWorthy ? c.gn : c.rd }}>
+                        {intel.recruiterView.interviewWorthy ? "Interview Worthy" : "Needs Improvement Before Applying"}
+                      </span>
+                    </div>
+                    <p className="text-sm" style={{ color: c.tx2 }}>{intel.recruiterView.hiringDecision}</p>
+                  </Card>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Top Strengths */}
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><TrendingUp size={14} style={{ color: c.gn }} /> Top Strengths</h3>
+                      <div className="space-y-2">
+                        {intel.recruiterView.topStrengths.map((s, i) => (
+                          <div key={i} className="flex items-start gap-2 p-2.5 rounded-xl" style={{ background: c.sf }}>
+                            <CheckCircle size={13} className="shrink-0 mt-0.5" style={{ color: c.gn }} />
+                            <span className="text-[11px]" style={{ color: c.tx2 }}>{s}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                    {/* Red Flags */}
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><AlertTriangle size={14} style={{ color: c.rd }} /> Red Flags</h3>
+                      <div className="space-y-2">
+                        {intel.recruiterView.redFlags.length > 0 ? intel.recruiterView.redFlags.map((r, i) => (
+                          <div key={i} className="flex items-start gap-2 p-2.5 rounded-xl" style={{ background: c.sf }}>
+                            <XCircle size={13} className="shrink-0 mt-0.5" style={{ color: c.rd }} />
+                            <span className="text-[11px]" style={{ color: c.tx2 }}>{r}</span>
+                          </div>
+                        )) : <p className="text-[11px]" style={{ color: c.gn }}>No red flags detected</p>}
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Readability */}
+                  {intel.readabilityAnalysis && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Activity size={14} style={{ color: c.am }} /> Readability Analysis</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {Object.entries(intel.readabilityAnalysis).map(([k, v]) => (
+                          <div key={k} className="p-3 rounded-xl" style={{ background: c.sf }}>
+                            <div className="text-[8px] font-bold uppercase tracking-widest mb-1" style={{ color: c.txM }}>{k.replace(/([A-Z])/g, " $1").trim()}</div>
+                            <div className="text-xs font-semibold">{v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ═══ TAB: INSIGHTS ═══ */}
+              {tab === "insights" && intel?.insights && (
+                <motion.div key="t-ins" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* Missing Sections */}
+                  {intel.missingSections.length > 0 && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><AlertCircle size={14} style={{ color: c.rd }} /> Missing Sections</h3>
+                      <div className="space-y-2">
+                        {intel.missingSections.map((ms, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: c.sf }}>
+                            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ background: ms.importance === "critical" ? c.rdBg : ms.importance === "important" ? c.amBg : c.blBg }}>
+                              {ms.importance === "critical" ? <XCircle size={12} style={{ color: c.rd }} /> :
+                               ms.importance === "important" ? <AlertTriangle size={12} style={{ color: c.am }} /> :
+                               <CircleDot size={12} style={{ color: c.bl }} />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold">{ms.section}</span>
+                                <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded"
+                                  style={{ background: ms.importance === "critical" ? c.rdBg : ms.importance === "important" ? c.amBg : c.blBg, color: ms.importance === "critical" ? c.rd : ms.importance === "important" ? c.am : c.bl }}>
+                                  {ms.importance}
+                                </span>
+                              </div>
+                              <div className="text-[10px] mt-0.5" style={{ color: c.tx2 }}>{ms.reason}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Structure Analysis */}
+                  {intel.structureAnalysis && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2">
+                        <Shield size={14} style={{ color: intel.structureAnalysis.isAtsCompatible ? c.gn : c.rd }} /> ATS Structure Analysis
+                      </h3>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 rounded-full" style={{ background: intel.structureAnalysis.isAtsCompatible ? c.gn : c.rd }} />
+                        <span className="text-[11px] font-bold" style={{ color: intel.structureAnalysis.isAtsCompatible ? c.gn : c.rd }}>
+                          {intel.structureAnalysis.isAtsCompatible ? "ATS Compatible" : "ATS Incompatible"}
+                        </span>
+                        <span className="text-[10px]" style={{ color: c.txM }}>· {intel.structureAnalysis.overallFormat}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {intel.structureAnalysis.issues.map((iss, i) => (
+                          <div key={i} className="p-3 rounded-xl" style={{ background: c.sf }}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded"
+                                style={{ background: iss.severity === "high" ? c.rdBg : iss.severity === "medium" ? c.amBg : c.blBg, color: iss.severity === "high" ? c.rd : iss.severity === "medium" ? c.am : c.bl }}>
+                                {iss.severity}
+                              </span>
+                              <span className="text-[11px] font-bold">{iss.issue}</span>
+                            </div>
+                            <div className="text-[10px] ml-6" style={{ color: c.tx2 }}>Fix: {iss.fix}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* 4 Quadrant Insights */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {([
+                      ["Strengths", <TrendingUp size={13} />, c.gn, intel.insights.strengths],
+                      ["Weaknesses", <TrendingDown size={13} />, c.rd, intel.insights.weaknesses],
+                      ["Risks", <AlertTriangle size={13} />, c.am, intel.insights.risks],
+                      ["Opportunities", <Lightbulb size={13} />, c.bl, intel.insights.opportunities],
+                    ] as const).map(([lbl, ic, cl, data], i) => (
+                      <motion.div key={lbl} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.06 }}
+                        className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                        <h3 className="text-[11px] font-bold mb-3 flex items-center gap-2">
+                          <span style={{ color: cl }}>{ic}</span> {lbl}
+                        </h3>
+                        <div className="space-y-1.5">
+                          {data.map((item, j) => (
+                            <div key={j} className="text-[10px] flex items-start gap-1.5" style={{ color: c.tx2 }}>
+                              <span style={{ color: cl }} className="mt-0.5">•</span> {item}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ═══ TAB: FIXES ═══ */}
+              {tab === "fixes" && (
+                <motion.div key="t-fix" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* AI Recommendations */}
+                  {intel?.improvementRecommendations && intel.improvementRecommendations.length > 0 && (
+                    <Card className="p-5">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Brain size={14} style={{ color: c.pp }} /> AI Improvement Recommendations</h3>
+                      <div className="space-y-2">
+                        {intel.improvementRecommendations.map((rec, i) => {
+                          const open = expandedRec === i;
+                          return (
+                            <div key={i} className="rounded-xl overflow-hidden" style={{ background: c.sf, border: `1px solid ${c.bd}` }}>
+                              <button onClick={() => setExpandedRec(open ? null : i)} className="w-full flex items-center gap-2 p-3 text-left">
+                                <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded shrink-0"
+                                  style={{ background: rec.priority === "high" ? c.rdBg : rec.priority === "medium" ? c.amBg : c.blBg, color: rec.priority === "high" ? c.rd : rec.priority === "medium" ? c.am : c.bl }}>
+                                  {rec.priority}
+                                </span>
+                                <span className="text-[11px] font-bold flex-1">{rec.title}</span>
+                                <span className="text-[9px] font-semibold" style={{ color: c.txM }}>{rec.category}</span>
+                                {open ? <ChevronUp size={12} style={{ color: c.txM }} /> : <ChevronDown size={12} style={{ color: c.txM }} />}
+                              </button>
+                              <AnimatePresence>
+                                {open && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden px-3 pb-3">
+                                    <p className="text-[10px] mb-1.5" style={{ color: c.tx2 }}>{rec.description}</p>
+                                    <div className="text-[10px] font-semibold" style={{ color: c.am }}>Impact: {rec.impact}</div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Applied Suggestions */}
+                  {suggestions.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold flex items-center gap-2"><Sparkles size={14} style={{ color: c.am }} /> AI Suggested Improvements</h3>
+                      {suggestions.map((sg, i) => {
+                        const done = applied.has(sg.id);
+                        return (
+                          <motion.div key={sg.id} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.04 }}
+                            whileHover={hov} className="p-4 rounded-xl"
+                            style={{ background: done ? "rgba(16,185,129,0.04)" : c.cb, border: `1px solid ${done ? "rgba(16,185,129,0.2)" : c.bd}` }}>
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-bold">{sg.title}</span>
+                                  <Pill color={sg.impact === "high" ? "#ef4444" : sg.impact === "medium" ? "#f59e0b" : "#3b82f6"}>{sg.impact} impact</Pill>
+                                </div>
+                                <p className="text-[11px]" style={{ color: c.tx2 }}>{sg.description}</p>
+                              </div>
+                              {done ? (
+                                <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
+                                  style={{ background: c.gnBg, color: c.gn, border: `1px solid ${c.gn}30` }}><CheckCircle size={10} /> Applied</span>
+                              ) : (
+                                <motion.button whileHover={btnH} whileTap={btnT} onClick={() => applySugg(sg)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0"
+                                  style={{ background: c.am, color: "#000" }}><Sparkles size={10} /> Apply</motion.button>
+                              )}
+                            </div>
+                          </motion.div>
                         );
                       })}
                     </div>
-                  </motion.div>
-                )}
-
-                {/* AI Suggestions */}
-                <div className="space-y-3">
-                  {suggestions.length > 0 && (
-                    <h3 className="text-xs font-bold flex items-center gap-2" style={{ color: c.text }}>
-                      <Sparkles size={14} style={{ color: c.amber }} /> AI Suggested Improvements
-                    </h3>
                   )}
-                  {suggestions.map((sugg, i) => {
-                    const applied = appliedSuggestions.has(sugg.id);
-                    return (
-                      <motion.div key={sugg.id} variants={fadeUp} initial="hidden" animate="visible" custom={i} whileHover={cardHover}
-                        className="p-4 rounded-xl" style={{
-                          background: applied ? "rgba(16,185,129,0.05)" : c.cardBg,
-                          border: `1px solid ${applied ? "rgba(16,185,129,0.2)" : c.border}`,
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-bold" style={{ color: c.text }}>{sugg.title}</span>
-                              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase"
-                                style={{
-                                  background: sugg.impact === "high" ? "rgba(239,68,68,0.1)" : sugg.impact === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                                  color: sugg.impact === "high" ? c.red : sugg.impact === "medium" ? c.amber : c.blue,
-                                }}
-                              >{sugg.impact} impact</span>
-                            </div>
-                            <p className="text-[11px]" style={{ color: c.textSec }}>{sugg.description}</p>
-                          </div>
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            {applied ? (
-                              <>
-                                <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => handleUndoSuggestion(sugg.id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                                  style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
-                                ><RotateCcw size={10} /> Undo</motion.button>
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                                  style={{ background: "rgba(16,185,129,0.1)", color: c.green, border: "1px solid rgba(16,185,129,0.2)" }}
-                                ><CheckCircle size={10} /> Applied</span>
-                              </>
-                            ) : (
-                              <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => handleApplySuggestion(sugg)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                                style={{ background: c.amber, color: "#000" }}
-                              ><Sparkles size={10} /> Apply</motion.button>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
 
-                {/* Strengths & Recommendations from ATS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <CheckCircle size={14} style={{ color: c.green }} /> ATS Strengths
-                    </h3>
-                    <div className="space-y-1.5">
+                  {/* Strengths & Recs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="p-4">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><CheckCircle size={13} style={{ color: c.gn }} /> Strengths</h3>
                       {analysis.strengths.map((s, i) => (
-                        <div key={i} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
-                          <span style={{ color: c.green }}>✓</span> {s}
-                        </div>
+                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.gn }}>✓</span> {s}</div>
                       ))}
-                    </div>
-                  </motion.div>
-                  <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                    className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                  >
-                    <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                      <Star size={14} style={{ color: c.amber }} /> ATS Recommendations
-                    </h3>
-                    <div className="space-y-1.5">
+                    </Card>
+                    <Card className="p-4">
+                      <h3 className="text-xs font-bold mb-3 flex items-center gap-2"><Star size={13} style={{ color: c.am }} /> Recommendations</h3>
                       {analysis.recommendations.map((r, i) => (
-                        <div key={i} className="text-[11px] flex items-start gap-2" style={{ color: c.textSec }}>
-                          <span style={{ color: c.amber }}>✦</span> {r}
-                        </div>
+                        <div key={i} className="text-[10px] flex items-start gap-1.5 mb-1.5" style={{ color: c.tx2 }}><span style={{ color: c.am }}>✦</span> {r}</div>
                       ))}
-                    </div>
-                  </motion.div>
-                </div>
+                    </Card>
+                  </div>
 
-                {/* Navigation */}
-                <div className="flex gap-3">
-                  <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setView("resume-hub")}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs"
-                    style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-                  >Back to Resume Hub</motion.button>
-                  <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("final")}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                    style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
-                  ><CheckCircle size={16} /> View Final Score</motion.button>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
+                  <div className="flex gap-3">
+                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setView("resume-hub")}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-xs"
+                      style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back to Resume Hub</motion.button>
+                    <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("final")}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000" }}>
+                      <CheckCircle size={15} /> View Final Score
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
 
-        {/* ─────── SCREEN: INTELLIGENCE ─────── */}
-        {screen === "intelligence" && intelligence && (
-          <motion.div key="intelligence" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Recruiter View Summary */}
-              <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-              >
-                <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                  <Users size={14} style={{ color: c.purple }} /> Recruiter First Impression
-                </h3>
-                <p className="text-[11px] leading-relaxed mb-3" style={{ color: c.textSec }}>{intelligence.recruiterView.firstImpression}</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: intelligence.recruiterView.interviewWorthy ? c.green : c.red }} />
-                  <span className="text-[10px] font-bold" style={{ color: intelligence.recruiterView.interviewWorthy ? c.green : c.red }}>
-                    {intelligence.recruiterView.interviewWorthy ? "Interview Worthy" : "Needs Improvement"}
-                  </span>
+          {/* ═══════ HISTORY ═══════ */}
+          {screen === "history" && (
+            <motion.div key="hist" {...AP.page} transition={{ duration: 0.3 }} className="space-y-4 pt-5">
+              {histLoad ? (
+                <div className="flex items-center justify-center py-16">
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-8 h-8 rounded-full border-2" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} />
                 </div>
-              </motion.div>
-
-              {/* Missing Sections */}
-              <motion.div variants={scaleIn} initial="hidden" animate="visible"
-                className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-              >
-                <h3 className="text-xs font-bold mb-3 flex items-center gap-2" style={{ color: c.text }}>
-                  <AlertCircle size={14} style={{ color: c.red }} /> Missing Sections
-                </h3>
-                {intelligence.missingSections.length > 0 ? (
-                  <div className="space-y-2">
-                    {intelligence.missingSections.slice(0, 4).map((ms, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase rounded"
-                          style={{
-                            background: ms.importance === "critical" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
-                            color: ms.importance === "critical" ? c.red : c.amber,
-                          }}
-                        >{ms.importance}</span>
-                        <span className="text-[11px] font-semibold" style={{ color: c.text }}>{ms.section}</span>
+              ) : history.length === 0 ? (
+                <EmptyState title="No ATS Reports Yet" description="Analyze your first resume to start tracking your ATS performance."
+                  actionLabel="Analyze Resume" onAction={() => setScreen("home")} illustration={<BarChart3 size={32} />} />
+              ) : (
+                <div className="space-y-3">
+                  {history.map((r, i) => (
+                    <motion.div key={r.id} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.04 }}
+                      whileHover={hov} className="p-4 rounded-xl flex items-center gap-4"
+                      style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: scBg(r.score) }}>
+                        <span className="text-lg font-extrabold" style={{ color: sc(r.score) }}>{r.score}</span>
                       </div>
-                    ))}
-                  </div>
-                ) : <div className="text-[11px]" style={{ color: c.green }}>All sections present</div>}
-              </motion.div>
-            </div>
-
-            {/* Quick Insights */}
-            <motion.div variants={fadeUp} initial="hidden" animate="visible"
-              className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-            >
-              <h3 className="text-xs font-bold mb-3" style={{ color: c.text }}>Quick Insights</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {intelligence.insights.strengths.slice(0, 2).map((s, i) => (
-                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg" style={{ background: "rgba(16,185,129,0.05)" }}>
-                    <TrendingUp size={12} className="shrink-0 mt-0.5" style={{ color: c.green }} />
-                    <span className="text-[10px]" style={{ color: c.textSec }}>{s}</span>
-                  </div>
-                ))}
-                {intelligence.insights.weaknesses.slice(0, 2).map((w, i) => (
-                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg" style={{ background: "rgba(239,68,68,0.05)" }}>
-                    <TrendingDown size={12} className="shrink-0 mt-0.5" style={{ color: c.red }} />
-                    <span className="text-[10px]" style={{ color: c.textSec }}>{w}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("dashboard")}
-              className="w-full py-2 rounded-lg font-bold text-xs"
-              style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-            >Back to Dashboard</motion.button>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: SUGGESTIONS ─────── */}
-        {screen === "suggestions" && (
-          <motion.div key="suggestions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-            <motion.div variants={scaleIn} initial="hidden" animate="visible"
-              className="p-5 rounded-2xl flex items-center gap-4"
-              style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(16,185,129,0.1))", border: "1px solid rgba(245,158,11,0.2)" }}
-            >
-              <div className="relative w-16 h-16 flex-shrink-0">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="32" cy="32" r="27" stroke={c.border} strokeWidth="5" fill="transparent" />
-                  <circle cx="32" cy="32" r="27" stroke={scoreColor(updatedScore)} strokeWidth="5" fill="transparent"
-                    strokeDasharray={2 * Math.PI * 27} strokeDashoffset={2 * Math.PI * 27 * (1 - updatedScore / 100)} strokeLinecap="round"
-                    style={{ transition: "stroke-dashoffset 1s ease" }} />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-extrabold" style={{ color: c.text }}>{updatedScore}</span>
-                </div>
-              </div>
-              <div>
-                <div className="font-bold text-sm" style={{ color: c.text }}>AI Suggestions</div>
-                <p className="text-xs" style={{ color: c.textSec }}>Apply improvements to boost your ATS score.</p>
-              </div>
-            </motion.div>
-
-            <div className="space-y-3">
-              {suggestions.map((sugg, i) => {
-                const applied = appliedSuggestions.has(sugg.id);
-                return (
-                  <motion.div key={sugg.id} variants={fadeUp} initial="hidden" animate="visible" custom={i} whileHover={cardHover}
-                    className="p-4 rounded-xl" style={{
-                      background: applied ? "rgba(16,185,129,0.05)" : c.cardBg,
-                      border: `1px solid ${applied ? "rgba(16,185,129,0.2)" : c.border}`,
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold" style={{ color: c.text }}>{sugg.title}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase"
-                            style={{
-                              background: sugg.impact === "high" ? "rgba(239,68,68,0.1)" : sugg.impact === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                              color: sugg.impact === "high" ? c.red : sugg.impact === "medium" ? c.amber : c.blue,
-                            }}
-                          >{sugg.impact} impact</span>
-                        </div>
-                        <p className="text-[11px]" style={{ color: c.textSec }}>{sugg.description}</p>
+                        <div className="text-sm font-bold truncate">{r.resume?.title || "Resume"}</div>
+                        <div className="text-[10px]" style={{ color: c.txM }}>{new Date(r.createdAt).toLocaleDateString()} · {new Date(r.createdAt).toLocaleTimeString()}</div>
                       </div>
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        {applied ? (
-                          <>
-                            <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => handleUndoSuggestion(sugg.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                              style={{ background: "rgba(239,68,68,0.1)", color: c.red, border: "1px solid rgba(239,68,68,0.2)" }}
-                            ><RotateCcw size={10} /> Undo</motion.button>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                              style={{ background: "rgba(16,185,129,0.1)", color: c.green, border: "1px solid rgba(16,185,129,0.2)" }}
-                            ><CheckCircle size={10} /> Applied</span>
-                          </>
-                        ) : (
-                          <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => handleApplySuggestion(sugg)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                            style={{ background: c.amber, color: "#000" }}
-                          ><Sparkles size={10} /> Apply</motion.button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-3">
-              <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("dashboard")}
-                className="flex-1 py-2 rounded-lg font-bold text-xs"
-                style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-              >Back to Dashboard</motion.button>
-              <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("final")}
-                className="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000" }}
-              ><CheckCircle size={16} /> View Final Score</motion.button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: HISTORY ─────── */}
-        {screen === "history" && (
-          <motion.div key="history" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
-            {historyLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-8 h-8 rounded-full border-2" style={{ borderColor: `${c.amber} transparent ${c.amber} ${c.amber}` }} />
-              </div>
-            ) : history.length === 0 ? (
-              <EmptyState
-                title="No ATS Reports Yet"
-                description="Analyze your first resume to start tracking your ATS performance over time."
-                actionLabel="Analyze Resume"
-                onAction={() => setScreen("home")}
-                illustration={<BarChart3 size={32} />}
-              />
-            ) : (
-              <div className="space-y-3">
-                {history.map((report, i) => (
-                  <motion.div key={report.id} variants={fadeUp} initial="hidden" animate="visible" custom={i} whileHover={cardHover}
-                    className="p-4 rounded-xl flex items-center gap-4 cursor-pointer"
-                    style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-                    onClick={() => { /* Could load report details */ }}
-                  >
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: scoreBg(report.score) }}>
-                      <span className="text-lg font-extrabold" style={{ color: scoreColor(report.score) }}>{report.score}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold" style={{ color: c.text }}>{report.resume?.title || "Resume"}</div>
-                      <div className="text-[10px]" style={{ color: c.textMuted }}>
-                        {new Date(report.createdAt).toLocaleDateString()} · {new Date(report.createdAt).toLocaleTimeString()}
-                      </div>
-                    </div>
-                    <div className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase"
-                      style={{ background: scoreBg(report.score), color: scoreColor(report.score) }}
-                    >{scoreLabel(report.score)}</div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("home")}
-              className="w-full py-2 rounded-lg font-bold text-xs"
-              style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-            >Back to Home</motion.button>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: COMPARE ─────── */}
-        {screen === "compare" && (
-          <motion.div key="compare" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-            <div className="p-5 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-              <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: c.text }}>
-                <GitCompare size={16} style={{ color: c.amber }} /> Compare Resume Versions
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>Version A</label>
-                  <select value={compareA} onChange={e => setCompareA(e.target.value)}
-                    className="w-full p-3 rounded-xl text-sm outline-none"
-                    style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                  >
-                    <option value="">Select resume...</option>
-                    {resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                  </select>
+                      <span className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase" style={{ background: scBg(r.score), color: sc(r.score) }}>{scLb(r.score)}</span>
+                    </motion.div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: c.textSec }}>Version B</label>
-                  <select value={compareB} onChange={e => setCompareB(e.target.value)}
-                    className="w-full p-3 rounded-xl text-sm outline-none"
-                    style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                  >
-                    <option value="">Select resume...</option>
-                    {resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                  </select>
-                </div>
-              </div>
-              <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={runCompare}
-                disabled={!compareA || !compareB || compareLoading}
-                className="w-full mt-4 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{
-                  background: !compareA || !compareB ? c.surface : "linear-gradient(135deg, #f59e0b, #d97706)",
-                  color: !compareA || !compareB ? c.textMuted : "#000",
-                  border: !compareA || !compareB ? `1px solid ${c.border}` : "none",
-                }}
-              ><GitCompare size={14} /> {compareLoading ? "Comparing..." : "Compare Resumes"}</motion.button>
-            </div>
+              )}
+              <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("home")}
+                className="w-full py-2.5 rounded-xl font-bold text-xs" style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back to Home</motion.button>
+            </motion.div>
+          )}
 
-            {compareResult && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: "Version A", data: compareResult.versionA },
-                    { label: "Version B", data: compareResult.versionB },
-                  ].map(v => (
-                    <div key={v.label} className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-                      <div className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: c.textMuted }}>{v.label}</div>
-                      <div className="text-2xl font-extrabold mb-1" style={{ color: scoreColor(v.data.score) }}>{v.data.score}/100</div>
-                      <div className="space-y-1">
-                        {v.data.strengths.slice(0, 2).map((s: string, i: number) => (
-                          <div key={i} className="text-[10px] flex items-start gap-1" style={{ color: c.green }}>✓ {s}</div>
-                        ))}
-                      </div>
+          {/* ═══════ COMPARE ═══════ */}
+          {screen === "compare" && (
+            <motion.div key="cmp" {...AP.page} transition={{ duration: 0.3 }} className="space-y-5 pt-5 max-w-2xl mx-auto">
+              <Card className="p-6">
+                <h3 className="text-sm font-bold mb-4 flex items-center gap-2"><GitCompare size={16} style={{ color: c.am }} /> Compare Resume Versions</h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {[["Version A", cmpA, setCmpA], ["Version B", cmpB, setCmpB]].map(([lbl, val, set]) => (
+                    <div key={lbl as string}>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: c.tx2 }}>{lbl as string}</label>
+                      <select value={val as string} onChange={e => (set as any)(e.target.value)}
+                        className="w-full p-3 rounded-xl text-sm outline-none" style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }}>
+                        <option value="">Select resume...</option>
+                        {resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+                      </select>
                     </div>
                   ))}
                 </div>
-                <div className="p-4 rounded-xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}>
-                  <div className="text-xs font-bold mb-2" style={{ color: c.text }}>Recommendation</div>
-                  <p className="text-[11px]" style={{ color: c.textSec }}>{compareResult.recommendation}</p>
-                  {compareResult.overallImprovement !== 0 && (
-                    <div className="mt-2 text-[11px] font-bold" style={{ color: compareResult.overallImprovement > 0 ? c.green : c.red }}>
-                      {compareResult.overallImprovement > 0 ? "+" : ""}{compareResult.overallImprovement} points overall
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
+                <motion.button whileHover={btnH} whileTap={btnT} onClick={runCompare}
+                  disabled={!cmpA || !cmpB || cmpBusy}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                  style={{ background: (!cmpA || !cmpB) ? c.sf : "linear-gradient(135deg,#f59e0b,#d97706)", color: (!cmpA || !cmpB) ? c.txM : "#000", border: (!cmpA || !cmpB) ? `1px solid ${c.bd}` : "none", opacity: (!cmpA || !cmpB) ? 0.5 : 1 }}>
+                  <GitCompare size={14} /> {cmpBusy ? "Comparing..." : "Compare Resumes"}
+                </motion.button>
+              </Card>
 
-            <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={() => setScreen("home")}
-              className="w-full py-2 rounded-lg font-bold text-xs"
-              style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-            >Back to Home</motion.button>
-          </motion.div>
-        )}
-
-        {/* ─────── SCREEN: FINAL ─────── */}
-        {screen === "final" && (
-          <motion.div key="final" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-            className="max-w-lg mx-auto text-center space-y-6"
-          >
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
-              style={{ background: "rgba(16,185,129,0.1)", border: "3px solid rgba(16,185,129,0.3)" }}
-            ><CheckCircle size={48} style={{ color: c.green }} /></motion.div>
-            <div>
-              <h2 className="text-xl font-extrabold mb-2" style={{ color: c.text }}>Resume Improved Successfully</h2>
-              <p className="text-sm" style={{ color: c.textSec }}>Applied {appliedSuggestions.size} of {suggestions.length} suggestions</p>
-            </div>
-            <motion.div variants={scaleIn} initial="hidden" animate="visible"
-              className="p-6 rounded-2xl" style={{ background: c.cardBg, border: `1px solid ${c.border}`, boxShadow: c.cardShadow }}
-            >
-              <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: c.textMuted }}>Updated ATS Score</div>
-              <div className="flex items-center justify-center gap-3">
-                <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-5xl font-extrabold" style={{ color: c.text }}
-                ><CountUp end={updatedScore} duration={1.5} /></motion.span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg" style={{ color: c.textMuted }}>/ 100</span>
-                  <div className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    style={{ background: scoreBg(updatedScore), color: scoreColor(updatedScore) }}
-                  >{scoreLabel(updatedScore)}</div>
-                </div>
-              </div>
-              {updatedScore > (analysis?.score || 0) && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="mt-2 text-sm font-bold flex items-center justify-center gap-1" style={{ color: c.green }}
-                >+{updatedScore - (analysis?.score || 0)} points improved</motion.div>
+              {cmpRes && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[{ l: "Version A", d: cmpRes.versionA }, { l: "Version B", d: cmpRes.versionB }].map(v => (
+                      <Card key={v.l} className="p-5">
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: c.txM }}>{v.l}</div>
+                        <div className="text-3xl font-extrabold mb-2" style={{ color: sc(v.d.score) }}><CountUp end={v.d.score} /></div>
+                        {v.d.strengths?.slice(0, 2).map((s: string, i: number) => (
+                          <div key={i} className="text-[10px] flex items-start gap-1 mb-1" style={{ color: c.gn }}>✓ {s}</div>
+                        ))}
+                      </Card>
+                    ))}
+                  </div>
+                  <Card className="p-5">
+                    <div className="text-xs font-bold mb-2">Recommendation</div>
+                    <p className="text-[11px]" style={{ color: c.tx2 }}>{cmpRes.recommendation}</p>
+                    {cmpRes.overallImprovement !== 0 && (
+                      <div className="mt-2 text-[11px] font-bold" style={{ color: cmpRes.overallImprovement > 0 ? c.gn : c.rd }}>
+                        {cmpRes.overallImprovement > 0 ? "+" : ""}{cmpRes.overallImprovement} points overall
+                      </div>
+                    )}
+                  </Card>
+                </motion.div>
               )}
+              <motion.button whileHover={btnH} whileTap={btnT} onClick={() => setScreen("home")}
+                className="w-full py-2.5 rounded-xl font-bold text-xs" style={{ background: c.sf, color: c.tx, border: `1px solid ${c.bd}` }}>Back to Home</motion.button>
             </motion.div>
-            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3">
-              <motion.button variants={fadeUp} whileHover={buttonHover} whileTap={buttonTap}
-                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-              ><Save size={16} /> Save Resume</motion.button>
-              <motion.button variants={fadeUp} whileHover={buttonHover} whileTap={buttonTap}
-                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-              ><Download size={16} /> Download PDF</motion.button>
-              <motion.button variants={fadeUp} whileHover={buttonHover} whileTap={buttonTap}
-                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: c.surface, color: c.text, border: `1px solid ${c.border}` }}
-              ><Download size={16} /> Download DOCX</motion.button>
-              <motion.button variants={fadeUp} whileHover={buttonHover} whileTap={buttonTap}
-                onClick={() => setView("resume-hub")}
-                className="py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2"
-                style={{ background: c.amber, color: "#000" }}
-              ><FileText size={16} /> Open Resume Builder</motion.button>
+          )}
+
+          {/* ═══════ FINAL ═══════ */}
+          {screen === "final" && (
+            <motion.div key="final" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md mx-auto text-center space-y-6 pt-8">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
+                style={{ background: c.gnBg, border: `3px solid ${c.gn}40` }}>
+                <CheckCircle size={48} style={{ color: c.gn }} />
+              </motion.div>
+              <div>
+                <h2 className="text-xl font-extrabold mb-1">Resume Improved</h2>
+                <p className="text-sm" style={{ color: c.tx2 }}>Applied {applied.size} of {suggestions.length} suggestions</p>
+              </div>
+              <Card className="p-6">
+                <div className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: c.txM }}>Updated ATS Score</div>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-5xl font-extrabold"><CountUp end={updScore} /></span>
+                  <div>
+                    <span className="text-lg" style={{ color: c.txM }}>/ 100</span>
+                    <div className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase" style={{ background: scBg(updScore), color: sc(updScore) }}>{scLb(updScore)}</div>
+                  </div>
+                </div>
+                {updScore > (analysis?.score || 0) && (
+                  <div className="mt-2 text-sm font-bold" style={{ color: c.gn }}>+{updScore - (analysis?.score || 0)} points improved</div>
+                )}
+              </Card>
+              <motion.div variants={AP.stagger.in} initial="init" animate="in" className="grid grid-cols-2 gap-3">
+                {[
+                  ["Save Resume", <Save size={14} />],
+                  ["Download PDF", <Download size={14} />],
+                  ["Download DOCX", <Download size={14} />],
+                  ["Resume Builder", <FileText size={14} />],
+                ].map(([l, ic], i) => (
+                  <motion.button key={l as string} variants={AP.card} whileHover={btnH} whileTap={btnT}
+                    onClick={i === 3 ? () => setView("resume-builder") : undefined}
+                    className="py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                    style={{ background: i === 3 ? c.am : c.sf, color: i === 3 ? "#000" : c.tx, border: `1px solid ${c.bd}` }}>
+                    {ic} {l}
+                  </motion.button>
+                ))}
+              </motion.div>
+              <motion.button whileHover={btnH} whileTap={btnT} onClick={resetAll}
+                className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: c.am }}>
+                <RefreshCw size={14} /> Analyze Another Resume
+              </motion.button>
             </motion.div>
-            <motion.button whileHover={buttonHover} whileTap={buttonTap}
-              onClick={() => { setScreen("home"); setAnalysis(null); setIntelligence(null); setFile(null); setSelectedResumeId(""); setSuggestions([]); setAppliedSuggestions(new Set()); }}
-              className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: c.amber }}
-            ><RefreshCw size={14} /> Analyze Another Resume</motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+
+        </AnimatePresence>
       </div>
 
-      {/* ─── AI CHAT BUTTON ─── */}
-      {(screen === "dashboard" || screen === "suggestions") && (
+      {/* ═══════ AI CHAT ═══════ */}
+      {(screen === "dashboard") && (
         <>
-          <motion.button whileHover={buttonHover} whileTap={buttonTap}
+          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
             onClick={() => setChatOpen(!chatOpen)}
             className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-50"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#000", boxShadow: "0 4px 20px rgba(245,158,11,0.3)" }}
-          >
+            style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#000", boxShadow: "0 4px 24px rgba(245,158,11,0.35)" }}>
             {chatOpen ? <X size={22} /> : <MessageCircle size={22} />}
           </motion.button>
           <AnimatePresence>
@@ -1854,62 +1356,51 @@ export function AtsCheckerView({ setView }: AtsCheckerViewProps) {
               <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ duration: 0.2 }}
                 className="fixed bottom-24 right-6 w-80 sm:w-96 rounded-2xl shadow-2xl z-50 overflow-hidden"
-                style={{ background: c.chatBg, border: `1px solid ${c.border}`, maxHeight: "60vh", display: "flex", flexDirection: "column" }}
-              >
-                <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: c.border }}>
+                style={{ background: c.chat, border: `1px solid ${c.bd}`, maxHeight: "60vh", display: "flex", flexDirection: "column" }}>
+                <div className="flex items-center justify-between p-3" style={{ borderBottom: `1px solid ${c.dv}` }}>
                   <div className="flex items-center gap-2">
-                    <Sparkles size={14} style={{ color: c.amber }} />
-                    <span className="text-sm font-bold" style={{ color: c.text }}>AI ATS Assistant</span>
+                    <Sparkles size={14} style={{ color: c.am }} />
+                    <span className="text-sm font-bold">AI ATS Assistant</span>
                   </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                    onClick={() => setChatOpen(false)} className="p-1 rounded-lg" style={{ color: c.textMuted }}
-                  ><X size={14} /></motion.button>
+                  <button onClick={() => setChatOpen(false)} className="p-1 rounded-lg" style={{ color: c.txM }}><X size={14} /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ minHeight: 200, maxHeight: 350 }}>
-                  {chatMessages.length === 0 && (
+                  {chatMsgs.length === 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs" style={{ color: c.textMuted }}>Ask me anything about your ATS score. Try:</p>
-                      {["Improve ATS score", "Optimize for Google", "Rewrite Summary", "Add Missing Keywords", "Reduce Resume Length"].map((suggestion, i) => (
-                        <motion.button key={suggestion} variants={fadeUp} initial="hidden" animate="visible" custom={i}
-                          whileHover={{ scale: 1.02 }} onClick={() => setChatInput(suggestion)}
-                          className="block w-full text-left p-2 rounded-lg text-[11px] font-medium transition-all"
-                          style={{ background: "rgba(245,158,11,0.08)", color: c.amber, border: "1px solid rgba(245,158,11,0.15)" }}
-                        ><Sparkles size={10} className="inline mr-1.5" />{suggestion}</motion.button>
+                      <p className="text-[10px]" style={{ color: c.txM }}>Ask me anything. Try:</p>
+                      {["Improve ATS score", "Optimize for Google", "Rewrite Summary", "Add Missing Keywords"].map((s, i) => (
+                        <motion.button key={s} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                          whileHover={{ scale: 1.02 }} onClick={() => setChatIn(s)}
+                          className="block w-full text-left p-2 rounded-lg text-[11px] font-medium"
+                          style={{ background: "rgba(245,158,11,0.06)", color: c.am, border: `1px solid rgba(245,158,11,0.12)` }}>
+                          <Sparkles size={9} className="inline mr-1.5" />{s}
+                        </motion.button>
                       ))}
                     </div>
                   )}
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm"}`}
-                        style={{
-                          background: msg.role === "user" ? c.amber : c.surface,
-                          color: msg.role === "user" ? "#000" : c.text,
-                          border: msg.role === "user" ? "none" : `1px solid ${c.border}`,
-                        }}
-                      >{msg.content}</div>
-                    </div>
-                  ))}
-                  {chatLoading && (
-                    <div className="flex justify-start">
-                      <div className="p-2.5 rounded-xl rounded-bl-sm text-xs" style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.textMuted }}>
-                        <LoadingDots />
+                  {chatMsgs.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${m.role === "user" ? "rounded-br-sm" : "rounded-bl-sm"}`}
+                        style={{ background: m.role === "user" ? c.am : c.sf, color: m.role === "user" ? "#000" : c.tx, border: m.role === "user" ? "none" : `1px solid ${c.bd}` }}>
+                        {m.content}
                       </div>
                     </div>
-                  )}
-                  <div ref={chatEndRef} />
+                  ))}
+                  {chatBusy && <div className="flex justify-start"><div className="p-2.5 rounded-xl rounded-bl-sm" style={{ background: c.sf, border: `1px solid ${c.bd}` }}><Dots /></div></div>}
+                  <div ref={chatEnd} />
                 </div>
-                <div className="p-3 border-t flex gap-2" style={{ borderColor: c.border }}>
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSendChat()}
+                <div className="p-3 flex gap-2" style={{ borderTop: `1px solid ${c.dv}` }}>
+                  <input value={chatIn} onChange={e => setChatIn(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && sendChat()}
                     placeholder="Ask about your ATS score..."
                     className="flex-1 p-2.5 rounded-xl text-xs outline-none"
-                    style={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }}
-                  />
-                  <motion.button whileHover={buttonHover} whileTap={buttonTap} onClick={handleSendChat}
-                    disabled={chatLoading || !chatInput.trim()}
+                    style={{ background: c.sf, border: `1px solid ${c.bd}`, color: c.tx }} />
+                  <motion.button whileHover={btnH} whileTap={btnT} onClick={sendChat}
+                    disabled={chatBusy || !chatIn.trim()}
                     className="p-2.5 rounded-xl flex items-center justify-center"
-                    style={{ background: c.amber, color: "#000", opacity: chatLoading || !chatInput.trim() ? 0.5 : 1 }}
-                  ><Send size={14} /></motion.button>
+                    style={{ background: c.am, color: "#000", opacity: chatBusy || !chatIn.trim() ? 0.5 : 1 }}>
+                    <Send size={14} />
+                  </motion.button>
                 </div>
               </motion.div>
             )}
