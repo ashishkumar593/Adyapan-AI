@@ -359,6 +359,9 @@ export function AtsCheckerView({ setView }: Props) {
         api.post("/ats/intelligence", fd, { headers: hdrs }),
       ]);
       clearInterval(iv); setLoadStep(loadSteps.length - 1);
+      if (aR.status === "rejected") {
+        throw new Error(aR.reason?.response?.data?.message || aR.reason?.message || "Failed to analyze resume.");
+      }
       if (aR.status === "fulfilled" && aR.value.data.analysis) {
         setAnalysis(aR.value.data.analysis);
         setUpdScore(aR.value.data.analysis.score);
@@ -369,6 +372,7 @@ export function AtsCheckerView({ setView }: Props) {
       if (aR.status === "fulfilled") genSuggestions(aR.value.data.analysis);
     } catch (err) {
       clearInterval(iv);
+      setScreen("home");
       alert(`Failed to analyze. ${err instanceof Error ? err.message : "Try again."}`);
     } finally { setLoading(false); }
   };
@@ -664,24 +668,21 @@ export function AtsCheckerView({ setView }: Props) {
               <Card className="p-8 text-center">
                 {/* Spinner */}
                 <div className="relative w-20 h-20 mx-auto mb-6">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-full h-full rounded-full" style={{ border: `3px solid ${c.bd}`, borderTopColor: c.am }} />
+                  <div className="w-full h-full rounded-full border-3 animate-spin" style={{ border: `3px solid ${c.bd}`, borderTopColor: c.am }} />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <BarChart3 size={22} style={{ color: c.am }} />
                   </div>
                 </div>
-                <h2 className="text-lg font-extrabold mb-6">Analyzing Resume...</h2>
+                <h2 className="text-lg font-extrabold mb-6 animate-pulse">Analyzing Resume...</h2>
                 <div className="space-y-2.5 text-left">
                   {loadSteps.map((step, i) => (
-                    <motion.div key={step} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
-                      className="flex items-center gap-3 p-2.5 rounded-xl transition-all"
+                    <div key={step} className="flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300"
                       style={{ background: i <= loadStep ? "rgba(245,158,11,0.04)" : "transparent" }}>
                       {i < loadStep ? <CheckCircle size={16} style={{ color: c.gn }} /> :
-                       i === loadStep ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                         className="w-4 h-4 rounded-full border-2" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} /> :
+                       i === loadStep ? <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: `${c.am} transparent ${c.am} ${c.am}` }} /> :
                        <div className="w-4 h-4 rounded-full" style={{ background: c.sf, border: `1px solid ${c.bd}` }} />}
                       <span className="text-xs" style={{ color: i <= loadStep ? c.tx : c.txM, fontWeight: i <= loadStep ? 700 : 400 }}>{step}</span>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </Card>
