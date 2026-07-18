@@ -86,7 +86,7 @@ describe("generateJSON", () => {
     const { generateJSON } = loadModule();
     mockFetchOnce('Sure, here is the result: {"name": "ady"} hope it helps!');
     await expect(
-      generateJSON("sys", "user", { model: "x" }, {})
+      generateJSON("sys", "user", { model: "x" }, { name: "" })
     ).resolves.toEqual({ name: "ady" });
   });
 
@@ -141,7 +141,7 @@ describe("generateText", () => {
     const { generateText } = loadModule();
     (global as any).fetch = jest.fn().mockRejectedValue(new Error("network down"));
     await expect(generateText("sys", "user", { model: "x" })).rejects.toThrow(
-      /All AI completion providers failed/
+      /All AI providers failed/
     );
   });
 

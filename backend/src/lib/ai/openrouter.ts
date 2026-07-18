@@ -39,7 +39,7 @@ async function callAIRobust(
     let groqModel = "llama-3.3-70b-versatile";
     const modelLower = options.model?.toLowerCase() ?? "";
     const isMiniOrFast = (modelLower.includes("mini") && !modelLower.includes("gemini")) ||
-                         modelLower.includes("fast") ||
+                         (modelLower.includes("fast") && !modelLower.includes("flash")) ||
                          modelLower.includes("cheap");
     if (isMiniOrFast) {
       groqModel = "llama-3.1-8b-instant";
@@ -174,13 +174,18 @@ export async function generateJSON<T>(
   const modifiedSys = `${systemPrompt}\nYou MUST respond with valid JSON only, no other conversational introduction or explanation.`;
   const cached = getCachedAIResponse(modifiedSys, userPrompt, options);
   if (cached) {
+    console.log(`[AI Engine] generateJSON cache HIT, cached length: ${cached.length}`);
     try {
       const repaired = tryRepairJSON(cached);
       const parsed = JSON.parse(repaired);
-      return enforceSchema(parsed, fallback);
-    } catch {
-      // In case parsing fails, recalculate
+      const validated = enforceSchema(parsed, fallback);
+      console.log(`[AI Engine] Cache hit validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
+      return validated;
+    } catch (e) {
+      console.log(`[AI Engine] Cache hit parse failed, falling through to API call`);
     }
+  } else {
+    console.log(`[AI Engine] generateJSON cache MISS`);
   }
 
   const start = Date.now();
@@ -193,19 +198,26 @@ export async function generateJSON<T>(
     text = await callAIRobust(messages, options);
     const duration = Date.now() - start;
 
+    console.log(`[AI Engine] generateJSON raw response length: ${text.length}`);
+    console.log(`[AI Engine] generateJSON first 300 chars: ${text.substring(0, 300)}`);
+
     try {
       const { PerformanceMonitor } = require("../../utils/monitoring");
       PerformanceMonitor.record("ai", options.model || "unknown", duration);
     } catch (err) {}
 
     const repaired = tryRepairJSON(text);
+    console.log(`[AI Engine] After tryRepairJSON length: ${repaired.length}`);
     const parsed = JSON.parse(repaired);
+    console.log(`[AI Engine] Parsed keys: ${Object.keys(parsed).join(", ")}`);
     const validated = enforceSchema(parsed, fallback);
+    console.log(`[AI Engine] Validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}, edu: ${(validated as any).education?.length}`);
     
     setCachedAIResponse(modifiedSys, userPrompt, options, text);
     return validated;
   } catch (error) {
     console.warn(`[AI Engine] Initial JSON generation/parsing failed:`, error);
+    console.log(`[AI Engine] Failed text was: ${text.substring(0, 300)}`);
     try {
       console.log(`[AI Engine] Attempting automatic retry...`);
       const retryMessages: OpenRouterMessage[] = [
@@ -213,9 +225,11 @@ export async function generateJSON<T>(
         { role: "user", content: `${userPrompt}\n\nStrict instruction: return valid JSON matching this schema: ${JSON.stringify(fallback)}` }
       ];
       const retryText = await callAIRobust(retryMessages, options);
+      console.log(`[AI Engine] Retry response length: ${retryText.length}, first 300: ${retryText.substring(0, 300)}`);
       const repaired = tryRepairJSON(retryText);
       const parsed = JSON.parse(repaired);
       const validated = enforceSchema(parsed, fallback);
+      console.log(`[AI Engine] Retry validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
       
       setCachedAIResponse(modifiedSys, userPrompt, options, retryText);
       return validated;

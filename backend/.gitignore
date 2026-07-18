@@ -1,7 +1,8 @@
 node_modules
 dist
 coverage
-.env
+.env*
+!.env.example
 uploads/*
 !uploads/.gitkeep
 ai_cache/

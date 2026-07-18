@@ -113,15 +113,26 @@ Rules:
     name: "", email: "", phone: "", location: "", summary: "",
     education: [], experience: [], projects: [], skills: [],
     certifications: [], achievements: [], languages: [],
-    links: {},
+    links: { linkedin: "", github: "", portfolio: "", other: "" },
   };
+
+  const truncatedText = text.slice(0, 12000);
+  console.log(`[Resume AI] Input text length: ${text.length}, truncated to: ${truncatedText.length}`);
+  console.log(`[Resume AI] First 200 chars: ${truncatedText.substring(0, 200)}`);
 
   const result = await generateJSON<ExtractedProfile>(
     systemPrompt,
-    `Resume text:\n\n${text.slice(0, 12000)}`,
+    `Resume text:\n\n${truncatedText}`,
     { model: "google/gemini-2.5-flash" },
     fallbackProfile
   );
+
+  console.log(`[Resume AI] Result name: "${result.name}"`);
+  console.log(`[Resume AI] Result email: "${result.email}"`);
+  console.log(`[Resume AI] Result skills count: ${result.skills?.length ?? 0}`);
+  console.log(`[Resume AI] Result education count: ${result.education?.length ?? 0}`);
+  console.log(`[Resume AI] Result experience count: ${result.experience?.length ?? 0}`);
+  console.log(`[Resume AI] Result full: ${JSON.stringify(result, null, 2).substring(0, 500)}`);
 
   return result;
 }
