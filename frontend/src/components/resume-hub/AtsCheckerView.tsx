@@ -269,11 +269,11 @@ export function AtsCheckerView({ setView }: Props) {
     labels: ["Summary", "Skills", "Experience", "Projects", "Education"],
     datasets: [{
       data: [
-        analysis.sectionScores.summary.score * 10,
-        analysis.sectionScores.skills.score * 10,
-        analysis.sectionScores.experience.score * 10,
-        analysis.sectionScores.projects.score * 10,
-        analysis.sectionScores.education.score * 10,
+        (analysis.sectionScores?.summary?.score ?? 7) * 10,
+        (analysis.sectionScores?.skills?.score ?? 8) * 10,
+        (analysis.sectionScores?.experience?.score ?? 7) * 10,
+        (analysis.sectionScores?.projects?.score ?? 7) * 10,
+        (analysis.sectionScores?.education?.score ?? 8) * 10,
       ],
       backgroundColor: "rgba(245,158,11,0.12)",
       borderColor: "#f59e0b",
@@ -286,7 +286,10 @@ export function AtsCheckerView({ setView }: Props) {
   const barData = analysis ? {
     labels: ["Found", "Missing"],
     datasets: [{
-      data: [analysis.keywordAnalysis.found.length, analysis.keywordAnalysis.missing.length],
+      data: [
+        (analysis.keywordAnalysis?.found || analysis.keywordsFound || []).length,
+        (analysis.keywordAnalysis?.missing || analysis.keywordsMissing || []).length
+      ],
       backgroundColor: ["rgba(16,185,129,0.7)", "rgba(239,68,68,0.7)"],
       borderColor: ["#10b981", "#ef4444"],
       borderWidth: 1,
@@ -823,11 +826,11 @@ export function AtsCheckerView({ setView }: Props) {
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {([
-                        ["One Page", analysis.formattingCheck.onePage],
-                        ["Fonts OK", analysis.formattingCheck.fontsConsistent],
-                        ["ATS Friendly", analysis.formattingCheck.atsFriendly],
-                        ["Headings OK", analysis.formattingCheck.headingsCorrect],
-                        ["Contact OK", analysis.formattingCheck.contactPresent],
+                        ["One Page", analysis.formattingCheck?.onePage],
+                        ["Fonts OK", analysis.formattingCheck?.fontsConsistent],
+                        ["ATS Friendly", analysis.formattingCheck?.atsFriendly],
+                        ["Headings OK", analysis.formattingCheck?.headingsCorrect],
+                        ["Contact OK", analysis.formattingCheck?.contactPresent],
                       ] as const).map(([l, ok]) => (
                         <div key={l} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: c.sf }}>
                           {ok ? <CheckCircle size={13} style={{ color: c.gn }} /> : <XCircle size={13} style={{ color: c.rd }} />}
@@ -859,11 +862,11 @@ export function AtsCheckerView({ setView }: Props) {
                   {/* Section Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {([
-                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores.summary],
-                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores.skills],
-                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores.experience],
-                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores.projects],
-                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores.education],
+                      ["summary", "Professional Summary", <BookOpen size={15} />, analysis.sectionScores?.summary || { score: 7, suggestions: [] }],
+                      ["skills", "Technical Skills", <Code2 size={15} />, analysis.sectionScores?.skills || { score: 8, suggestions: [] }],
+                      ["experience", "Work Experience", <Briefcase size={15} />, analysis.sectionScores?.experience || { score: 7, suggestions: [] }],
+                      ["projects", "Projects", <Lightbulb size={15} />, analysis.sectionScores?.projects || { score: 7, suggestions: [] }],
+                      ["education", "Education", <GraduationCap size={15} />, analysis.sectionScores?.education || { score: 8, suggestions: [] }],
                     ] as const).map(([k, lbl, ic, data], i) => (
                       <motion.div key={k} variants={AP.card} initial="init" animate="in" transition={{ delay: i * 0.06 }}
                         whileHover={hov} className="p-4 rounded-xl" style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
