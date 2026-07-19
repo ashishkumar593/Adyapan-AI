@@ -27,52 +27,34 @@ export const ADZUNA_COUNTRIES = [
 
 export type AdzunaCountryCode = (typeof ADZUNA_COUNTRIES)[number]["code"];
 
-// ─── Adzuna API Response Types ───────────────────────────────────────────────
-export interface AdzunaJobListing {
+// ─── Real Adzuna API Response Types ──────────────────────────────────────────
+export interface AdzunaRawJob {
+  id: string;
   title: string;
-  company: string;
-  location: string;
-  salary?: string;
   description: string;
+  company: { display_name: string };
+  location: { display_name: string; area: string[] };
+  salary_min?: number;
+  salary_max?: number;
+  salary_is_predicted?: string;
+  category?: { label: string; tag: string };
+  created: string;
+  redirect_url: string;
+  contract_type?: string;
+  contract_time?: string;
 }
 
-export interface AdzunaJobListingsResponse {
-  job_listings: AdzunaJobListing[];
-}
-
-export interface AdzunaSalaryResponse {
-  average_salary: string;
-  min_salary: string;
-  max_salary: string;
-}
-
-export interface AdzunaCompanyReview {
-  rating: number;
-  review_text: string;
-}
-
-export interface AdzunaCompanyReviewsResponse {
-  company_name: string;
-  reviews: AdzunaCompanyReview[];
+export interface AdzunaSearchResponse {
+  count: number;
+  mean?: number;
+  results: AdzunaRawJob[];
 }
 
 // ─── Search Params ───────────────────────────────────────────────────────────
 export interface AdzunaSearchParams {
   keywords?: string;
   location?: string;
-  radius?: number;
   country?: string;
-  page?: number;
-  resultsPerPage?: number;
-}
-
-export interface AdzunaSalaryParams {
-  jobTitle: string;
-  location?: string;
-}
-
-export interface AdzunaCompanyParams {
-  companyName: string;
 }
 
 // ─── Normalized Types ────────────────────────────────────────────────────────
@@ -99,71 +81,61 @@ export interface NormalizedJob {
   isFeatured?: boolean;
 }
 
-export interface SalaryInsight {
-  averageSalary: string;
-  minSalary: string;
-  maxSalary: string;
-}
-
-export interface CompanyReview {
-  rating: number;
-  reviewText: string;
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function getAuthParams(): string {
+function authParams(): string {
   return `app_id=${env.adzuna.appId}&app_key=${env.adzuna.appKey}`;
 }
 
-function normalizeJob(listing: AdzunaJobListing, countryCode: string): NormalizedJob {
-  const countryName = ADZUNA_COUNTRIES.find(c => c.code === countryCode)?.name || "";
-  const parts = (listing.location || "").split(",").map(s => s.trim());
-  const state = parts.length > 1 ? parts[parts.length - 2] : "";
-  const city = parts.length > 0 ? parts[parts.length - 1] : "";
+function normalizeJob(job: AdzunaRawJob, countryCode: string): NormalizedJob {
+  const area = job.location?.area || [];
+  const countryName = area[0] || ADZUNA_COUNTRIES.find(c => c.code === countryCode)?.name || "";
+  const state = area.length > 2 ? area[1] : "";
+  const city = area.length > 1 ? area[area.length - 1] : job.location?.display_name || "";
+
+  const contractType = job.contract_type || "";
+  const contractTime = job.contract_time || "";
+
+  let employmentType = "Full-Time";
+  if (contractType === "contract") employmentType = "Contract";
+  else if (contractType === "temporary") employmentType = "Part-Time";
+  else if (contractTime === "part_time") employmentType = "Part-Time";
 
   let mode = "On-site";
-  const descLower = (listing.description || "").toLowerCase();
+  const descLower = (job.description || "").toLowerCase();
   if (descLower.includes("remote")) mode = "Remote";
   else if (descLower.includes("hybrid")) mode = "Hybrid";
 
-  let employmentType = "Full-Time";
-  if (descLower.includes("contract") || descLower.includes("freelance")) employmentType = "Contract";
-  else if (descLower.includes("part-time") || descLower.includes("part time")) employmentType = "Part-Time";
+  const skills = extractSkills(job.description || "", job.title || "");
 
-  const skills = extractSkills(listing.description || "", listing.title || "");
-
-  let salaryMin: number | undefined;
-  let salaryMax: number | undefined;
-  if (listing.salary) {
-    const salaryNums = listing.salary.replace(/[^0-9\-]/g, "").split("-").map(s => parseInt(s, 10)).filter(n => !isNaN(n));
-    if (salaryNums.length >= 2) {
-      salaryMin = salaryNums[0];
-      salaryMax = salaryNums[1];
-    } else if (salaryNums.length === 1) {
-      salaryMin = salaryNums[0];
-    }
+  const salaryMin = job.salary_min || undefined;
+  const salaryMax = job.salary_max || undefined;
+  let salary: string | undefined;
+  if (salaryMin && salaryMax) {
+    salary = `${Math.round(salaryMin).toLocaleString()} - ${Math.round(salaryMax).toLocaleString()}`;
+  } else if (salaryMin) {
+    salary = `From ${Math.round(salaryMin).toLocaleString()}`;
+  } else if (salaryMax) {
+    salary = `Up to ${Math.round(salaryMax).toLocaleString()}`;
   }
 
-  const titleSlug = (listing.title || "job").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
   return {
-    id: `adzuna_${countryCode}_${titleSlug}_${Date.now()}`,
-    title: listing.title || "Untitled",
-    company: listing.company || "Unknown Company",
-    location: listing.location || "",
+    id: `adzuna_${job.id}`,
+    title: job.title || "Untitled",
+    company: job.company?.display_name || "Unknown Company",
+    location: job.location?.display_name || "",
     country: countryName,
     state,
     city,
     mode,
     employmentType,
-    salary: listing.salary,
+    salary,
     salaryMin,
     salaryMax,
-    description: listing.description || "",
+    description: job.description || "",
     skills,
-    postedDate: new Date().toISOString(),
-    category: "",
-    applyUrl: "",
+    postedDate: job.created || new Date().toISOString(),
+    category: job.category?.label || "",
+    applyUrl: job.redirect_url || "",
     isAdzuna: true,
     isFeatured: false,
   };
@@ -195,81 +167,41 @@ function extractSkills(description: string, title: string): string[] {
 
 export async function searchAdzunaJobs(params: AdzunaSearchParams): Promise<{ jobs: NormalizedJob[]; count: number }> {
   const countryCode = (params.country || "gb").toLowerCase();
-  const keywords = params.keywords || params.location || "";
-  const location = params.location || "";
 
   const queryParams = new URLSearchParams();
   queryParams.set("app_id", env.adzuna.appId);
   queryParams.set("app_key", env.adzuna.appKey);
-  if (keywords) queryParams.set("keywords", keywords);
-  if (location) queryParams.set("location", location);
-  if (params.radius) queryParams.set("radius", String(params.radius));
+  queryParams.set("results_per_page", "20");
+  queryParams.set("content-type", "application/json");
+  if (params.keywords) queryParams.set("what", params.keywords);
+  if (params.location) queryParams.set("where", params.location);
 
-  const url = `${BASE_URL}/job_listings?${queryParams.toString()}`;
+  const url = `${BASE_URL}/jobs/${countryCode}/search/1?${queryParams.toString()}`;
 
   try {
     const res = await fetch(url);
     if (!res.ok) {
-      console.error(`[Adzuna] API error: ${res.status} ${res.statusText}`);
+      console.error(`[Adzuna] API error: ${res.status} ${res.statusText} — URL: ${url}`);
       return { jobs: [], count: 0 };
     }
-    const data: AdzunaJobListingsResponse = await res.json();
-    const jobs = (data.job_listings || []).map(listing => normalizeJob(listing, countryCode));
-    return { jobs, count: jobs.length };
+    const data: AdzunaSearchResponse = await res.json();
+    const jobs = (data.results || []).map(job => normalizeJob(job, countryCode));
+    return { jobs, count: data.count || 0 };
   } catch (error) {
     console.error("[Adzuna] Search failed:", error);
     return { jobs: [], count: 0 };
   }
 }
 
-export async function getAdzunaSalary(params: AdzunaSalaryParams): Promise<SalaryInsight | null> {
-  const queryParams = new URLSearchParams();
-  queryParams.set("app_id", env.adzuna.appId);
-  queryParams.set("app_key", env.adzuna.appKey);
-  queryParams.set("job_title", params.jobTitle);
-  if (params.location) queryParams.set("location", params.location);
-
-  const url = `${BASE_URL}/salary_information?${queryParams.toString()}`;
-
+export async function getAdzunaCategories(countryCode: string = "gb"): Promise<{ tag: string; label: string }[]> {
+  const url = `${BASE_URL}/jobs/${countryCode.toLowerCase()}/categories?${authParams()}&content-type=application/json`;
   try {
     const res = await fetch(url);
-    if (!res.ok) {
-      console.error(`[Adzuna] Salary API error: ${res.status} ${res.statusText}`);
-      return null;
-    }
-    const data: AdzunaSalaryResponse = await res.json();
-    return {
-      averageSalary: data.average_salary || "",
-      minSalary: data.min_salary || "",
-      maxSalary: data.max_salary || "",
-    };
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map((c: any) => ({ tag: c.tag, label: c.label }));
   } catch (error) {
-    console.error("[Adzuna] Salary fetch failed:", error);
-    return null;
-  }
-}
-
-export async function getAdzunaCompanyReviews(params: AdzunaCompanyParams): Promise<CompanyReview[]> {
-  const queryParams = new URLSearchParams();
-  queryParams.set("app_id", env.adzuna.appId);
-  queryParams.set("app_key", env.adzuna.appKey);
-  queryParams.set("company_name", params.companyName);
-
-  const url = `${BASE_URL}/company_reviews?${queryParams.toString()}`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error(`[Adzuna] Reviews API error: ${res.status} ${res.statusText}`);
-      return [];
-    }
-    const data: AdzunaCompanyReviewsResponse = await res.json();
-    return (data.reviews || []).map(r => ({
-      rating: r.rating || 0,
-      reviewText: r.review_text || "",
-    }));
-  } catch (error) {
-    console.error("[Adzuna] Reviews fetch failed:", error);
+    console.error("[Adzuna] Failed to fetch categories:", error);
     return [];
   }
 }

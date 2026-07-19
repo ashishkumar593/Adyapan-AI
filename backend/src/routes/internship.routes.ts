@@ -1,15 +1,24 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { createPrismaClient } from "../config/dynamicPrisma";
+import { env } from "../config/env";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
-import { searchAdzunaJobs, getAdzunaSalary, getAdzunaCompanyReviews, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+import { searchAdzunaJobs, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+
+let _publicDb: any = null;
+function getPublicDb() {
+  if (!_publicDb) _publicDb = createPrismaClient(env.databaseUrl);
+  return _publicDb;
+}
 
 const internshipRouter = Router();
 
 internshipRouter.get("/", async (req, res) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
     const {
       search,
       company,
@@ -144,7 +153,8 @@ internshipRouter.get("/", async (req, res) => {
 
 internshipRouter.get("/featured", async (req, res) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const internships = await prisma.internship.findMany({
       where: { isFeatured: true },
@@ -160,7 +170,8 @@ internshipRouter.get("/featured", async (req, res) => {
 
 internshipRouter.get("/trending", async (req, res) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -195,7 +206,8 @@ internshipRouter.get("/trending", async (req, res) => {
 
 internshipRouter.get("/companies", async (req, res) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const results = await prisma.internship.groupBy({
       by: ["company"],
@@ -259,16 +271,26 @@ internshipRouter.get("/adzuna/countries", async (_req, res) => {
   }
 });
 
+// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
+internshipRouter.get("/adzuna/categories", async (req, res) => {
+  try {
+    const country = (req.query.country as string) || "gb";
+    const categories = await getAdzunaCategories(country);
+    res.json({ success: true, categories });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.adzunaCategories", "Failed to fetch categories");
+  }
+});
+
 // ─── GET /adzuna/search ─ Direct Adzuna search for internships ─────────────
 internshipRouter.get("/adzuna/search", async (req, res) => {
   try {
-    const { keywords, location, country = "gb", radius } = req.query;
+    const { keywords, location, country = "gb" } = req.query;
 
     const result = await searchAdzunaJobs({
       keywords: keywords as string,
       location: location as string,
       country: country as string,
-      radius: radius ? parseInt(radius as string, 10) : undefined,
     });
 
     res.json({
@@ -278,36 +300,6 @@ internshipRouter.get("/adzuna/search", async (req, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Internship.adzunaSearch", "Failed to search Adzuna");
-  }
-});
-
-// ─── GET /adzuna/salary ─ Salary information from Adzuna ───────────────────
-internshipRouter.get("/adzuna/salary", async (req, res) => {
-  try {
-    const { job_title, location } = req.query;
-    if (!job_title || typeof job_title !== "string") {
-      res.status(400).json({ success: false, error: "job_title is required" });
-      return;
-    }
-    const salary = await getAdzunaSalary({ jobTitle: job_title, location: location as string });
-    res.json({ success: true, salary });
-  } catch (error) {
-    handleRouteError(res, error, "Internship.adzunaSalary", "Failed to fetch salary info");
-  }
-});
-
-// ─── GET /adzuna/reviews ─ Company reviews from Adzuna ─────────────────────
-internshipRouter.get("/adzuna/reviews", async (req, res) => {
-  try {
-    const { company_name } = req.query;
-    if (!company_name || typeof company_name !== "string") {
-      res.status(400).json({ success: false, error: "company_name is required" });
-      return;
-    }
-    const reviews = await getAdzunaCompanyReviews({ companyName: company_name });
-    res.json({ success: true, reviews });
-  } catch (error) {
-    handleRouteError(res, error, "Internship.adzunaReviews", "Failed to fetch company reviews");
   }
 });
 

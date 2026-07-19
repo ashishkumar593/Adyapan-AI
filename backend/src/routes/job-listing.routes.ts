@@ -1,16 +1,25 @@
 import { Router, Request, Response } from "express";
 import { requireAuth } from "../middleware/auth";
 import { getUserPrismaFromRequest } from "../utils/prisma";
+import { createPrismaClient } from "../config/dynamicPrisma";
+import { env } from "../config/env";
 import { handleRouteError } from "../utils/routeError";
 import { generateJSON, MODELS } from "../lib/ai/openrouter";
-import { searchAdzunaJobs, getAdzunaSalary, getAdzunaCompanyReviews, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+import { searchAdzunaJobs, getAdzunaCategories, getSupportedCountries, type NormalizedJob } from "../services/adzuna.service";
+
+let _publicDb: any = null;
+function getPublicDb() {
+  if (!_publicDb) _publicDb = createPrismaClient(env.databaseUrl);
+  return _publicDb;
+}
 
 export const jobListingRouter = Router();
 
 // ─── GET / ─ List jobs with filters (DB + Adzuna merged) ───────────────────
 jobListingRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
     const {
       search,
       company,
@@ -184,7 +193,8 @@ jobListingRouter.get("/", async (req: Request, res: Response) => {
 // ─── GET /featured ─ Featured jobs ─────────────────────────────────────────
 jobListingRouter.get("/featured", async (req: Request, res: Response) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const jobs = await prisma.jobListing.findMany({
       where: { isFeatured: true, isActive: true },
@@ -201,7 +211,8 @@ jobListingRouter.get("/featured", async (req: Request, res: Response) => {
 // ─── GET /trending ─ Trending jobs (most saved recently) ───────────────────
 jobListingRouter.get("/trending", async (req: Request, res: Response) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -236,7 +247,8 @@ jobListingRouter.get("/trending", async (req: Request, res: Response) => {
 // ─── GET /companies ─ Distinct companies with counts ──────────────────────
 jobListingRouter.get("/companies", async (req: Request, res: Response) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const results = await prisma.jobListing.groupBy({
       by: ["company"],
@@ -259,7 +271,8 @@ jobListingRouter.get("/companies", async (req: Request, res: Response) => {
 // ─── GET /stats ─ Job market stats ────────────────────────────────────────
 jobListingRouter.get("/stats", async (req: Request, res: Response) => {
   try {
-    const prisma = await getUserPrismaFromRequest(req);
+    const userId = (req as any).user?.userId;
+    const prisma = userId ? await getUserPrismaFromRequest(req) : getPublicDb();
 
     const activeWhere = { isActive: true };
 
@@ -315,21 +328,26 @@ jobListingRouter.get("/adzuna/countries", async (_req: Request, res: Response) =
   }
 });
 
+// ─── GET /adzuna/categories ─ Adzuna job categories for a country ──────────
+jobListingRouter.get("/adzuna/categories", async (req: Request, res: Response) => {
+  try {
+    const country = (req.query.country as string) || "gb";
+    const categories = await getAdzunaCategories(country);
+    res.json({ success: true, categories });
+  } catch (error) {
+    handleRouteError(res, error, "JobListing.adzunaCategories", "Failed to fetch categories");
+  }
+});
+
 // ─── GET /adzuna/search ─ Direct Adzuna job search ──────────────────────────
 jobListingRouter.get("/adzuna/search", async (req: Request, res: Response) => {
   try {
-    const {
-      keywords,
-      location,
-      country = "gb",
-      radius,
-    } = req.query;
+    const { keywords, location, country = "gb" } = req.query;
 
     const result = await searchAdzunaJobs({
       keywords: keywords as string,
       location: location as string,
       country: country as string,
-      radius: radius ? parseInt(radius as string, 10) : undefined,
     });
 
     res.json({
@@ -339,47 +357,6 @@ jobListingRouter.get("/adzuna/search", async (req: Request, res: Response) => {
     });
   } catch (error) {
     handleRouteError(res, error, "JobListing.adzunaSearch", "Failed to search Adzuna");
-  }
-});
-
-// ─── GET /adzuna/salary ─ Salary information from Adzuna ───────────────────
-jobListingRouter.get("/adzuna/salary", async (req: Request, res: Response) => {
-  try {
-    const { job_title, location } = req.query;
-
-    if (!job_title || typeof job_title !== "string") {
-      res.status(400).json({ success: false, error: "job_title is required" });
-      return;
-    }
-
-    const salary = await getAdzunaSalary({
-      jobTitle: job_title,
-      location: location as string,
-    });
-
-    res.json({ success: true, salary });
-  } catch (error) {
-    handleRouteError(res, error, "JobListing.adzunaSalary", "Failed to fetch salary info");
-  }
-});
-
-// ─── GET /adzuna/reviews ─ Company reviews from Adzuna ─────────────────────
-jobListingRouter.get("/adzuna/reviews", async (req: Request, res: Response) => {
-  try {
-    const { company_name } = req.query;
-
-    if (!company_name || typeof company_name !== "string") {
-      res.status(400).json({ success: false, error: "company_name is required" });
-      return;
-    }
-
-    const reviews = await getAdzunaCompanyReviews({
-      companyName: company_name,
-    });
-
-    res.json({ success: true, reviews });
-  } catch (error) {
-    handleRouteError(res, error, "JobListing.adzunaReviews", "Failed to fetch company reviews");
   }
 });
 
