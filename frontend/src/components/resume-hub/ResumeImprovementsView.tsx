@@ -115,7 +115,35 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
   }, []);
 
   useEffect(() => {
-    api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
+    Promise.allSettled([
+      api.get("/resume/list"),
+      api.get("/resume-upload/list"),
+    ]).then(([builderRes, uploadRes]) => {
+      const builderResumes = builderRes.status === "fulfilled"
+        ? (builderRes.value.data.resumes || [])
+        : [];
+      const uploadedResumes = uploadRes.status === "fulfilled" && uploadRes.value.data.success
+        ? (uploadRes.value.data.resumes || []).map((u: any) => ({
+            id: u.id,
+            title: u.fileName,
+            template: "Uploaded",
+            updatedAt: u.createdAt,
+          }))
+        : [];
+      const allIds = new Set(builderResumes.map((r: any) => r.id));
+      const merged = [...builderResumes, ...uploadedResumes.filter((u: any) => !allIds.has(u.id))];
+      setResumes(merged);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem("pendingResumeUploadId");
+    if (pendingId) {
+      sessionStorage.removeItem("pendingResumeUploadId");
+      setResumeId(pendingId);
+      const timer = setTimeout(() => generateImprovementsWithId(pendingId), 300);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const isDark = theme === "dark";
@@ -158,10 +186,14 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
   };
 
   const generateImprovements = async () => {
+    await generateImprovementsWithId(resumeId);
+  };
+
+  const generateImprovementsWithId = async (explicitResumeId: string) => {
     setLoading(true);
     try {
       const res = await api.post("/resume-improvements/generate", {
-        resumeId: resumeId || undefined,
+        resumeId: explicitResumeId || undefined,
         targetRole,
         targetIndustry: targetIndustry || undefined,
         targetCompany: targetCompany || undefined,
@@ -499,6 +531,13 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
         </motion.div>
 
         {toast && <Toast message={toast} onClose={() => setToast("")} />}
+
+        <style>{`
+          select option {
+            background: ${isDark ? "#0d151c" : "#fff"};
+            color: ${textPrimary};
+          }
+        `}</style>
       </div>
     );
   }

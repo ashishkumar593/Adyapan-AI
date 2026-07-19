@@ -408,7 +408,35 @@ export function AtsCheckerView({ setView }: Props) {
   ];
 
   useEffect(() => {
-    api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
+    Promise.allSettled([
+      api.get("/resume/list"),
+      api.get("/resume-upload/list"),
+    ]).then(([builderRes, uploadRes]) => {
+      const builderResumes = builderRes.status === "fulfilled"
+        ? (builderRes.value.data.resumes || [])
+        : [];
+      const uploadedResumes = uploadRes.status === "fulfilled" && uploadRes.value.data.success
+        ? (uploadRes.value.data.resumes || []).map((u: any) => ({
+            id: u.id,
+            title: u.fileName,
+            template: "Uploaded",
+            updatedAt: u.createdAt,
+            isUploaded: true,
+          }))
+        : [];
+      const allIds = new Set(builderResumes.map((r: any) => r.id));
+      const merged = [...builderResumes, ...uploadedResumes.filter((u: any) => !allIds.has(u.id))];
+      setResumes(merged);
+    }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem("pendingResumeUploadId");
+    if (pendingId) {
+      sessionStorage.removeItem("pendingResumeUploadId");
+      setSelId(pendingId);
+      const timer = setTimeout(() => startAnalysisWithId(pendingId), 300);
+      return () => clearTimeout(timer);
+    }
   }, []);
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs]);
 
@@ -497,13 +525,18 @@ export function AtsCheckerView({ setView }: Props) {
   };
 
   const startAnalysis = async () => {
+    await startAnalysisWithId(selId);
+  };
+
+  const startAnalysisWithId = async (explicitId: string) => {
     setScreen("loading");
     setLoading(true); setLoadStep(0);
     const iv = setInterval(() => setLoadStep(p => Math.min(p + 1, loadSteps.length - 1)), 700);
     try {
       const fd = new FormData();
       if (file) fd.append("resume", file);
-      if (selId) fd.append("resumeId", selId);
+      const effectiveSelId = explicitId || selId;
+      if (effectiveSelId) fd.append("resumeId", effectiveSelId);
       fd.append("targetRole", role);
       if (incJD === "yes") {
         if (jdFile) fd.append("jobDescription", await jdFile.text());
