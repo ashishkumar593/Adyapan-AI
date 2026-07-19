@@ -1026,9 +1026,7 @@ Instructions:
 3. Structure the notes logically with clear headings, bullet points, and markdown. Highlight key definitions and formulas.
 4. Return ONLY valid markdown.`;
   try {
-    console.log("[Notes Generator] Starting for topic:", topic, "Difficulty:", difficulty);
     const result = await generateText(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL });
-    console.log("[Notes Generator] Successfully generated notes, length:", result?.length || 0);
     
     if (!result || result.trim().length === 0) {
       throw new Error("Empty response from AI model");

@@ -70,8 +70,6 @@ export async function streamChat(
 
   for (const provider of providers) {
     try {
-      console.log(`[Chat Stream] Calling ${provider.name} with model ${provider.model}...`);
-      
       const body: Record<string, unknown> = {
         model: provider.model,
         messages,
@@ -130,7 +128,6 @@ export async function streamChat(
       }
 
       callbacks.onDone(fullText);
-      console.log(`[Chat Stream] Successfully completed stream via ${provider.name}.`);
       return; // Success! Return immediately.
     } catch (error: any) {
       if (error.name === "AbortError") {

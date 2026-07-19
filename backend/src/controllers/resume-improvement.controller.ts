@@ -112,8 +112,6 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
     const resumeText = serializeResumeToText(resume);
     if (!resumeText.trim()) throw httpError(400, "Resume content is empty.");
 
-    console.log(`[ResumeImprovement] Generating improvements for user ${userId}, role: ${targetRole || "Software Engineer"}`);
-
     const result = await generateResumeImprovements(
       resumeText,
       resume,
@@ -122,8 +120,6 @@ export async function generateImprovements(req: Request, res: Response, next: Ne
       targetIndustry,
       targetCompany
     );
-
-    console.log(`[ResumeImprovement] Generated ${result.improvements.length} improvements, scores: ${result.overallScoreBefore} -> ${result.overallScoreAfter}`);
 
     // Try to persist — gracefully skip if tables don't exist yet
     let improvement: any = null;

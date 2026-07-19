@@ -51,13 +51,11 @@ export async function getUserPrisma(userId: string): Promise<any> {
     });
 
     if (needsRemigration) {
-      console.log(`[dynamicPrisma] Tables missing for ${userId}. Running prisma db push...`);
       const { execSync } = require("child_process");
       execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
         env: { ...process.env, USER_DATABASE_URL: dbUrl },
         stdio: "ignore"
       });
-      console.log(`[dynamicPrisma] Schema push completed for ${userId}.`);
       // Create a fresh client after migration
       client.$disconnect();
       const freshClient = createPrismaClient(dbUrl);

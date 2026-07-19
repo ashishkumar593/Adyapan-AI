@@ -149,7 +149,6 @@ export function CodingDashboardView() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
-  const handleComingSoon = () => toast.info("Coming soon!");
   const handleViewProfile = () => router.push("/profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => router.push("/dashboard/user");
@@ -168,7 +167,7 @@ export function CodingDashboardView() {
 
       <DashboardTopNav
         user={user} theme={theme} onThemeToggle={handleThemeToggle}
-        onComingSoon={handleComingSoon} onViewProfile={handleViewProfile}
+        onViewProfile={handleViewProfile}
         onAdyChat={handleAdyChat} onViewTool={handleViewTool}
         onMenuToggle={() => setSidebarOpen((p) => !p)}
         notifications={notifications} setNotifications={setNotifications}
@@ -178,7 +177,7 @@ export function CodingDashboardView() {
       />
 
       <DashboardSidebar
-        onComingSoon={handleComingSoon} activeView="coding"
+        activeView="coding"
         onViewDashboard={handleViewDashboard} onViewTool={handleViewTool}
         sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
       />

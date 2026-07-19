@@ -25,13 +25,11 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
 
   try {
     if (mimeType === "application/pdf") {
-      console.log(`[Resume Upload] Parsing PDF: ${file.originalname} (${file.buffer.length} bytes)`);
       rawText = await parsePdf(file.buffer);
     } else if (
       mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       mimeType === "application/msword"
     ) {
-      console.log(`[Resume Upload] Parsing DOCX: ${file.originalname} (${file.buffer.length} bytes)`);
       const parsed = await mammoth.extractRawText({ buffer: file.buffer });
       rawText = parsed.value;
     } else {
@@ -47,7 +45,6 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     throw httpError(400, "The document appears to be empty. Please upload a resume with readable text.");
   }
 
-  console.log(`[Resume Upload] Extracted ${rawText.length} characters from ${file.originalname}`);
   return rawText;
 }
 
@@ -117,8 +114,6 @@ Rules:
   };
 
   const truncatedText = text.slice(0, 12000);
-  console.log(`[Resume AI] Input text length: ${text.length}, truncated to: ${truncatedText.length}`);
-  console.log(`[Resume AI] First 200 chars: ${truncatedText.substring(0, 200)}`);
 
   const result = await generateJSON<ExtractedProfile>(
     systemPrompt,
@@ -126,13 +121,6 @@ Rules:
     { model: "google/gemini-2.5-flash" },
     fallbackProfile
   );
-
-  console.log(`[Resume AI] Result name: "${result.name}"`);
-  console.log(`[Resume AI] Result email: "${result.email}"`);
-  console.log(`[Resume AI] Result skills count: ${result.skills?.length ?? 0}`);
-  console.log(`[Resume AI] Result education count: ${result.education?.length ?? 0}`);
-  console.log(`[Resume AI] Result experience count: ${result.experience?.length ?? 0}`);
-  console.log(`[Resume AI] Result full: ${JSON.stringify(result, null, 2).substring(0, 500)}`);
 
   return result;
 }
@@ -197,21 +185,14 @@ export async function uploadAndParseResume(req: Request, res: Response, next: Ne
       throw httpError(400, "The file is empty. Please upload a valid resume.");
     }
 
-    console.log(`[Resume Upload] Starting upload for user ${userId}: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`);
-
     // 1. Extract text
-    console.log(`[Resume Upload] Step 1: Extracting text...`);
     const extractedText = await extractTextFromFile(file);
 
     // 2. Upload to Cloudinary
-    console.log(`[Resume Upload] Step 2: Uploading to Cloudinary...`);
     const { url: cloudinaryUrl } = await uploadToCloudinary(file);
-    console.log(`[Resume Upload] Step 2: Cloudinary URL: ${cloudinaryUrl}`);
 
     // 3. AI extraction
-    console.log(`[Resume Upload] Step 3: Running AI extraction...`);
     const profile = await extractProfileWithAI(extractedText);
-    console.log(`[Resume Upload] Step 3: AI extraction complete. Name: "${profile.name}", Skills: ${profile.skills.length}, Education: ${profile.education.length}, Experience: ${profile.experience.length}`);
 
     // Guard: detect when AI returned empty fallback (all providers failed)
     const isEmptyProfile = !profile.name && !profile.email && profile.skills.length === 0 && profile.education.length === 0 && profile.experience.length === 0;
@@ -224,7 +205,6 @@ export async function uploadAndParseResume(req: Request, res: Response, next: Ne
     const analysis = calculateCompleteness(profile);
 
     // 5. Get next version number
-    console.log(`[Resume Upload] Step 4: Storing in database...`);
     const userPrisma = await getUserPrismaFromRequest(req);
     const existingCount = await userPrisma.uploadedResume.count({ where: { userId } });
     const versionNumber = existingCount + 1;

@@ -30,10 +30,8 @@ export class AICodingService {
     if (cached) {
       const data = cached.explanationJson as unknown as AIAnalysisSchema;
       if (data && data.examples && data.examples.length > 0) {
-        console.log(`[AICodingService] Cache hit for question ${questionId}`);
         return data;
       }
-      console.log(`[AICodingService] Cache hit but examples are missing/empty. Regenerating...`);
       try {
         await prisma.questionAIAnalysis.delete({
           where: { id: cached.id }
@@ -50,8 +48,6 @@ export class AICodingService {
     if (!question) {
       throw new Error(`Question with ID ${questionId} not found`);
     }
-
-    console.log(`[AICodingService] Cache miss. Generating AI analysis for "${question.title}"...`);
 
     const fallback: AIAnalysisSchema = {
       problem_explanation: `A structured explanation of the problem: "${question.title}" (${question.topic}). We need to solve it efficiently.`,

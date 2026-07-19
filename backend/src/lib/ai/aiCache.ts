@@ -36,10 +36,8 @@ export function getCachedAIResponse(
       
       const age = Date.now() - entry.timestamp;
       if (age < CACHE_TTL_MS) {
-        console.log(`[AI Cache] Cache hit for key: ${key}`);
         return entry.response;
       } else {
-        console.log(`[AI Cache] Expired cache entry for key: ${key}. Deleting.`);
         fs.unlinkSync(filePath);
       }
     }
@@ -65,7 +63,6 @@ export function setCachedAIResponse(
     };
 
     fs.writeFileSync(filePath, JSON.stringify(entry, null, 2), "utf-8");
-    console.log(`[AI Cache] Saved response to cache: ${key}`);
   } catch (error) {
     console.error("[AI Cache] Error writing cache file:", error);
   }

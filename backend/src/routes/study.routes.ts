@@ -332,11 +332,9 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
     const readingTime = `${Math.max(1, Math.round(wordCount / 200))} min`;
 
     // ── Phase 1: Extract document structure ──
-    console.log(`[Study Analyze] Phase 1: Extracting structure from ${wordCount} words...`);
     const structure = await extractDocumentStructure(documentText);
 
     if (!structure || !structure.topics || structure.topics.length === 0) {
-      console.log("[Study Analyze] Phase 1 returned no structure, using heuristic fallback");
       // Heuristic fallback: split text into rough topic blocks
       const paragraphs = documentText.split(/\n\s*\n/).filter(p => p.trim().length > 50);
       const title = paragraphs[0]?.trim().slice(0, 120) || "Document Analysis";
@@ -363,10 +361,7 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
       return res.json({ success: true, analysis: fallbackAnalysis });
     }
 
-    console.log(`[Study Analyze] Phase 1 complete: "${structure.title}" with ${structure.topics.length} topics`);
-
     // ── Phase 2: Generate detailed analysis for ALL topics concurrently ──
-    console.log("[Study Analyze] Phase 2: Generating detailed topic analysis (concurrent)...");
     const mainSubject = structure.insights?.mainSubject || structure.title;
     const maxTopics = Math.min(structure.topics.length, 5); // cap at 5 for speed
     const topicsToAnalyze = structure.topics.slice(0, maxTopics);
@@ -399,8 +394,6 @@ studyRouter.post("/analyze", uploadMemory.single("file"), async (req, res) => {
         keywords: [],
       };
     });
-
-    console.log(`[Study Analyze] Phase 2 complete: ${detailedTopics.length} topics analyzed`);
 
     // ── Combine results ──
     const analysis = {

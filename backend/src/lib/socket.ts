@@ -60,24 +60,19 @@ export function initSocketServer(server: HttpServer) {
   });
 
   io.on("connection", (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-
     // Join personal notification room — called by frontend after auth
     socket.on("join_user", (userId: string) => {
       socket.join(`user:${userId}`);
-      console.log(`Socket ${socket.id} joined user room: user:${userId}`);
     });
 
     // Leave user room on logout
     socket.on("leave_user", (userId: string) => {
       socket.leave(`user:${userId}`);
-      console.log(`Socket ${socket.id} left user room: user:${userId}`);
     });
 
     // Join session specific room
     socket.on("join_session", (sessionId: string) => {
       socket.join(sessionId);
-      console.log(`Socket ${socket.id} joined session room: ${sessionId}`);
     });
 
     // Real-time Study Assistant Streaming (uses actual Gemini API)
@@ -431,7 +426,6 @@ Keep responses concise for short durations and detailed for longer durations.`;
     // ─── Proctoring: Join proctoring room ────────────────────────────────
     socket.on("proctor:join", async ({ sessionId, userId }: { sessionId: string; userId: string }) => {
       socket.join(sessionId);
-      console.log(`Socket ${socket.id} joined proctoring room: ${sessionId}`);
     });
 
     // ─── Proctoring: Get current violation state ─────────────────────────
@@ -539,7 +533,6 @@ Keep responses concise for short durations and detailed for longer durations.`;
     });
 
     socket.on("disconnect", () => {
-      console.log(`Socket disconnected: ${socket.id}`);
     });
   });
 }

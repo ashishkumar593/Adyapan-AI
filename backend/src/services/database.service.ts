@@ -136,25 +136,21 @@ class DatabaseService {
 
   async getDatabaseUrlForUser(userId: string): Promise<string> {
     if (!this.apiKey || !this.projectId || !this.branchId) {
-      console.log(`[Database] Neon API credentials missing. Falling back to default DATABASE_URL for user ${userId}`);
       return env.databaseUrl;
     }
     try {
       const dbName = `user_${userId}`;
       const exists = await this.checkDatabaseExists(dbName);
       if (!exists) {
-        console.log(`[Database] User database '${dbName}' not found. Creating dynamically...`);
         try {
           await this.createDatabase(dbName);
           const dbUrl = await this.getConnectionString(dbName);
-          console.log(`[Database] Running migrations for '${dbName}'...`);
           const { execSync } = require("child_process");
           execSync(`npx prisma db push --config=prisma/prisma.config.user.ts --accept-data-loss`, {
             env: { ...process.env, USER_DATABASE_URL: dbUrl },
             stdio: "inherit"
           });
-          console.log(`[Database] Migrated '${dbName}' successfully.`);
-        } catch (createErr) {
+          } catch (createErr) {
           console.warn("[Database] Dynamic database creation/migration failed, using main database:", createErr);
           return env.databaseUrl;
         }

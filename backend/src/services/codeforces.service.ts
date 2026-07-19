@@ -188,7 +188,6 @@ export class CodeforcesService {
     const apiKey = env.codeforces.apiKey;
     const apiSecret = env.codeforces.apiSecret;
 
-    console.log("[Codeforces] Starting problem synchronization...");
     
     try {
       const url = generateCodeforcesUrl("problemset.problems", {}, apiKey, apiSecret);
@@ -205,8 +204,6 @@ export class CodeforcesService {
 
       const rawProblems = data.result.problems || [];
       const stats = data.result.problemStatistics || [];
-
-      console.log(`[Codeforces] Fetched ${rawProblems.length} problems. Filtering and sorting...`);
 
       // Filter: only programming type, with rating, and rating between 800 and 2600
       const filtered = rawProblems.filter(
@@ -252,8 +249,6 @@ export class CodeforcesService {
         problemsToSync.push(...topicBuckets[topic]);
       }
 
-      console.log(`[Codeforces] Normalized ${problemsToSync.length} problems for DB update...`);
-
       // Perform batch upserts in master DB
       let count = 0;
       for (const p of problemsToSync) {
@@ -289,7 +284,6 @@ export class CodeforcesService {
         }
       }
 
-      console.log(`[Codeforces] Completed sync! Upserted ${count} problems successfully.`);
       return { success: true, syncedCount: count };
 
     } catch (err: any) {

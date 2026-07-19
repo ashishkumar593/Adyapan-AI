@@ -76,13 +76,10 @@ async function callAIRobust(
     for (let attempt = 0; attempt <= MAX_PROVIDER_RETRIES; attempt++) {
       if (attempt > 0) {
         const backoffMs = Math.min(5000 * attempt, 30000);
-        console.log(`[AI Engine] [Fallback] Retrying ${provider.name} in ${backoffMs}ms (attempt ${attempt + 1}/${MAX_PROVIDER_RETRIES + 1})...`);
         await new Promise(r => setTimeout(r, backoffMs));
       }
 
       try {
-        console.log(`[AI Engine] [Fallback] Trying ${provider.name} using model ${provider.model}${attempt > 0 ? ` (retry ${attempt})` : ""}...`);
-        
         const body: Record<string, unknown> = {
           model: provider.model,
           messages,
@@ -112,8 +109,6 @@ async function callAIRobust(
           throw new Error(`${provider.name} returned non-JSON response.`);
         }
 
-        console.log(`[AI Engine] [Fallback] ${provider.name} HTTP ${res.status}, keys: ${Object.keys(data).join(", ")}`);
-
         if (!res.ok || data.error) {
           const errMsg = data.error?.message ?? res.statusText;
           const isRateLimit = res.status === 429;
@@ -123,7 +118,6 @@ async function callAIRobust(
             const retryAfter = res.headers?.get?.("retry-after");
             const waitSec = retryAfter ? parseInt(retryAfter, 10) : undefined;
             if (waitSec && waitSec <= 60) {
-              console.log(`[AI Engine] [Fallback] ${provider.name} rate-limited, waiting ${waitSec}s per retry-after header...`);
               await new Promise(r => setTimeout(r, waitSec * 1000));
             }
             lastError = `${provider.name}: ${errMsg}`;
@@ -139,7 +133,6 @@ async function callAIRobust(
           throw new Error(`${provider.name} returned empty completion.`);
         }
 
-        console.log(`[AI Engine] [Fallback] Successfully generated ${content.length} chars via ${provider.name}.`);
         return content;
       } catch (e: any) {
         const msg = e.message || String(e);
@@ -218,7 +211,6 @@ export async function generateJSON<T>(
   const modifiedSys = `${systemPrompt}\nYou MUST respond with valid JSON only, no other conversational introduction or explanation.`;
   const cached = getCachedAIResponse(modifiedSys, userPrompt, options);
   if (cached) {
-    console.log(`[AI Engine] generateJSON cache HIT, cached length: ${cached.length}`);
     try {
       const repaired = tryRepairJSON(cached);
       const parsed = JSON.parse(repaired);
@@ -227,16 +219,12 @@ export async function generateJSON<T>(
       const isResumeSchema = "name" in (fallback as any) || "email" in (fallback as any);
       const isEmpty = isResumeSchema && !(validated as any).name && !(validated as any).email && ((validated as any).skills?.length ?? 0) === 0;
       if (isEmpty) {
-        console.log(`[AI Engine] Cache hit returned empty profile, discarding and re-fetching`);
       } else {
-        console.log(`[AI Engine] Cache hit validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
         return validated;
       }
     } catch (e) {
-      console.log(`[AI Engine] Cache hit parse failed, falling through to API call`);
     }
   } else {
-    console.log(`[AI Engine] generateJSON cache MISS`);
   }
 
   const start = Date.now();
@@ -249,38 +237,28 @@ export async function generateJSON<T>(
     text = await callAIRobust(messages, options);
     const duration = Date.now() - start;
 
-    console.log(`[AI Engine] generateJSON raw response length: ${text.length}`);
-    console.log(`[AI Engine] generateJSON first 300 chars: ${text.substring(0, 300)}`);
-
     try {
       const { PerformanceMonitor } = require("../../utils/monitoring");
       PerformanceMonitor.record("ai", options.model || "unknown", duration);
     } catch (err) {}
 
     const repaired = tryRepairJSON(text);
-    console.log(`[AI Engine] After tryRepairJSON length: ${repaired.length}`);
     const parsed = JSON.parse(repaired);
-    console.log(`[AI Engine] Parsed keys: ${Object.keys(parsed).join(", ")}`);
     const validated = enforceSchema(parsed, fallback);
-    console.log(`[AI Engine] Validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}, edu: ${(validated as any).education?.length}`);
     
     setCachedAIResponse(modifiedSys, userPrompt, options, text);
     return validated;
   } catch (error) {
     console.warn(`[AI Engine] Initial JSON generation/parsing failed:`, error);
-    console.log(`[AI Engine] Failed text was: ${text.substring(0, 300)}`);
     try {
-      console.log(`[AI Engine] Attempting automatic retry...`);
       const retryMessages: OpenRouterMessage[] = [
         { role: "system", content: `${modifiedSys}\nIMPORTANT: Your previous output was invalid JSON. Ensure all keys and string values are double-quoted and all trailing commas are removed. Do not include markdown wraps or conversational prose.` },
         { role: "user", content: `${userPrompt}\n\nStrict instruction: return valid JSON matching this schema: ${JSON.stringify(fallback)}` }
       ];
       const retryText = await callAIRobust(retryMessages, options);
-      console.log(`[AI Engine] Retry response length: ${retryText.length}, first 300: ${retryText.substring(0, 300)}`);
       const repaired = tryRepairJSON(retryText);
       const parsed = JSON.parse(repaired);
       const validated = enforceSchema(parsed, fallback);
-      console.log(`[AI Engine] Retry validated name: "${(validated as any).name}", skills: ${(validated as any).skills?.length}`);
       
       setCachedAIResponse(modifiedSys, userPrompt, options, retryText);
       return validated;

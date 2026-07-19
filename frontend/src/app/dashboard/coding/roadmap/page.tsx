@@ -161,7 +161,6 @@ export default function CodingRoadmapPage() {
     document.documentElement.setAttribute("data-theme", next);
   }, [theme]);
 
-  const handleComingSoon = () => toast.info("Coming soon!");
   const handleViewProfile = () => router.push("/profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => router.push("/dashboard/user");
@@ -279,7 +278,6 @@ export default function CodingRoadmapPage() {
       <FloatingOrbs />
 
       <DashboardSidebar
-        onComingSoon={handleComingSoon}
         activeView="coding"
         onViewDashboard={handleViewDashboard}
         onViewTool={handleViewTool}
@@ -291,7 +289,6 @@ export default function CodingRoadmapPage() {
         user={user}
         theme={theme}
         onThemeToggle={handleThemeToggle}
-        onComingSoon={handleComingSoon}
         onViewProfile={handleViewProfile}
         onAdyChat={handleAdyChat}
         onViewTool={handleViewTool}

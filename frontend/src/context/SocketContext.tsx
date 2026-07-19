@@ -24,8 +24,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
     const socketUrl = apiUrl.replace(/\/api\/?$/, "");
 
-    console.log("Connecting to WebSocket server at:", socketUrl);
-
     const token =
       localStorage.getItem("adyapan-token") || sessionStorage.getItem("adyapan-token");
 
@@ -37,12 +35,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     });
 
     socketInstance.on("connect", () => {
-      console.log("WebSocket connected successfully!");
       setIsConnected(true);
     });
 
     socketInstance.on("disconnect", () => {
-      console.log("WebSocket disconnected.");
       setIsConnected(false);
     });
 

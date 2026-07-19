@@ -2070,7 +2070,6 @@ Answer the student's question based on the coding problem. Provide hints or feed
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleComingSoon = () => toast.info("Coming soon!");
   const handleViewProfile = () => router.push("/profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => router.push("/dashboard/user");
@@ -2095,7 +2094,6 @@ Answer the student's question based on the coding problem. Provide hints or feed
         user={user}
         theme={theme}
         onThemeToggle={handleThemeToggle}
-        onComingSoon={handleComingSoon}
         onViewProfile={handleViewProfile}
         onAdyChat={handleAdyChat}
         onViewTool={handleViewTool}
@@ -2111,7 +2109,6 @@ Answer the student's question based on the coding problem. Provide hints or feed
 
       {/* Sidebar */}
       <DashboardSidebar
-        onComingSoon={handleComingSoon}
         activeView="coding"
         onViewDashboard={handleViewDashboard}
         onViewTool={handleViewTool}

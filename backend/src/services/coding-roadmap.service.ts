@@ -42,8 +42,6 @@ export class CodingRoadmapService {
       preferredLanguage: string;
     }
   ): Promise<any> {
-    console.log(`[CodingRoadmapService] Starting roadmap generation for user ${userId}...`);
-
     // 1. Fetch user question progress
     const userProgress = await prisma.userQuestionProgress.findMany({
       where: { userId }
@@ -218,7 +216,6 @@ ${JSON.stringify(unsolvedPool.slice(0, 80), null, 2)}`;
 
     await Promise.all(milestonePromises);
 
-    console.log(`[CodingRoadmapService] Successfully generated and stored roadmap for user ${userId}`);
     return this.getRoadmap(userId, prisma);
   }
 

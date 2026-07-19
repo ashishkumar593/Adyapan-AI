@@ -242,7 +242,6 @@ export default function CodingHubPage() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
-  const handleComingSoon = () => toast.info("Coming soon!");
   const handleViewProfile = () => router.push("/profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => router.push("/dashboard/user");
@@ -382,7 +381,6 @@ export default function CodingHubPage() {
         user={user}
         theme={theme}
         onThemeToggle={handleThemeToggle}
-        onComingSoon={handleComingSoon}
         onViewProfile={handleViewProfile}
         onAdyChat={handleAdyChat}
         onViewTool={handleViewTool}
@@ -398,7 +396,6 @@ export default function CodingHubPage() {
 
       {/* Sidebar */}
       <DashboardSidebar
-        onComingSoon={handleComingSoon}
         activeView="coding"
         onViewDashboard={handleViewDashboard}
         onViewTool={handleViewTool}

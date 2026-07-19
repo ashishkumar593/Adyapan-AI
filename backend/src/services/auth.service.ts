@@ -120,9 +120,6 @@ export async function registerUser(input: RegisterInput) {
       stdio: "pipe",
       env: { ...process.env, USER_DATABASE_URL: dbUrl },
     });
-    console.log(`Migrated database ${userDbName} for user ${user.id}`);
-    
-    console.log(`Created database ${userDbName} for user ${user.id}`);
   } catch (error) {
     console.error(`Failed to create database for user ${user.id}:`, error);
   }

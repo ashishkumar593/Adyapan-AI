@@ -22,8 +22,6 @@ notesExportRouter.post("/pdf", async (req, res) => {
       return;
     }
 
-    console.log(`[Notes Export] Generating PDF for topic: "${topic}" by user: ${req.user!.userId}`);
-
     const pdfBuffer = await generateNotesPdf(content, topic, { difficulty, type });
 
     const filename = `${topic.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "_")}_AdyapanAI_Notes.pdf`;
@@ -35,8 +33,6 @@ notesExportRouter.post("/pdf", async (req, res) => {
     });
 
     res.send(pdfBuffer);
-
-    console.log(`[Notes Export] PDF generated successfully (${pdfBuffer.length} bytes)`);
   } catch (error) {
     handleRouteError(res, error, "Notes.export.pdf", "PDF generation failed");
   }

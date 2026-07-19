@@ -177,33 +177,6 @@ export interface SidebarItem {
   submenu?: { label: string; href: string }[];
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function Toast({ message, onClose }: { message: string; onClose: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 4000);
-    return () => clearTimeout(t);
-  }, [onClose]);
-
-  return (
-    <div
-      style={{
-        position: "fixed", bottom: 24, right: 24, zIndex: 9999,
-        background: "rgba(245,158,11,0.15)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        color: "#f59e0b",
-        border: "1px solid rgba(245,158,11,0.35)",
-        padding: "12px 22px", borderRadius: 14,
-        boxShadow: "0 8px 32px rgba(245,158,11,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-        fontSize: "0.88rem", fontWeight: 600,
-        animation: "fadeInUp 0.3s ease",
-      }}
-    >
-      {message}
-    </div>
-  );
-}
-
 // ─── Search Index ─────────────────────────────────────────────────────────────
 interface SearchEntry { label: string; viewId: string; category: string; }
 const SEARCH_INDEX: SearchEntry[] = [
@@ -351,8 +324,7 @@ export const sidebarItems: SidebarItem[] = [
 ];
 
 // ─── Sidebar Component ────────────────────────────────────────────────────────
-export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, onViewTool, sidebarOpen, setSidebarOpen }: {
-  onComingSoon: () => void;
+export function DashboardSidebar({ activeView, onViewDashboard, onViewTool, sidebarOpen, setSidebarOpen }: {
   activeView: string;
   onViewDashboard: () => void;
   onViewTool: (tool: string) => void;
@@ -534,7 +506,6 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
                       else if (sub.label === "Interview Progress") onViewTool("analytics-interview");
                       else if (sub.label === "Resume Score") onViewTool("analytics-resume");
                       else if (sub.label === "Skill Growth") onViewTool("analytics-skills");
-                      else onComingSoon();
                       setSidebarOpen(false);
                     }}
                     style={{
@@ -566,13 +537,12 @@ export function DashboardSidebar({ onComingSoon, activeView, onViewDashboard, on
 
 // ─── TopNav Component ─────────────────────────────────────────────────────────
 export function DashboardTopNav({
-  user, theme, onThemeToggle, onComingSoon, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
+  user, theme, onThemeToggle, onViewProfile, onAdyChat, onViewTool, onMenuToggle,
   notifications, setNotifications, unreadCount, onMarkAllRead, onClearAll, onPremium, onViewSettings,
 }: {
   user: AdyapanUser | null;
   theme: string;
   onThemeToggle: () => void;
-  onComingSoon: () => void;
   onViewProfile: () => void;
   onAdyChat: () => void;
   onViewTool: (tool: string) => void;
@@ -864,7 +834,7 @@ export function DashboardTopNav({
           whileTap={{scale:0.95}}
           animate={{borderColor: ["rgba(245,158,11,0.3)", "rgba(245,158,11,0.6)", "rgba(245,158,11,0.3)"]}}
           transition={{duration:0.12, borderColor: {duration: 2, repeat: Infinity, ease: "easeInOut"}}}
-          className="desktop-premium" onClick={onPremium || onComingSoon} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
+          className="desktop-premium" onClick={onPremium} style={{ ...navBtnBase, color: "#f59e0b", borderColor: "rgba(245,158,11,0.3)" }}>
           <Crown size={13} /> Premium
         </motion.button>
 
@@ -973,14 +943,14 @@ export function DashboardTopNav({
           )}
         </div>
         {/* Profile dropdown */}
-        <ProfileDropdown user={user} onComingSoon={onComingSoon} theme={theme} onViewProfile={onViewProfile} onViewSettings={onViewSettings} onViewTool={onViewTool} />
+        <ProfileDropdown user={user} theme={theme} onViewProfile={onViewProfile} onViewSettings={onViewSettings} onViewTool={onViewTool} />
       </div>
     </header>
   );
 }
 
 // ─── Profile Dropdown ─────────────────────────────────────────────────────────
-export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; onComingSoon: () => void; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: string) => void }) {
+export function ProfileDropdown({ user, theme, onViewProfile, onViewSettings, onViewTool }: { user: AdyapanUser | null; theme: string; onViewProfile: () => void; onViewSettings?: () => void; onViewTool: (tool: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1014,7 +984,7 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
     { icon: <CreditCard size={15} />, label: "Billing", href: "#", onClickFn: () => onViewTool("billing") },
     null,
     { icon: <LogOut size={15} />, label: "Logout", href: "/login", onClickFn: () => { clearAuthSession(); window.location.href = "/login"; } },
-  ] as Array<{ icon: React.ReactNode; label: string; href: string; cs?: boolean; onClickFn?: () => void } | null>;
+  ] as Array<{ icon: React.ReactNode; label: string; href: string; onClickFn?: () => void } | null>;
 
   const initials = user?.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "U";
 
@@ -1094,7 +1064,7 @@ export function ProfileDropdown({ user, onComingSoon, theme, onViewProfile, onVi
                 <Link
                   key={item.label}
                   href={item.href}
-                  onClick={item.onClickFn ? (e) => { e.preventDefault(); setOpen(false); item.onClickFn!(); } : item.cs ? (e) => { e.preventDefault(); onComingSoon(); } : undefined}
+                  onClick={item.onClickFn ? (e) => { e.preventDefault(); setOpen(false); item.onClickFn!(); } : undefined}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
                     padding: "0.5rem 0.6rem", borderRadius: 8,
@@ -1876,7 +1846,6 @@ function UserDashboardContent() {
   useRequireAuth("USER");
   const [user, setUser] = useState<AdyapanUser | null>(null);
   const [theme, setTheme] = useState("dark");
-  const [toast, setToast] = useState(false);
   // ── Start with a stable SSR-safe default to avoid hydration mismatches.
   // The saved view is restored client-side in the first useEffect below.
   const [activeView, setActiveView] = useState<string>("dashboard");
@@ -2154,7 +2123,6 @@ function UserDashboardContent() {
   };
 
   const router = useRouter();
-  const showComingSoon = () => setToast(true);
   const handleViewProfile = () => setActiveView("profile");
   const handlePremium = () => router.push("/premium");
   const handleViewDashboard = () => setActiveView("dashboard");
@@ -2164,8 +2132,8 @@ function UserDashboardContent() {
     <div className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--bg-dark)", color: "var(--text-primary)" }}>
       {showOnboarding && <OnboardingFlow onComplete={() => setShowOnboarding(false)} />}
       <FloatingOrbs />
-      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onComingSoon={showComingSoon} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
-      <DashboardSidebar onComingSoon={showComingSoon} activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <DashboardTopNav user={user} theme={theme} onThemeToggle={handleThemeToggle} onViewProfile={handleViewProfile} onAdyChat={handleAdyChat} onViewTool={setActiveView} onMenuToggle={() => setSidebarOpen(prev => !prev)} notifications={notifications} setNotifications={setNotifications} unreadCount={unreadCount} onMarkAllRead={async () => { try { await api.put("/notifications/read-all"); setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); } catch {} }} onClearAll={async () => { try { await api.delete("/notifications/clear"); setNotifications([]); setUnreadCount(0); } catch {} }} onPremium={handlePremium} onViewSettings={() => setActiveView("settings")} />
+      <DashboardSidebar activeView={activeView} onViewDashboard={handleViewDashboard} onViewTool={setActiveView} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="dash-main relative z-10 resume-hub-theme">
 
@@ -2293,10 +2261,6 @@ function UserDashboardContent() {
         )}
         </HubErrorBoundary>
       </main>
-
-      {toast && (
-        <Toast message="Coming Soon! This feature will be available in the next release." onClose={() => setToast(false)} />
-      )}
 
       {/* Inline responsive styles */}
       <style>{`
