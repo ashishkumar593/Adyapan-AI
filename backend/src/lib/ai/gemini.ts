@@ -982,6 +982,354 @@ Output JSON with:
 }
 
 // ============================================================================
+// LINKEDIN CAREER OPTIMIZATION ENGINE — Extended
+// ============================================================================
+
+const LINKEDIN_SYSTEM = `You are a senior LinkedIn branding expert, recruiter, ATS specialist, and career coach.
+Generate optimized LinkedIn content based only on the user's actual resume, candidate profile, ATS report, and career information.
+Never invent experience, technologies, achievements, certifications, companies, or metrics.
+Optimize for recruiter visibility, keyword relevance, readability, and professional branding.`;
+
+export interface LinkedInFullProfile {
+  headline: string;
+  aboutSection: string;
+  headlineVariants: string[];
+  aboutVariants: { label: string; content: string }[];
+  experience: { company: string; role: string; description: string; achievements: string[] }[];
+  projects: { name: string; description: string; technologies: string[]; impact: string; media: string }[];
+  skills: { name: string; endorsed: boolean; priority: number }[];
+  skillRecommendations: string[];
+  featured: { type: string; title: string; description: string; url: string }[];
+  networking: {
+    connectionRequests: string[];
+    thankYouMessages: string[];
+    recruiterOutreach: string[];
+    referralRequests: string[];
+  };
+  contentIdeas: { title: string; hook: string; body: string; cta: string; hashtags: string[] }[];
+  completeness: {
+    score: number;
+    checklist: { item: string; present: boolean; suggestion: string }[];
+  };
+  scores: {
+    headline: number;
+    about: number;
+    experience: number;
+    projects: number;
+    skills: number;
+    keyword: number;
+    visibility: number;
+    overall: number;
+  };
+  recommendations: { priority: string; title: string; reason: string; impact: string; difficulty: string; improvement: string }[];
+}
+
+export async function generateLinkedInFullProfile(data: {
+  resumeText: string;
+  candidateProfile: any;
+  atsReport: any;
+  targetRole: string;
+}): Promise<LinkedInFullProfile> {
+  const prompt = `Generate a complete LinkedIn profile optimization based on this data:
+
+Resume Content:
+${data.resumeText}
+
+Candidate Profile:
+${JSON.stringify(data.candidateProfile || {}, null, 2)}
+
+ATS Report:
+${JSON.stringify(data.atsReport || {}, null, 2)}
+
+Target Role: ${data.targetRole}
+
+Generate JSON with ALL of these fields:
+{
+  "headline": "optimized headline (max 220 chars, keyword-rich)",
+  "aboutSection": "compelling About summary (200-300 words, first person, with hook/expertise/CTA)",
+  "headlineVariants": ["variant 1", "variant 2", "variant 3", "variant 4", "variant 5"],
+  "aboutVariants": [{"label": "Professional", "content": "..."}, {"label": "Recruiter-Focused", "content": "..."}, {"label": "Startup", "content": "..."}, {"label": "Technical", "content": "..."}, {"label": "Student", "content": "..."}],
+  "experience": [{"company": "...", "role": "...", "description": "LinkedIn-optimized description", "achievements": ["achievement 1", "achievement 2"]}],
+  "projects": [{"name": "...", "description": "LinkedIn-ready project description", "technologies": ["tech1"], "impact": "business impact", "media": "suggested media type"}],
+  "skills": [{"name": "skill", "endorsed": false, "priority": 1}],
+  "skillRecommendations": ["trending skill 1", "trending skill 2", "trending skill 3"],
+  "featured": [{"type": "portfolio|github|resume|demo|blog|certificate|website", "title": "...", "description": "...", "url": ""}],
+  "networking": {
+    "connectionRequests": ["template 1", "template 2"],
+    "thankYouMessages": ["template 1", "template 2"],
+    "recruiterOutreach": ["template 1", "template 2"],
+    "referralRequests": ["template 1", "template 2"]
+  },
+  "contentIdeas": [{"title": "...", "hook": "...", "body": "...", "cta": "...", "hashtags": ["#tag1"]}],
+  "completeness": {
+    "score": 85,
+    "checklist": [{"item": "Headline", "present": true, "suggestion": "..."}]
+  },
+  "scores": {
+    "headline": 80, "about": 75, "experience": 70, "projects": 65,
+    "skills": 85, "keyword": 72, "visibility": 68, "overall": 75
+  },
+  "recommendations": [{"priority": "high|medium|low", "title": "...", "reason": "...", "impact": "...", "difficulty": "easy|medium|hard", "improvement": "..."}]
+}
+
+Rules:
+- Use ONLY data from the resume and profile. Never fabricate.
+- Optimize every section for the target role.
+- Headlines must be keyword-rich and recruiter-friendly.
+- About sections must use first person, have a hook, showcase expertise, and end with a CTA.
+- Experience must transform resume bullets into LinkedIn-friendly achievements with metrics.
+- Projects must include problem, solution, technologies, and business impact.
+- Skills must be ordered by relevance to target role.
+- Networking templates must be personalized based on the actual profile data.
+- Content ideas must be based on actual projects, learning, and career milestones.
+- Completeness checklist must cover: Headline, About, Experience, Projects, Skills, Education, Certifications, Featured, Custom URL, Banner, Photo.
+- Recommendations must explain why each matters for recruiters and expected impact.`;
+
+  const fallback: LinkedInFullProfile = {
+    headline: `${data.targetRole || "Software Engineer"} | Building impactful solutions`,
+    aboutSection: "Passionate developer focused on building quality software.",
+    headlineVariants: [],
+    aboutVariants: [],
+    experience: [],
+    projects: [],
+    skills: [],
+    skillRecommendations: [],
+    featured: [],
+    networking: { connectionRequests: [], thankYouMessages: [], recruiterOutreach: [], referralRequests: [] },
+    contentIdeas: [],
+    completeness: { score: 50, checklist: [] },
+    scores: { headline: 50, about: 50, experience: 50, projects: 50, skills: 50, keyword: 50, visibility: 50, overall: 50 },
+    recommendations: [],
+  };
+
+  return generateJSON<LinkedInFullProfile>(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInHeadlines(data: {
+  targetRole: string;
+  skills: string;
+  experience: string;
+  count: number;
+}): Promise<string[]> {
+  const prompt = `Generate ${data.count || 5} LinkedIn headline variants for a "${data.targetRole}" professional.
+Skills: ${data.skills}
+Experience context: ${data.experience}
+
+Rules:
+- Max 220 characters each
+- Use pipes (|) or bullets (•) to separate sections
+- Include target role keywords
+- Make each variant distinct in style (Professional, Keyword-Rich, Recruiter-Focused, Minimal, Creative)
+- Return JSON array of strings`;
+
+  const fallback = [`${data.targetRole} | Building Impact`];
+  const result = await generateJSON<string[]>(LINKEDIN_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
+  return Array.isArray(result) ? result : fallback;
+}
+
+export async function generateLinkedInAbout(data: {
+  targetRole: string;
+  resumeText: string;
+  variant: string;
+}): Promise<string> {
+  const prompt = `Write a LinkedIn About section for a "${data.targetRole}" professional.
+Variant style: ${data.variant}
+Resume data:
+${data.resumeText}
+
+Rules:
+- 150-300 words, first person
+- Start with a compelling hook
+- Showcase key expertise areas
+- Include relevant keywords naturally
+- End with a call-to-action
+- Never fabricate achievements
+- Return ONLY the text, no JSON`;
+
+  return generateText(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED });
+}
+
+export async function generateLinkedInExperience(data: {
+  experienceJson: any[];
+  targetRole: string;
+}): Promise<{ company: string; role: string; description: string; achievements: string[] }[]> {
+  const prompt = `Transform these resume experiences into LinkedIn-optimized format:
+${JSON.stringify(data.experienceJson, null, 2)}
+
+Target Role: ${data.targetRole}
+
+For each experience, generate:
+- description: 2-3 sentence LinkedIn-friendly overview
+- achievements: 3-5 bullet points with action verbs, metrics, and business impact
+
+Rules:
+- Use strong action verbs (Led, Built, Reduced, Increased, Implemented)
+- Include metrics where possible (%, $, time saved)
+- Focus on impact, not just responsibilities
+- Never fabricate metrics
+- Return JSON array`;
+
+  const fallback: { company: string; role: string; description: string; achievements: string[] }[] = [];
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInProjects(data: {
+  projectsJson: any[];
+  targetRole: string;
+}): Promise<{ name: string; description: string; technologies: string[]; impact: string; media: string }[]> {
+  const prompt = `Transform these resume projects into LinkedIn-ready showcase format:
+${JSON.stringify(data.projectsJson, null, 2)}
+
+Target Role: ${data.targetRole}
+
+For each project, generate:
+- description: Problem statement + solution approach (2-3 sentences)
+- technologies: relevant tech stack
+- impact: business/user impact
+- media: suggested media type (github, demo, screenshot, video)
+
+Rules:
+- Focus on problem→solution→impact narrative
+- Never fabricate technologies or results
+- Return JSON array`;
+
+  const fallback: { name: string; description: string; technologies: string[]; impact: string; media: string }[] = [];
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInSkills(data: {
+  currentSkills: string[];
+  atsKeywords: string[];
+  targetRole: string;
+}): Promise<{ recommended: string[]; trending: string[]; missing: string[]; priority: string[] }> {
+  const prompt = `Analyze LinkedIn skills for a "${data.targetRole}" professional.
+
+Current Skills: ${data.currentSkills.join(", ")}
+ATS Keywords: ${data.atsKeywords.join(", ")}
+
+Generate:
+- recommended: skills to add based on target role
+- trending: currently trending skills in the field
+- missing: important skills not in current list
+- priority: ordered list of top 10 most important skills
+
+Rules:
+- Base recommendations on target role requirements
+- Consider ATS keyword coverage
+- Never recommend skills not relevant to the role
+- Return JSON`;
+
+  const fallback = { recommended: [], trending: [], missing: [], priority: data.currentSkills.slice(0, 10) };
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInNetworking(data: {
+  profile: any;
+  targetRole: string;
+  context: string;
+}): Promise<{
+  connectionRequests: string[];
+  thankYouMessages: string[];
+  recruiterOutreach: string[];
+  referralRequests: string[];
+}> {
+  const prompt = `Generate personalized LinkedIn networking templates for this professional:
+Profile: ${JSON.stringify(data.profile, null, 2)}
+Target Role: ${data.targetRole}
+Context: ${data.context}
+
+Generate templates for:
+1. connectionRequests: 3 connection request messages (professional, friendly, confident)
+2. thankYouMessages: 2 thank-you messages after interviews
+3. recruiterOutreach: 2 messages to recruiters
+4. referralRequests: 2 referral request messages
+
+Rules:
+- Personalize based on actual profile data
+- Keep messages concise (under 300 characters for connection requests)
+- Professional tone
+- Never fabricate details
+- Return JSON`;
+
+  const fallback = { connectionRequests: [], thankYouMessages: [], recruiterOutreach: [], referralRequests: [] };
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInContentIdeas(data: {
+  projects: any[];
+  experience: any[];
+  skills: string[];
+  targetRole: string;
+}): Promise<{ title: string; hook: string; body: string; cta: string; hashtags: string[] }[]> {
+  const prompt = `Generate LinkedIn post ideas for this professional:
+Projects: ${JSON.stringify(data.projects, null, 2)}
+Experience: ${JSON.stringify(data.experience, null, 2)}
+Skills: ${data.skills.join(", ")}
+Target Role: ${data.targetRole}
+
+Generate 6 post ideas covering:
+1. Project showcase
+2. Learning milestone
+3. Technical insight
+4. Career advice
+5. Industry trend
+6. Personal growth
+
+Each post should have:
+- title: catchy title
+- hook: attention-grabbing opening line
+- body: post content (100-200 words)
+- cta: call to action
+- hashtags: 5 relevant hashtags
+
+Rules:
+- Based on actual projects and experience
+- Engaging and professional
+- Return JSON array`;
+
+  const fallback: { title: string; hook: string; body: string; cta: string; hashtags: string[] }[] = [];
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+export async function generateLinkedInRecruiterVisibility(data: {
+  headline: string;
+  about: string;
+  skills: string[];
+  experience: any[];
+  targetRole: string;
+}): Promise<{
+  visibilityScore: number;
+  keywordDensity: number;
+  roleAlignment: number;
+  tips: string[];
+  missingKeywords: string[];
+  strongKeywords: string[];
+}> {
+  const prompt = `Analyze recruiter search visibility for this LinkedIn profile:
+Headline: ${data.headline}
+About: ${data.about}
+Skills: ${data.skills.join(", ")}
+Experience: ${JSON.stringify(data.experience, null, 2)}
+Target Role: ${data.targetRole}
+
+Generate JSON with:
+- visibilityScore: 0-100 recruiter visibility rating
+- keywordDensity: 0-100 keyword coverage score
+- roleAlignment: 0-100 alignment with target role
+- tips: 5 specific optimization tips
+- missingKeywords: important keywords not in profile
+- strongKeywords: keywords already well-covered
+
+Rules:
+- Analyze how recruiters would search for this profile
+- Consider LinkedIn search algorithm factors
+- Return JSON`;
+
+  const fallback = { visibilityScore: 50, keywordDensity: 50, roleAlignment: 50, tips: [], missingKeywords: [], strongKeywords: [] };
+  return generateJSON(LINKEDIN_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+}
+
+// ============================================================================
 // LEARNING HUB AI SERVICES
 // ============================================================================
 

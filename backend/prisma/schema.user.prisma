@@ -161,14 +161,35 @@ model CandidateProfile {
 }
 
 model LinkedInReport {
-  id              String   @id @default(cuid())
-  userId          String   @map("user_id")
-  headline        String
-  aboutSection    String   @map("about_section")
-  skills          Json
-  recommendations Json
-  score           Int
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  headline            String   @default("")
+  aboutSection        String   @default("") @map("about_section")
+  skills              Json     @default("[]")
+  recommendations     Json     @default("[]")
+  score               Int      @default(0)
+
+  experienceJson      Json?    @map("experience_json")
+  projectsJson        Json?    @map("projects_json")
+  featuredJson        Json?    @map("featured_json")
+  networkingJson      Json?    @map("networking_json")
+  contentIdeasJson    Json?    @map("content_ideas_json")
+
+  headlineScore       Int?     @map("headline_score")
+  aboutScore          Int?     @map("about_score")
+  experienceScore     Int?     @map("experience_score")
+  projectsScore       Int?     @map("projects_score")
+  skillsScore         Int?     @map("skills_score")
+  keywordScore        Int?     @map("keyword_score")
+  visibilityScore     Int?     @map("visibility_score")
+  completenessScore   Int?     @map("completeness_score")
+  completenessJson    Json?    @map("completeness_json")
+
+  targetRole          String?  @map("target_role")
+  versionNumber       Int      @default(1) @map("version_number")
+  versionLabel        String?  @map("version_label")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([createdAt])
