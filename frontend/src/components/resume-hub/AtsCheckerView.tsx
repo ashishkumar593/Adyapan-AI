@@ -408,22 +408,25 @@ export function AtsCheckerView({ setView }: Props) {
   ];
 
   useEffect(() => {
-    api.get("/resume/list").then(r => setResumes(r.data.resumes || [])).catch(() => {});
-    api.get("/resume-upload/list").then(r => {
-      if (r.data.success) {
-        const ups = (r.data.resumes || []).map((u: any) => ({
-          id: u.id,
-          title: u.fileName,
-          template: "Uploaded",
-          updatedAt: u.createdAt,
-          isUploaded: true,
-        }));
-        setResumes(prev => {
-          const existing = new Set(prev.map(r => r.id));
-          const merged = [...prev, ...ups.filter((u: any) => !existing.has(u.id))];
-          return merged;
-        });
-      }
+    Promise.allSettled([
+      api.get("/resume/list"),
+      api.get("/resume-upload/list"),
+    ]).then(([builderRes, uploadRes]) => {
+      const builderResumes = builderRes.status === "fulfilled"
+        ? (builderRes.value.data.resumes || [])
+        : [];
+      const uploadedResumes = uploadRes.status === "fulfilled" && uploadRes.value.data.success
+        ? (uploadRes.value.data.resumes || []).map((u: any) => ({
+            id: u.id,
+            title: u.fileName,
+            template: "Uploaded",
+            updatedAt: u.createdAt,
+            isUploaded: true,
+          }))
+        : [];
+      const allIds = new Set(builderResumes.map((r: any) => r.id));
+      const merged = [...builderResumes, ...uploadedResumes.filter((u: any) => !allIds.has(u.id))];
+      setResumes(merged);
     }).catch(() => {});
   }, []);
   useEffect(() => {
@@ -431,8 +434,7 @@ export function AtsCheckerView({ setView }: Props) {
     if (pendingId) {
       sessionStorage.removeItem("pendingResumeUploadId");
       setSelId(pendingId);
-      // Small delay to let state settle, then auto-start analysis
-      const timer = setTimeout(() => startAnalysis(), 300);
+      const timer = setTimeout(() => startAnalysisWithId(pendingId), 300);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -523,13 +525,18 @@ export function AtsCheckerView({ setView }: Props) {
   };
 
   const startAnalysis = async () => {
+    await startAnalysisWithId(selId);
+  };
+
+  const startAnalysisWithId = async (explicitId: string) => {
     setScreen("loading");
     setLoading(true); setLoadStep(0);
     const iv = setInterval(() => setLoadStep(p => Math.min(p + 1, loadSteps.length - 1)), 700);
     try {
       const fd = new FormData();
       if (file) fd.append("resume", file);
-      if (selId) fd.append("resumeId", selId);
+      const effectiveSelId = explicitId || selId;
+      if (effectiveSelId) fd.append("resumeId", effectiveSelId);
       fd.append("targetRole", role);
       if (incJD === "yes") {
         if (jdFile) fd.append("jobDescription", await jdFile.text());
