@@ -578,4 +578,33 @@ Return ONLY the cover letter text as a plain string value in JSON: { "coverLette
   }
 });
 
+internshipRouter.post("/ai/chat", requireAuth, async (req, res) => {
+  try {
+    const { message, skills } = req.body;
+    if (!message || typeof message !== "string") {
+      res.status(400).json({ success: false, error: "message is required" });
+      return;
+    }
+
+    const result = await generateJSON(
+      "You are an expert internship advisor and career coach specializing in helping students find and succeed in internships. Provide helpful, actionable advice about internships, resume building, skill development, interview prep, and career growth. Be concise and practical.",
+      `The user is looking for internship guidance.
+${skills ? `Their skills: ${skills}` : ""}
+
+User's message: "${message}"
+
+Return JSON matching:
+{
+  "reply": "Your helpful internship advice response here"
+}`,
+      { model: MODELS.FAST, temperature: 0.7 },
+      { reply: "I'm here to help with your internship questions. Could you please rephrase that?" }
+    );
+
+    res.json({ success: true, reply: (result as any).reply || (result as any).response || "" });
+  } catch (error) {
+    handleRouteError(res, error, "Internship.aiChat", "Failed to process chat message");
+  }
+});
+
 export { internshipRouter };

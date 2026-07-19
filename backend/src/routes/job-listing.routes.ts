@@ -274,12 +274,27 @@ jobListingRouter.get("/user/saved", requireAuth, async (req: Request, res: Respo
 
     const saved = await prisma.jobListingSaved.findMany({
       where: { userId },
-      select: { jobListingId: true },
+      select: { jobListingId: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
     });
+
+    const savedWithJobs = await Promise.all(
+      saved.map(async (s) => {
+        try {
+          const jobListing = await prisma.jobListing.findUnique({
+            where: { id: s.jobListingId },
+          });
+          return { id: s.jobListingId, jobListingId: s.jobListingId, createdAt: s.createdAt, jobListing };
+        } catch {
+          return { id: s.jobListingId, jobListingId: s.jobListingId, createdAt: s.createdAt, jobListing: null };
+        }
+      })
+    );
 
     res.json({
       success: true,
       savedIds: saved.map((s) => s.jobListingId),
+      saved: savedWithJobs,
     });
   } catch (error) {
     handleRouteError(res, error, "JobListing.userSaved", "Failed to fetch saved jobs");

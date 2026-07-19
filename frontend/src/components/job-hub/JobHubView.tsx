@@ -126,6 +126,31 @@ interface FilterState {
   postedDate: string;
 }
 
+interface JobApplication {
+  id: string;
+  jobListingId: string;
+  status: string;
+  appliedAt: string;
+  notes?: string;
+  jobListing?: JobListing;
+}
+
+interface SavedJobListing {
+  id: string;
+  jobListingId: string;
+  createdAt: string;
+  jobListing?: JobListing;
+}
+
+type TrackerColumn =
+  | "saved"
+  | "applied"
+  | "under_review"
+  | "shortlisted"
+  | "interview_scheduled"
+  | "offer_received"
+  | "rejected";
+
 type SortOption = { value: string; label: string };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -135,6 +160,8 @@ type SortOption = { value: string; label: string };
 const TABS = [
   { id: "browse", label: "Browse", icon: Briefcase, module: "job-matching" },
   { id: "ai-match", label: "AI Match", icon: Sparkles, module: "job-jd-match" },
+  { id: "tracker", label: "Tracker", icon: BarChart3, module: "job-tracker" },
+  { id: "saved", label: "Saved", icon: Bookmark, module: "job-saved" },
   { id: "referrals", label: "Referrals", icon: Users, module: "job-referrals" },
   { id: "challenges", label: "Challenges", icon: Trophy, module: "job-challenges" },
 ] as const;
@@ -149,6 +176,16 @@ const MODE_OPTIONS = ["Remote", "Hybrid", "On-site"];
 const EMPLOYMENT_TYPES = ["Full-Time", "Part-Time", "Contract", "Freelance", "Government"];
 const DIFFICULTY_LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"];
 const PAGE_LIMIT = 12;
+
+const TRACKER_COLUMNS: { id: TrackerColumn; label: string; color: string }[] = [
+  { id: "saved", label: "Saved", color: "#6366f1" },
+  { id: "applied", label: "Applied", color: "#f59e0b" },
+  { id: "under_review", label: "Under Review", color: "#8b5cf6" },
+  { id: "shortlisted", label: "Shortlisted", color: "#06b6d4" },
+  { id: "interview_scheduled", label: "Interview", color: "#10b981" },
+  { id: "offer_received", label: "Offer", color: "#22c55e" },
+  { id: "rejected", label: "Rejected", color: "#ef4444" },
+];
 
 const AI_QUICK_ACTIONS = [
   { id: "recommend", label: "Recommend jobs", icon: Target, prompt: "Recommend jobs based on my profile" },
@@ -506,7 +543,7 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   }), [isDark]);
 
   // ── Tab state ──
-  const [activeTab, setActiveTab] = useState<"browse" | "ai-match" | "referrals" | "challenges">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "ai-match" | "tracker" | "saved" | "referrals" | "challenges">("browse");
 
   // ── Browse state ──
   const [jobs, setJobs] = useState<JobListing[]>([]);
@@ -560,6 +597,16 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   // ── Challenges state ──
   const [challenges, setChallenges] = useState<HiringChallenge[]>([]);
   const [challengesLoading, setChallengesLoading] = useState(false);
+
+  // ── Tracker state ──
+  const [trackerApps, setTrackerApps] = useState<JobApplication[]>([]);
+  const [trackerLoading, setTrackerLoading] = useState(true);
+  const [trackerUpdatingId, setTrackerUpdatingId] = useState<string | null>(null);
+
+  // ── Saved state ──
+  const [savedItems, setSavedItems] = useState<SavedJobListing[]>([]);
+  const [savedLoading, setSavedLoading] = useState(true);
+  const [savedRemovingId, setSavedRemovingId] = useState<string | null>(null);
 
   // ── AI Chat sidebar ──
   const [chatOpen, setChatOpen] = useState(false);
@@ -674,8 +721,8 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   const fetchSavedJobs = useCallback(async () => {
     try {
       const res = await api.get("/job-listing/user/saved");
-      const saved = res.data.saved || res.data.jobs || res.data.data || [];
-      setSavedJobs(new Set(saved.map((j: JobListing) => j.id)));
+      const ids = res.data.savedIds || [];
+      setSavedJobs(new Set(ids));
     } catch {
       // Non-critical
     }
@@ -709,6 +756,13 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
       const res = await api.get(`/job-listing/${job.id}`);
       const data = res.data.job || res.data;
       setDetailData({ ...data, isSaved: savedJobs.has(job.id) });
+      try {
+        const simRes = await api.get(`/job-listing?category=${encodeURIComponent(data.category || job.category || "")}&limit=4`);
+        const simJobs: JobListing[] = (simRes.data.jobs || simRes.data.listings || simRes.data.data || []).filter((j: JobListing) => j.id !== job.id);
+        setSimilarJobs(simJobs.slice(0, 3));
+      } catch {
+        // Non-critical
+      }
     } catch {
       setDetailData({ ...job, isSaved: savedJobs.has(job.id) });
     } finally {
@@ -791,6 +845,57 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
     }
   }, []);
 
+  const fetchTrackerApps = useCallback(async () => {
+    setTrackerLoading(true);
+    try {
+      const res = await api.get("/job-listing/user/applications");
+      setTrackerApps(res.data.applications || res.data.data || res.data || []);
+    } catch {
+      toast.error("Failed to load applications");
+    } finally {
+      setTrackerLoading(false);
+    }
+  }, []);
+
+  const updateTrackerStatus = useCallback(async (appId: string, newStatus: string) => {
+    setTrackerUpdatingId(appId);
+    try {
+      await api.put(`/job-listing/applications/${appId}`, { status: newStatus });
+      setTrackerApps(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
+      toast.success("Status updated!");
+    } catch {
+      toast.error("Failed to update status");
+    } finally {
+      setTrackerUpdatingId(null);
+    }
+  }, []);
+
+  const fetchSavedItems = useCallback(async () => {
+    setSavedLoading(true);
+    try {
+      const res = await api.get("/job-listing/user/saved");
+      setSavedItems(res.data.saved || []);
+    } catch {
+      toast.error("Failed to load saved jobs");
+    } finally {
+      setSavedLoading(false);
+    }
+  }, []);
+
+  const handleUnsaveJob = useCallback(async (jobId: string) => {
+    setSavedRemovingId(jobId);
+    try {
+      await api.post(`/job-listing/saved/${jobId}`);
+      setSavedItems(prev => prev.filter(s => (s.jobListingId || s.jobListing?.id || s.id) !== jobId));
+      setSavedJobs(prev => { const next = new Set(prev); next.delete(jobId); return next; });
+      toast.success("Removed from saved");
+    } catch {
+      toast.error("Failed to remove saved job");
+    } finally {
+      setSavedRemovingId(null);
+    }
+  }, []);
+
   const applyToJob = useCallback(async (jobId: string) => {
     try {
       await api.post(`/job-listing/apply/${jobId}`);
@@ -858,7 +963,9 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   useEffect(() => {
     if (activeTab === "referrals") fetchReferrals();
     if (activeTab === "challenges") fetchChallenges();
-  }, [activeTab, fetchReferrals, fetchChallenges]);
+    if (activeTab === "tracker") fetchTrackerApps();
+    if (activeTab === "saved") fetchSavedItems();
+  }, [activeTab, fetchReferrals, fetchChallenges, fetchTrackerApps, fetchSavedItems]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -927,7 +1034,7 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
     setAiSummaryLoading(true);
     setAiSummary(null);
     try {
-      const res = await api.post("/job-listing/ai/summary", { jobId });
+      const res = await api.post("/job-listing/ai/summary", { jobListingId: jobId });
       setAiSummary(res.data.summary || res.data.analysis || "No summary available.");
     } catch {
       toast.error("Failed to generate AI summary");
@@ -940,7 +1047,7 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
     setSkillGapLoading(true);
     setSkillGap(null);
     try {
-      const res = await api.post("/job-listing/ai/skill-gap", { jobId });
+      const res = await api.post("/job-listing/ai/skill-gap", { jobListingId: jobId, userSkills: [] });
       const data = res.data.gap || res.data;
       setSkillGap({ matched: data.matched || [], missing: data.missing || [] });
     } catch {
@@ -1692,6 +1799,206 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
   );
 
   // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: APPLICATION TRACKER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const trackerGrouped = useMemo(() => {
+    const map: Record<TrackerColumn, JobApplication[]> = {
+      saved: [], applied: [], under_review: [], shortlisted: [],
+      interview_scheduled: [], offer_received: [], rejected: [],
+    };
+    trackerApps.forEach(app => {
+      const status = (app.status || "applied") as TrackerColumn;
+      if (map[status]) map[status].push(app);
+      else map.applied.push(app);
+    });
+    return map;
+  }, [trackerApps]);
+
+  const trackerStats = useMemo(() => ({
+    total: trackerApps.length,
+    interviews: trackerApps.filter(a => a.status === "interview_scheduled").length,
+    offers: trackerApps.filter(a => a.status === "offer_received").length,
+    shortlisted: trackerApps.filter(a => a.status === "shortlisted").length,
+  }), [trackerApps]);
+
+  const renderTracker = () => (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total", value: trackerStats.total, color: c.primary, icon: <Briefcase size={14} /> },
+          { label: "Interviews", value: trackerStats.interviews, color: "#10b981", icon: <CalendarDays size={14} /> },
+          { label: "Offers", value: trackerStats.offers, color: "#22c55e", icon: <CheckCircle2 size={14} /> },
+          { label: "Shortlisted", value: trackerStats.shortlisted, color: "#06b6d4", icon: <Star size={14} /> },
+        ].map(stat => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border p-3.5 text-center"
+            style={{ background: c.cardBg, borderColor: c.border }}>
+            <div className="flex items-center justify-center mb-1.5" style={{ color: stat.color }}>{stat.icon}</div>
+            <div className="text-lg font-black" style={{ color: c.text }}>{stat.value}</div>
+            <div className="text-[8px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>{stat.label}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      {trackerLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <div className="h-8 rounded-lg animate-pulse" style={{ background: `${c.textMuted}10` }} />
+              {Array.from({ length: 2 }).map((_, j) => (
+                <div key={j} className="h-20 rounded-xl animate-pulse" style={{ background: `${c.textMuted}08` }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : trackerApps.length === 0 ? (
+        <div className="text-center py-16 rounded-2xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+          <BarChart3 size={28} className="mx-auto mb-3 opacity-40" style={{ color: c.textMuted }} />
+          <p className="text-xs font-bold" style={{ color: c.textSec }}>No applications tracked yet</p>
+          <p className="text-[10px] mt-1" style={{ color: c.textMuted }}>Apply to jobs from the Browse tab to start tracking</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto pb-4 -mx-2 px-2">
+          <div className="flex gap-3 min-w-max">
+            {TRACKER_COLUMNS.map(col => (
+              <div key={col.id} className="w-56 shrink-0">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <span className="w-2 h-2 rounded-full" style={{ background: col.color }} />
+                  <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: c.textMuted }}>{col.label}</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: `${col.color}15`, color: col.color }}>
+                    {trackerGrouped[col.id].length}
+                  </span>
+                </div>
+                <div className="space-y-2 min-h-[100px] rounded-xl p-2 border"
+                  style={{ background: `${c.textMuted}04`, borderColor: c.border }}>
+                  {trackerGrouped[col.id].map(app => (
+                    <motion.div key={app.id} layout
+                      className="rounded-xl border p-3 cursor-pointer group"
+                      style={{ background: c.cardBg, borderColor: c.border }}
+                      whileHover={{ borderColor: "rgba(245,158,11,0.25)" }}>
+                      <p className="text-[10px] font-bold truncate" style={{ color: c.text }}>
+                        {app.jobListing?.title || "Job"}
+                      </p>
+                      <p className="text-[9px] font-semibold mt-0.5 flex items-center gap-1" style={{ color: c.textMuted }}>
+                        <Building2 size={8} /> {app.jobListing?.company || "Company"}
+                      </p>
+                      <p className="text-[8px] font-semibold mt-1" style={{ color: c.textMuted }}>
+                        {new Date(app.appliedAt).toLocaleDateString()}
+                      </p>
+                      <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <select value={app.status} onChange={(e) => { e.stopPropagation(); updateTrackerStatus(app.id, e.target.value); }}
+                          disabled={trackerUpdatingId === app.id}
+                          className="w-full text-[8px] rounded-lg px-2 py-1 border outline-none font-bold cursor-pointer"
+                          style={{ background: c.inputBg, borderColor: c.border, color: c.textMuted }}>
+                          {TRACKER_COLUMNS.map(tc => (
+                            <option key={tc.id} value={tc.id}>{tc.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </motion.div>
+                  ))}
+                  {trackerGrouped[col.id].length === 0 && (
+                    <div className="text-center py-6">
+                      <p className="text-[9px] font-semibold" style={{ color: c.textMuted }}>No items</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER: SAVED JOBS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const savedJobsList = useMemo(() =>
+    savedItems.map(s => s.jobListing).filter(Boolean) as JobListing[],
+    [savedItems]
+  );
+
+  const renderSaved = () => (
+    <div className="space-y-4">
+      {savedLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border p-5 space-y-3 animate-pulse"
+              style={{ background: c.cardBg, borderColor: c.border }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl" style={{ background: `${c.textMuted}10` }} />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-3/4 rounded-lg" style={{ background: `${c.textMuted}10` }} />
+                  <div className="h-2 w-1/2 rounded-lg" style={{ background: `${c.textMuted}08` }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : savedJobsList.length === 0 ? (
+        <div className="text-center py-16 rounded-2xl border" style={{ background: c.cardBg, borderColor: c.border }}>
+          <Bookmark size={28} className="mx-auto mb-3 opacity-40" style={{ color: c.textMuted }} />
+          <p className="text-xs font-bold" style={{ color: c.textSec }}>No saved jobs yet</p>
+          <p className="text-[10px] mt-1" style={{ color: c.textMuted }}>Browse jobs and click the bookmark icon to save them here</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {savedJobsList.map(job => (
+            <motion.div key={job.id} layout
+              className="rounded-2xl border overflow-hidden group"
+              style={{ background: c.cardBg, borderColor: c.border }}
+              whileHover={{ y: -4, borderColor: "rgba(245,158,11,0.25)" }}>
+              <div className="p-5 space-y-3 cursor-pointer" onClick={() => openJobDetail(job)}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+                      style={{ background: job.logoBg || "rgba(245,158,11,0.1)", color: c.primary, border: `1px solid ${c.border}` }}>
+                      {job.company?.charAt(0) || "C"}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold truncate" style={{ color: c.text }}>{job.title}</h3>
+                      <p className="text-[10px] font-semibold truncate flex items-center gap-1" style={{ color: c.textMuted }}>
+                        <Building2 size={9} /> {job.company}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    onClick={(e) => { e.stopPropagation(); handleUnsaveJob(job.id); }}
+                    disabled={savedRemovingId === job.id}
+                    className="p-1.5 rounded-full border-none cursor-pointer transition-colors disabled:opacity-40"
+                    style={{ background: "rgba(245,158,11,0.1)", color: c.primary }}>
+                    {savedRemovingId === job.id ? <Loader2 size={12} className="animate-spin" /> : <BookmarkCheck size={12} />}
+                  </motion.button>
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] font-semibold" style={{ color: c.textMuted }}>
+                  {job.location && <span className="flex items-center gap-1"><MapPin size={9} /> {job.location}</span>}
+                  {job.mode && <span className="flex items-center gap-1"><Globe size={9} /> {job.mode}</span>}
+                  {job.employmentType && <span className="flex items-center gap-1"><Briefcase size={9} /> {job.employmentType}</span>}
+                  {job.salary && <span className="flex items-center gap-1"><DollarSign size={9} /> {job.salary}</span>}
+                </div>
+                {job.skills && job.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {job.skills.slice(0, 3).map((skill, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full text-[9px] font-bold border"
+                        style={{ background: "rgba(255,255,255,0.02)", color: c.textMuted, borderColor: c.border }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
   // RENDER: JOB DETAIL MODAL
   // ═══════════════════════════════════════════════════════════════════════
 
@@ -2155,6 +2462,8 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
         <motion.div key={activeTab} variants={tabContent} initial="hidden" animate="visible" exit="exit">
           {activeTab === "browse" && renderBrowse()}
           {activeTab === "ai-match" && renderAIMatch()}
+          {activeTab === "tracker" && renderTracker()}
+          {activeTab === "saved" && renderSaved()}
           {activeTab === "referrals" && renderReferrals()}
           {activeTab === "challenges" && renderChallenges()}
         </motion.div>
