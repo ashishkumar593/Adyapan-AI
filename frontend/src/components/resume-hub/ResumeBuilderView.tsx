@@ -140,6 +140,7 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
               if (r.achievements?.length) setAchievements(r.achievements);
               if (r.languages?.length) setLanguages(r.languages);
             }
+            if (r.template) setSetup((prev) => ({ ...prev, resumeStyle: r.template }));
             setResumeId(pendingId);
             setScreen(4);
             showToast("Resume loaded with applied improvements!");
@@ -322,30 +323,40 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
 
                 <div className="lg:col-span-2 hidden lg:flex flex-col p-6 h-full overflow-y-auto" style={{ borderLeft: `1px solid ${c.border}`, background: c.surface }}>
                   <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: c.textSecondary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>Template Preview</h3>
-                  <div style={{ background: "#fff", borderRadius: 10, padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", flex: 1, minHeight: 300, fontSize: "0.65rem", color: "#334155" }}>
-                    <div style={{ textAlign: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.75rem", marginBottom: "0.75rem" }}>
-                      <div style={{ fontWeight: 800, fontSize: "0.9rem", color: setup.resumeStyle.includes("Developer") ? "#d97706" : "#1e293b" }}>{personalInfo.fullName || "Your Name"}</div>
-                      <div style={{ color: "#64748b", marginTop: 2 }}>{personalInfo.email || "email@example.com"} {personalInfo.phone && `• ${personalInfo.phone}`}</div>
+                    <div style={{ background: "#fff", borderRadius: 10, padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", flex: 1, minHeight: 300, fontSize: "0.65rem", color: "#334155" }}>
+                      <div style={{ textAlign: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.75rem", marginBottom: "0.75rem" }}>
+                        <div style={{ fontWeight: 800, fontSize: "0.9rem", color: setup.resumeStyle.includes("Developer") ? "#d97706" : "#1e293b" }}>{personalInfo.fullName || "Your Name"}</div>
+                        <div style={{ color: "#64748b", marginTop: 2 }}>{personalInfo.email || "email@example.com"} {personalInfo.phone && `• ${personalInfo.phone}`}</div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {summary && (
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Professional Summary</div>
+                            <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
+                            <p style={{ color: "#475569", lineHeight: 1.5 }}>{summary}</p>
+                          </div>
+                        )}
+                        {experience.some((e) => e.role || e.company) && (
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Experience</div>
+                            <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
+                            {experience.filter((e) => e.role || e.company).slice(0, 2).map((e, i) => (
+                              <div key={i} style={{ marginBottom: 4 }}>
+                                <div style={{ fontWeight: 600 }}>{e.role || "Role"} @ {e.company || "Company"}</div>
+                                <div style={{ color: "#64748b" }}>{e.description?.slice(0, 80) || "Description..."}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {skills.length > 0 && (
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Skills</div>
+                            <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>{skills.slice(0, 6).map((s) => <span key={s} style={{ background: "#f1f5f9", padding: "1px 6px", borderRadius: 4, fontSize: "0.55rem" }}>{s}</span>)}{skills.length > 6 && <span style={{ fontSize: "0.55rem", color: "#64748b" }}>+{skills.length - 6} more</span>}</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div>
-                        <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Professional Summary</div>
-                        <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
-                        <p style={{ color: "#475569", lineHeight: 1.5 }}>{summary || "Experienced professional with a track record of delivering high-impact solutions..."}</p>
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Experience</div>
-                        <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
-                        <div style={{ fontWeight: 600 }}>Software Engineer @ Company</div>
-                        <div style={{ color: "#64748b" }}>Led development of scalable microservices...</div>
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 2, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Skills</div>
-                        <div style={{ height: 1, background: "#e2e8f0", marginBottom: 4 }} />
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>{["Python", "React", "AWS", "Docker"].map((s) => <span key={s} style={{ background: "#f1f5f9", padding: "1px 6px", borderRadius: 4, fontSize: "0.55rem" }}>{s}</span>)}</div>
-                      </div>
-                    </div>
-                  </div>
                   <div style={{ marginTop: "0.75rem", display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {RESUME_STYLES.map((s) => (
                       <motion.button key={s} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -907,108 +918,151 @@ function ResumePreviewTemplate({ personalInfo, summary, education, experience, p
   personalInfo: { fullName: string; email: string; phone: string; location: string; linkedin: string; github: string; portfolio: string }; summary: string; education: Array<Record<string, string>>; experience: Array<Record<string, string>>; projects: Array<Record<string, string>>;
   skills: string[]; certifications: Array<Record<string, string>>; achievements: string[]; languages: string[]; template: string;
 }) {
+  const isMinimal = template.includes("Minimal");
+  const isDeveloper = template.includes("Developer");
+  const isStudent = template.includes("Student");
+  const isProfessional = template.includes("Professional");
+
+  // ─── Color schemes per template ───
+  const accentColor = isDeveloper ? "#d97706" : isStudent ? "#6366f1" : isProfessional ? "#1e40af" : "#1e293b";
+  const sectionTitleColor = isDeveloper ? "#92400e" : isStudent ? "#4338ca" : isProfessional ? "#1e3a8a" : "#111827";
+  const headerBg = isMinimal ? "transparent" : isDeveloper ? "rgba(245,158,11,0.04)" : isStudent ? "rgba(99,102,241,0.04)" : isProfessional ? "rgba(30,64,175,0.04)" : "transparent";
+  const dividerColor = isDeveloper ? "rgba(217,119,6,0.25)" : isStudent ? "rgba(99,102,241,0.25)" : isProfessional ? "rgba(30,64,175,0.2)" : "#e5e7eb";
+
+  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+      {!isMinimal && <div style={{ width: 3, height: 14, borderRadius: 2, background: accentColor, flexShrink: 0 }} />}
+      <div style={{ fontSize: 9, fontWeight: 800, color: sectionTitleColor, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>{children}</div>
+      {isMinimal && <div style={{ flex: 1, height: 1, background: dividerColor }} />}
+    </div>
+  );
+
   return (
-    <div className="text-[10px] text-gray-800 leading-relaxed space-y-4">
-      <div className={`text-center space-y-1 ${template.includes("Minimal") ? "text-left border-b border-gray-300 pb-3" : ""}`}>
-        <h4 className={`text-lg font-extrabold text-black tracking-wide ${template.includes("Developer") ? "text-amber-600" : ""}`}>{personalInfo.fullName || "Candidate Name"}</h4>
-        <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
+    <div style={{ fontSize: 10, color: "#1f2937", lineHeight: 1.5, fontFamily: isProfessional ? "Georgia, serif" : "system-ui, sans-serif" }}>
+      {/* ─── Header ─── */}
+      <div style={{ textAlign: isMinimal ? "left" : "center", padding: isMinimal ? "0 0 8px" : "8px 0", marginBottom: 8, borderBottom: isMinimal ? `1px solid ${dividerColor}` : `2px solid ${accentColor}`, background: headerBg, borderRadius: isMinimal ? 0 : 4 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: accentColor, letterSpacing: isMinimal ? "-0.01em" : "-0.02em" }}>{personalInfo.fullName || "Candidate Name"}</div>
+        <div style={{ fontSize: 9, color: "#6b7280", marginTop: 2, display: "flex", flexWrap: "wrap", justifyContent: isMinimal ? "flex-start" : "center", gap: 4 }}>
           {personalInfo.email && <span>{personalInfo.email}</span>}
-          {personalInfo.phone && <span> &bull; {personalInfo.phone}</span>}
-          {personalInfo.location && <span> &bull; {personalInfo.location}</span>}
+          {personalInfo.phone && <span style={{ color: dividerColor }}>•</span>}
+          {personalInfo.phone && <span>{personalInfo.phone}</span>}
+          {personalInfo.location && <span style={{ color: dividerColor }}>•</span>}
+          {personalInfo.location && <span>{personalInfo.location}</span>}
         </div>
-        <div className="text-[9px] text-gray-500 flex flex-wrap justify-center gap-2">
-          {personalInfo.linkedin && <span>LinkedIn: {personalInfo.linkedin}</span>}
-          {personalInfo.github && <span> &bull; GitHub: {personalInfo.github}</span>}
-          {personalInfo.portfolio && <span> &bull; Web: {personalInfo.portfolio}</span>}
-        </div>
+        {(personalInfo.linkedin || personalInfo.github || personalInfo.portfolio) && (
+          <div style={{ fontSize: 8.5, color: "#9ca3af", marginTop: 2, display: "flex", flexWrap: "wrap", justifyContent: isMinimal ? "flex-start" : "center", gap: 6 }}>
+            {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
+            {personalInfo.github && <span>{personalInfo.github}</span>}
+            {personalInfo.portfolio && <span>{personalInfo.portfolio}</span>}
+          </div>
+        )}
       </div>
 
+      {/* ─── Summary ─── */}
       {summary && (
-        <div className="space-y-1">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Professional Summary</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          <p className="text-[9px] text-gray-700 text-justify">{summary}</p>
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Professional Summary</SectionTitle>
+          <p style={{ fontSize: 9, color: "#374151", textAlign: "justify" }}>{summary}</p>
         </div>
       )}
 
-      {experience.some((e: Record<string, string>) => e.role || e.company) && (
-        <div className="space-y-2">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Work Experience</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          {experience.map((item: Record<string, string>, idx: number) => (
-            <div key={idx} className="space-y-1">
-              <div className="flex justify-between font-bold text-black text-[9.5px]">
-                <span>{item.role || "Role"} @ {item.company || "Company"}</span>
-                <span className="text-[8.5px] text-gray-400">{item.startDate} - {item.endDate}</span>
+      {/* ─── Experience ─── */}
+      {experience.some((e) => e.role || e.company) && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Work Experience</SectionTitle>
+          {experience.filter((e) => e.role || e.company).map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 6, paddingLeft: isMinimal ? 0 : 8, borderLeft: isMinimal ? "none" : `2px solid ${dividerColor}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#111827" }}>
+                  {item.role || "Role"}
+                  {item.company && <span style={{ fontWeight: 400, color: "#6b7280" }}> @ {item.company}</span>}
+                </div>
+                <div style={{ fontSize: 8, color: "#9ca3af", whiteSpace: "nowrap" }}>{item.startDate}{item.endDate ? ` — ${item.endDate}` : ""}</div>
               </div>
-              {item.description && <p className="text-[8.5px] text-gray-600 pl-2 border-l border-gray-200 whitespace-pre-line">{item.description}</p>}
+              {item.description && <p style={{ fontSize: 8.5, color: "#4b5563", marginTop: 2, whiteSpace: "pre-line" }}>{item.description}</p>}
             </div>
           ))}
         </div>
       )}
 
-      {projects.some((p: Record<string, string>) => p.name || p.techStack) && (
-        <div className="space-y-2">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Projects</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          {projects.map((item: Record<string, string>, idx: number) => (
-            <div key={idx} className="space-y-0.5">
-              <div className="font-bold text-black text-[9.5px]">{item.name || "Project Title"}</div>
-              {item.techStack && <div className="text-[8px] text-amber-700 italic">Tech Stack: {item.techStack}</div>}
-              {item.description && <p className="text-[8.5px] text-gray-600 pl-2 border-l border-gray-200 whitespace-pre-line">{item.description}</p>}
+      {/* ─── Projects ─── */}
+      {projects.some((p) => p.name || p.techStack) && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Projects</SectionTitle>
+          {projects.filter((p) => p.name || p.techStack).map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 4, paddingLeft: isMinimal ? 0 : 8, borderLeft: isMinimal ? "none" : `2px solid ${dividerColor}` }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#111827" }}>{item.name || "Project Title"}</div>
+              {item.techStack && <div style={{ fontSize: 8, color: accentColor, fontStyle: "italic", marginTop: 1 }}>{item.techStack}</div>}
+              {item.description && <p style={{ fontSize: 8.5, color: "#4b5563", marginTop: 2, whiteSpace: "pre-line" }}>{item.description}</p>}
             </div>
           ))}
         </div>
       )}
 
-      {education.some((e: Record<string, string>) => e.institution || e.degree) && (
-        <div className="space-y-2">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Education</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          {education.map((item: Record<string, string>, idx: number) => (
-            <div key={idx} className="space-y-0.5">
-              <div className="flex justify-between font-bold text-black">
-                <span>{item.degree || "Degree"} in {item.fieldOfStudy || "Specialization"}</span>
-                <span className="text-[8.5px] text-gray-400">{item.startDate} - {item.endDate}</span>
+      {/* ─── Education ─── */}
+      {education.some((e) => e.institution || e.degree) && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Education</SectionTitle>
+          {education.filter((e) => e.institution || e.degree).map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#111827" }}>
+                  {item.degree || "Degree"}{item.fieldOfStudy ? ` in ${item.fieldOfStudy}` : ""}
+                </div>
+                <div style={{ fontSize: 8, color: "#9ca3af", whiteSpace: "nowrap" }}>{item.startDate}{item.endDate ? ` — ${item.endDate}` : ""}</div>
               </div>
-              <div className="text-[8.5px] text-gray-600">{item.institution}</div>
-              {item.grade && <div className="text-[8px] text-gray-400">Grade / GPA: {item.grade}</div>}
+              {item.institution && <div style={{ fontSize: 8.5, color: "#6b7280" }}>{item.institution}</div>}
+              {item.grade && <div style={{ fontSize: 8, color: "#9ca3af" }}>GPA: {item.grade}</div>}
             </div>
           ))}
         </div>
       )}
 
+      {/* ─── Skills ─── */}
       {skills.length > 0 && (
-        <div className="space-y-1">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Technical Skills</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          <p className="text-[9.5px] text-gray-700">{skills.join(", ")}</p>
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Technical Skills</SectionTitle>
+          {isDeveloper || isStudent ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {skills.filter(Boolean).map((s, i) => (
+                <span key={i} style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: `${accentColor}10`, color: sectionTitleColor, border: `1px solid ${accentColor}20` }}>{s}</span>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 9, color: "#374151" }}>{skills.filter(Boolean).join(" • ")}</p>
+          )}
         </div>
       )}
 
-      {certifications.some((c: Record<string, string>) => c.name || c.issuer) && (
-        <div className="space-y-1">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Certifications</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          <ul className="list-disc pl-3 text-[9px] text-gray-700 space-y-0.5">
-            {certifications.map((c: Record<string, string>, idx: number) => <li key={idx}>{c.name}{c.issuer && ` by ${c.issuer}`}{c.date && ` (${c.date})`}</li>)}
+      {/* ─── Certifications ─── */}
+      {certifications.some((c) => c.name || c.issuer) && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Certifications</SectionTitle>
+          <ul style={{ margin: 0, paddingLeft: 14, fontSize: 9, color: "#374151" }}>
+            {certifications.filter((c) => c.name || c.issuer).map((c, idx) => (
+              <li key={idx} style={{ marginBottom: 1 }}>
+                {c.name}{c.issuer ? ` — ${c.issuer}` : ""}{c.date ? ` (${c.date})` : ""}
+              </li>
+            ))}
           </ul>
         </div>
       )}
 
-      {achievements.some((a: string) => a) && (
-        <div className="space-y-1">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Key Achievements</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          <ul className="list-disc pl-3 text-[9px] text-gray-700 space-y-0.5">{achievements.filter(Boolean).map((ach: string, idx: number) => <li key={idx}>{ach}</li>)}</ul>
+      {/* ─── Achievements ─── */}
+      {achievements.some((a) => a) && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionTitle>Key Achievements</SectionTitle>
+          <ul style={{ margin: 0, paddingLeft: 14, fontSize: 9, color: "#374151" }}>
+            {achievements.filter(Boolean).map((ach, idx) => <li key={idx} style={{ marginBottom: 1 }}>{ach}</li>)}
+          </ul>
         </div>
       )}
 
-      {languages.some((l: string) => l) && (
-        <div className="space-y-1">
-          <div className="text-[9px] font-bold text-gray-900 uppercase tracking-wider">Languages</div>
-          <div className="h-px bg-gray-200 w-full mb-1" />
-          <p className="text-[9.5px] text-gray-700">{languages.filter(Boolean).join(", ")}</p>
+      {/* ─── Languages ─── */}
+      {languages.some((l) => l) && (
+        <div style={{ marginBottom: 4 }}>
+          <SectionTitle>Languages</SectionTitle>
+          <p style={{ fontSize: 9, color: "#374151" }}>{languages.filter(Boolean).join(" • ")}</p>
         </div>
       )}
     </div>

@@ -1873,7 +1873,7 @@ function UserDashboardContent() {
   const [activeView, setActiveView] = useState<string>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lessonResult, setLessonResult] = useState<{ topic: string; lesson: UnifiedLesson; duration: string; level: string } | null>(null);
-  const selectedTemplate = "ATS Modern";
+  const [selectedTemplate, setSelectedTemplate] = useState("ATS Modern");
   const { socket, isConnected } = useSocket();
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; read: boolean; createdAt: string }>>([]);
   const [unreadCount, setUnreadCount] = useState(0);
