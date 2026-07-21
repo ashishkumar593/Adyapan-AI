@@ -19,6 +19,18 @@ import { logProctoringEvent } from "../services/interview-session.service";
 import { generateInterviewQuestion } from "./ai/gemini";
 import { callAIRobust } from "./ai/openrouter";
 
+function stripLessonJson(text: string): string {
+  let cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  // Fix trailing commas
+  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+  return cleaned;
+}
+
 let io: Server;
 
 export function initSocketServer(server: HttpServer) {
@@ -295,7 +307,7 @@ export function initSocketServer(server: HttpServer) {
       }
     });
 
-    // Lesson generation — Gemini streaming with multi-provider fallback (callAIRobust)
+    // Lesson generation — multi-provider fallback via callAIRobust
     socket.on("lesson:generate", async ({ topic, duration, level }: { topic: string; duration: string; level: string }) => {
       const progressMessages = [
         "Analyzing Topic Semantics",
@@ -307,7 +319,7 @@ export function initSocketServer(server: HttpServer) {
 
       const lessonPrompt = `You are an expert academic tutor. Teach the topic: "${topic}" at "${level}" level, duration: "${duration}".
 
-Return a JSON object with this exact structure (no markdown, no \`\`\`):
+Return ONLY a valid JSON object (no markdown, no explanation, no text before or after) with this exact structure:
 {
   "learning_goal": "string",
   "estimated_completion_time": "string",
@@ -337,79 +349,61 @@ If level is "intermediate", "interview", or "revision":
 Always include: learning_goal, estimated_completion_time, lesson_structure as array of section names.
 Keep responses concise for short durations and detailed for longer durations.`;
 
+      const systemMsg = "You are an expert academic tutor. Return ONLY valid JSON — no markdown fences, no explanation, no extra text.";
+
       try {
         socket.emit("lesson:progress", { step: 0, status: progressMessages[0] });
 
-        // Try Gemini streaming first for the progress UX
-        if (env.geminiApiKey) {
-          try {
-            const model = genAI.getGenerativeModel({
-              model: "gemini-2.5-flash",
-              generationConfig: {
-                responseMimeType: "application/json",
-                temperature: 0.7,
-                maxOutputTokens: 16384,
-              },
-            });
-
-            const result = await model.generateContentStream(lessonPrompt);
-            let fullResponse = "";
-            let charCount = 0;
-            const progressMilestones = [100, 500, 1500, 3000];
-            let milestoneIdx = 0;
-
-            for await (const chunk of result.stream) {
-              const chunkText = chunk.text();
-              fullResponse += chunkText;
-              charCount += chunkText.length;
-
-              while (milestoneIdx < progressMilestones.length && charCount >= progressMilestones[milestoneIdx]) {
-                socket.emit("lesson:progress", { step: milestoneIdx + 1, status: progressMessages[milestoneIdx + 1] });
-                milestoneIdx++;
-              }
-            }
-
-            const cleaned = fullResponse
-              .replace(/^```json\s*/i, "")
-              .replace(/```\s*$/, "")
-              .trim();
-            const data = JSON.parse(cleaned);
-
-            if (milestoneIdx < progressMessages.length) {
-              socket.emit("lesson:progress", { step: progressMessages.length, status: progressMessages[progressMessages.length - 1] });
-            }
-
-            socket.emit("lesson:complete", { data });
-            return; // Gemini streaming succeeded
-          } catch (geminiError: any) {
-            console.warn("[Lesson] Gemini streaming failed, falling back to multi-provider chain:", geminiError?.message || geminiError);
-            socket.emit("lesson:progress", { step: 2, status: "Gemini unavailable, switching providers..." });
+        // Emit progress updates while waiting for AI response
+        let step = 1;
+        const progressTimer = setInterval(() => {
+          if (step < progressMessages.length) {
+            socket.emit("lesson:progress", { step, status: progressMessages[step] });
+            step++;
           }
+        }, 8000);
+
+        let rawResponse: string;
+        try {
+          rawResponse = await callAIRobust(
+            [
+              { role: "system", content: systemMsg },
+              { role: "user", content: lessonPrompt },
+            ],
+            { model: "gemini-2.5-flash", temperature: 0.7, maxTokens: 16384 }
+          );
+        } finally {
+          clearInterval(progressTimer);
         }
 
-        // Fallback: use callAIRobust (Gemini → Groq → NVIDIA → OpenRouter)
-        socket.emit("lesson:progress", { step: 1, status: progressMessages[1] });
+        socket.emit("lesson:progress", { step: progressMessages.length - 1, status: progressMessages[progressMessages.length - 1] });
 
-        const rawResponse = await callAIRobust(
-          [{ role: "user", content: lessonPrompt }],
-          { model: "gemini-2.5-flash", temperature: 0.7, maxTokens: 16384, responseFormat: { type: "json_object" } }
-        );
+        // Parse JSON with repair attempts
+        let data: any;
+        try {
+          data = JSON.parse(stripLessonJson(rawResponse));
+        } catch {
+          // Retry: ask AI to fix the malformed JSON
+          console.warn("[Lesson] First JSON parse failed, requesting AI repair...");
+          const repairResponse = await callAIRobust(
+            [
+              { role: "system", content: "You are a JSON repair assistant. Fix the following JSON and return ONLY valid JSON. No explanation, no markdown." },
+              { role: "user", content: `Fix this JSON and return ONLY the corrected valid JSON:\n${rawResponse}` },
+            ],
+            { model: "gemini-2.5-flash", temperature: 0, maxTokens: 16384 }
+          );
+          data = JSON.parse(stripLessonJson(repairResponse));
+        }
 
-        socket.emit("lesson:progress", { step: 3, status: progressMessages[3] });
-
-        const cleaned = rawResponse
-          .replace(/^```json\s*/i, "")
-          .replace(/```\s*$/, "")
-          .trim();
-        const data = JSON.parse(cleaned);
-
-        socket.emit("lesson:progress", { step: 4, status: progressMessages[4] });
         socket.emit("lesson:complete", { data });
       } catch (error: any) {
         console.error("Lesson generation error:", error?.message || error);
-        const errMsg = error?.message?.includes("all providers")
-          ? "All AI providers are currently unavailable. Please try again later."
-          : "Failed to generate lesson. Please try again.";
+        let errMsg = "Failed to generate lesson. Please try again.";
+        if (error?.message?.includes("all providers") || error?.message?.includes("All AI providers")) {
+          errMsg = "All AI providers are currently unavailable. Please try again later.";
+        } else if (error?.message?.includes("timeout") || error?.message?.includes("abort")) {
+          errMsg = "Lesson generation timed out. Please try a shorter topic or different level.";
+        }
         socket.emit("lesson:error", { error: errMsg });
       }
     });
