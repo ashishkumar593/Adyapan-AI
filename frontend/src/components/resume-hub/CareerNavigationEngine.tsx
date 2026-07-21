@@ -264,6 +264,7 @@ export function CareerNavigationEngine({ setView }: Props) {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [activeTaskFilter, setActiveTaskFilter] = useState("all");
   const [checkedMicroTasks, setCheckedMicroTasks] = useState<Record<string, boolean>>({});
+  const [checkedObjectives, setCheckedObjectives] = useState<Record<string, boolean>>({});
 
   const scores = roadmapData?.readinessScores || { overall: 0, technical: 0, resume: 0, interview: 0, placement: 0, recruiter: 0 };
   const phases = roadmapData?.roadmap?.phases || [];
@@ -317,6 +318,40 @@ export function CareerNavigationEngine({ setView }: Props) {
       localStorage.setItem(`adyapan-microtasks-${roadmapRecord?.id || "default"}`, JSON.stringify(next));
     } catch {}
   };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`adyapan-objectives-${roadmapRecord?.id || "default"}`);
+      if (saved) setCheckedObjectives(JSON.parse(saved));
+      else setCheckedObjectives({});
+    } catch {}
+  }, [roadmapRecord?.id]);
+
+  const toggleObjective = (phaseIndex: number, objText: string) => {
+    const key = `${phaseIndex}-${objText}`;
+    const wasChecked = !!checkedObjectives[key];
+    const next = { ...checkedObjectives, [key]: !checkedObjectives[key] };
+    setCheckedObjectives(next);
+    try {
+      localStorage.setItem(`adyapan-objectives-${roadmapRecord?.id || "default"}`, JSON.stringify(next));
+    } catch {}
+
+    const phase = phases[phaseIndex];
+    if (phase && !wasChecked) {
+      const objectives = phase.objectives || [];
+      const completedCount = objectives.filter(obj => next[`${phaseIndex}-${obj}`]).length;
+      if (completedCount === objectives.length && objectives.length > 0) {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      }
+    }
+  };
+
+  const getPhaseCompletion = useCallback((phaseIndex: number, phase: RoadmapPhase) => {
+    const objectives = phase.objectives || [];
+    if (objectives.length === 0) return 0;
+    const completed = objectives.filter(obj => checkedObjectives[`${phaseIndex}-${obj}`]).length;
+    return Math.round((completed / objectives.length) * 100);
+  }, [checkedObjectives]);
 
   useEffect(() => {
     if (roadmapData?.milestones) {
@@ -890,58 +925,74 @@ export function CareerNavigationEngine({ setView }: Props) {
                   Career Roadmap &middot; {roadmapData?.roadmap?.totalDuration}
                 </h3>
               </div>
-              {phases.map((phase, i) => (
-                <motion.div key={i} variants={fadeUp} custom={i} className="rounded-2xl overflow-hidden"
-                  style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
-                  <button onClick={() => setExpandedPhase(expandedPhase === i ? null : i)}
-                    className="w-full flex items-center justify-between p-4 text-left">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-extrabold"
-                        style={{ background: phase.completionPercentage >= 100 ? c.gnBg : c.amBg, color: phase.completionPercentage >= 100 ? c.gn : c.am }}>
-                        {phase.completionPercentage >= 100 ? <Check size={14} /> : i + 1}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold" style={{ color: c.tx }}>{phase.title}</p>
-                        <p className="text-[10px]" style={{ color: c.txM }}>{phase.duration} &middot; {phase.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold" style={{ color: c.am }}>{phase.completionPercentage}%</span>
-                      <ChevronDown size={14} style={{ color: c.txM, transform: expandedPhase === i ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
-                    </div>
-                  </button>
-                  <AnimatePresence>
-                    {expandedPhase === i && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                        className="px-4 pb-4 space-y-3 overflow-hidden">
-                        <div className="w-full h-1.5 rounded-full" style={{ background: c.dv }}>
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${phase.completionPercentage}%` }}
-                            className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${c.am}, #f97316)` }} />
+              {phases.map((phase, i) => {
+                const pct = getPhaseCompletion(i, phase);
+                return (
+                  <motion.div key={i} variants={fadeUp} custom={i} className="rounded-2xl overflow-hidden"
+                    style={{ background: c.cb, border: `1px solid ${c.bd}`, boxShadow: c.cs }}>
+                    <button onClick={() => setExpandedPhase(expandedPhase === i ? null : i)}
+                      className="w-full flex items-center justify-between p-4 text-left">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-extrabold"
+                          style={{ background: pct >= 100 ? c.gnBg : c.amBg, color: pct >= 100 ? c.gn : c.am }}>
+                          {pct >= 100 ? <Check size={14} /> : i + 1}
                         </div>
-                        {phase.objectives.length > 0 && (
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Objectives</p>
-                            <div className="space-y-1">
-                              {phase.objectives.map((obj, j) => (
-                                <div key={j} className="flex items-center gap-2 text-[11px]" style={{ color: c.tx2 }}>
-                                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: c.am }} /> {obj}
-                                </div>
-                              ))}
-                            </div>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: c.tx }}>{phase.title}</p>
+                          <p className="text-[10px]" style={{ color: c.txM }}>{phase.duration} &middot; {phase.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold" style={{ color: c.am }}>{pct}%</span>
+                        <ChevronDown size={14} style={{ color: c.txM, transform: expandedPhase === i ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {expandedPhase === i && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                          className="px-4 pb-4 space-y-3 overflow-hidden">
+                          <div className="w-full h-1.5 rounded-full" style={{ background: c.dv }}>
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+                              className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${c.am}, #f97316)` }} />
                           </div>
-                        )}
-                        {phase.expectedOutcomes.length > 0 && (
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Expected Outcomes</p>
-                            <div className="space-y-1">
-                              {phase.expectedOutcomes.map((out, j) => (
-                                <div key={j} className="flex items-center gap-2 text-[11px]" style={{ color: c.gn }}>
-                                  <CheckCircle size={10} /> {out}
-                                </div>
-                              ))}
+                          {phase.objectives.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Objectives (Click to complete)</p>
+                              <div className="space-y-1">
+                                {phase.objectives.map((obj, j) => {
+                                  const isObjChecked = !!checkedObjectives[`${i}-${obj}`];
+                                  return (
+                                    <button key={j} onClick={() => toggleObjective(i, obj)}
+                                      className="w-full flex items-center gap-2 text-[11px] text-left py-1 hover:bg-slate-500/5 rounded px-1 transition-all"
+                                      style={{ color: isObjChecked ? c.txM : c.tx2 }}>
+                                      <div className="w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0"
+                                        style={{
+                                          borderColor: isObjChecked ? c.gn : c.am,
+                                          background: isObjChecked ? `${c.gn}20` : "transparent"
+                                        }}>
+                                        {isObjChecked && <Check size={10} style={{ color: c.gn }} />}
+                                      </div>
+                                      <span style={{ textDecoration: isObjChecked ? "line-through" : "none", opacity: isObjChecked ? 0.6 : 1 }}>
+                                        {obj}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                          {phase.expectedOutcomes.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Expected Outcomes</p>
+                              <div className="space-y-1">
+                                {phase.expectedOutcomes.map((out, j) => (
+                                  <div key={j} className="flex items-center gap-2 text-[11px]" style={{ color: c.gn }}>
+                                    <CheckCircle size={10} /> {out}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         {phase.dependencies && phase.dependencies.length > 0 && (
                           <div>
                             <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: c.txM }}>Dependencies</p>
@@ -957,8 +1008,9 @@ export function CareerNavigationEngine({ setView }: Props) {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
 
