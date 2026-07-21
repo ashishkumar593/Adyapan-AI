@@ -35,7 +35,7 @@ Skills: ${JSON.stringify(skills)}
 
 Focus on key achievements, years of experience, and core competencies. Write in a confident, professional third-person tone. Return ONLY the summary text.`;
   try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
   } catch (error) {
     console.warn("[Gemini] generateResumeSummary failed, using fallback:", error);
     return "Results-driven professional with a proven track record of academic and practical excellence, seeking to leverage skills in technology and problem-solving to contribute to organizational success.";
@@ -57,7 +57,7 @@ Role: ${role}
 
 Use the XYZ formula (Accomplished X as measured by Y, by doing Z) where possible. Start each with a strong action verb. Focus on measurable outcomes. Return bullet points separated by newlines, NO bullet symbols.`;
   try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
   } catch (error) {
     console.warn("[Gemini] generateProjectDescription failed, using fallback:", error);
     return `Designed and built ${title} utilizing ${techStack} to solve core system requirements.\nOptimized backend performance and frontend usability for enhanced scalability.\nCollaborated with developers to integrate data endpoints and ensure seamless deployment.`;
@@ -79,7 +79,7 @@ Draft: ${description}
 
 Generate 3 highly professional, result-oriented bullet points. Start each with a strong action verb. Quantify achievements where possible. Return separated by newlines, NO bullet symbols.`;
   try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
   } catch (error) {
     console.warn("[Gemini] generateExperienceBulletPoints failed, using fallback:", error);
     return `Spearheaded software development initiatives as a ${role} at ${company}, improving deployment velocity.\nArchitected scalable database architectures and clean REST APIs to serve client applications.\nDebugged critical production bugs, reducing latency and boosting customer satisfaction rates.`;
@@ -94,7 +94,7 @@ export async function generateSkillsRecommendations(existingSkills: string[]): P
 Existing Skills: ${existingSkills.join(", ")}
 
 Return a JSON array of exactly 5 strings. Example: ["React", "TypeScript", "Docker", "AWS", "CI/CD"]`;
-  const result = await generateJSON<string[]>(RESUME_SYSTEM, prompt, { model: MODELS.FAST }, []);
+  const result = await generateJSON<string[]>(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED }, []);
   return Array.isArray(result) ? result : [];
 }
 
@@ -135,7 +135,7 @@ Output a JSON object with:
     strengths: ["Clean personal contact info", "Strong technical skills listed"],
   };
 
-  return generateJSON<ATSAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+  return generateJSON<ATSAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
@@ -166,7 +166,7 @@ Output a JSON object with:
     recommendations: ["Incorporate cloud platforms skills", "Complete professional certifications"],
   };
 
-  return generateJSON<SWOTAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+  return generateJSON<SWOTAnalysisResult>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
@@ -205,7 +205,7 @@ Output JSON:
     gapAnalysis: ["Missing explicit testing experience", "System Design experience not highlighted"],
   };
 
-  return generateJSON<JobMatchResult>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+  return generateJSON<JobMatchResult>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 // ============================================================================
@@ -533,7 +533,7 @@ Be thorough and specific. Score honestly.`;
     formattingIssues: [], strengths: ["Strong technical skills"],
   };
 
-  return generateJSON<ATSDeepAnalysis>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, getDynamicFallback(resumeText, targetRole));
+  return generateJSON<ATSDeepAnalysis>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, getDynamicFallback(resumeText, targetRole));
 }
 
 /**
@@ -570,7 +570,7 @@ Output JSON:
 
   const fallback = { reply: "I understand you want help with your resume. Could you be more specific about what you'd like to improve?", updatedSections: undefined };
   return generateJSON<{ reply: string; updatedSections?: Record<string, any> }>(
-    ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback
+    ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback
   );
 }
 
@@ -619,7 +619,7 @@ Generate 5-8 suggestions. Be specific and actionable.`;
     { id: "sugg-1", section: "summary", title: "Improve Summary", description: "Add measurable achievements", impact: "high", original: "", improved: "" },
     { id: "sugg-2", section: "skills", title: "Add Docker", description: "Docker is commonly required", impact: "high", original: "", improved: "" },
   ];
-  return generateJSON<ATSSuggestion[]>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+  return generateJSON<ATSSuggestion[]>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
@@ -805,7 +805,7 @@ Be thorough, specific, and actionable. Score honestly. Do not be generic.`;
     readabilityAnalysis: { overallGrade: "C", sentenceLength: "N/A", bulletUsage: "N/A", formattingConsistency: "N/A", scanningEase: "N/A", recruiterFriendliness: "N/A" },
     improvementRecommendations: [],
   };
-  return generateJSON<ATSIntelligenceResult>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, getDynamicIntelligenceFallback(resumeText, targetRole));
+  return generateJSON<ATSIntelligenceResult>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, getDynamicIntelligenceFallback(resumeText, targetRole));
 }
 
 export interface ResumeComparisonResult {
@@ -849,7 +849,7 @@ Output JSON:
     recommendation: "Both versions are similar",
     overallImprovement: 0,
   };
-  return generateJSON<ResumeComparisonResult>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+  return generateJSON<ResumeComparisonResult>(ATS_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 interface CoverLetterResult {
@@ -1446,7 +1446,7 @@ Output JSON:
 4. "references": array of 3-5 APA references`;
 
   const fallback: AssignmentResult = { introduction: "", body: "", conclusion: "", references: [] };
-  return generateJSON<AssignmentResult>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+  return generateJSON<AssignmentResult>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
@@ -1470,7 +1470,7 @@ Output JSON array of objects, each with:
 2. "bullets": array of 3-5 bullet points
 3. "notes": speaker notes for the slide`;
 
-  return generateJSON<PptSlide[]>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED }, []);
+  return generateJSON<PptSlide[]>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL }, []);
 }
 
 /**
@@ -1489,7 +1489,7 @@ Output JSON with:
 2. "edges": array to connect nodes, each with "id", "source", "target"`;
 
   const fallback: MindMapResult = { nodes: [], edges: [] };
-  return generateJSON<MindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
+  return generateJSON<MindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST }, fallback);
 }
 
 /**
@@ -1505,7 +1505,7 @@ Raw: "${description}"
 
 Rewrite to be extremely professional, action-oriented, highlight impact/metrics. Use 2-3 strong bullet points. No intro/outro.`;
   try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
   } catch (error) {
     console.warn("[Gemini] enhanceProjectDescription failed, returning original description:", error);
     return description;
@@ -1525,7 +1525,7 @@ Raw: "${description}"
 
 Rewrite using STAR method. Focus on achievements, technical contributions, metrics. Output 3-4 bullet points starting with strong action verbs. Return ONLY bullet points.`;
   try {
-    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.FAST });
+    return await generateText(RESUME_SYSTEM, prompt, { model: MODELS.BALANCED });
   } catch (error) {
     console.warn("[Gemini] enhanceExperienceDescription failed, returning original description:", error);
     return description;
@@ -1606,7 +1606,7 @@ Only include fields that actually changed. Omit unchanged fields entirely.`;
   const defaultResult = { } as any;
   try {
     return await generateJSON<{ summary?: string; experience?: any[]; projects?: any[]; skills?: string[] }>(
-      RESUME_SYSTEM, prompt, { model: MODELS.POWERFUL }, defaultResult
+      RESUME_SYSTEM, prompt, { model: MODELS.BALANCED }, defaultResult
     );
   } catch (error) {
     console.warn("[Gemini] resumeAIChat failed, returning empty result:", error);
@@ -1648,7 +1648,7 @@ Based on their answer, ask the next appropriate ${type} interview question. If y
 
   try {
     return await generateText(systemPrompt, userPrompt, {
-      model: MODELS.POWERFUL,
+      model: MODELS.BALANCED,
       temperature: 0.8,
     });
   } catch (error) {
@@ -1704,7 +1704,7 @@ Provide comprehensive feedback as JSON:
     recommendedResources: ["Cracking the Coding Interview", "System Design Interview by Alex Xu"],
   };
 
-  return generateJSON<InterviewFeedback>(ATS_SYSTEM, prompt, { model: MODELS.POWERFUL }, fallback);
+  return generateJSON<InterviewFeedback>(ATS_SYSTEM, prompt, { model: MODELS.BALANCED }, fallback);
 }
 
 // ============================================================================
@@ -1749,7 +1749,7 @@ Output JSON with:
 The root node should be the main topic. Include 5-8 concept nodes connected to root. Add sub_concepts, examples, applications as children of concepts.`;
 
   const fallback: EnhancedMindMapResult = { mindmap: { nodes: [], edges: [] } };
-  return generateJSON<EnhancedMindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+  return generateJSON<EnhancedMindMapResult>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST, responseFormat: { type: "json_object" } }, fallback);
 }
 
 export interface SmartQuizQuestion {
@@ -1801,7 +1801,7 @@ Output JSON with:
     quiz_title: "", topic, difficulty: "", estimated_time: duration, mode,
     questions: [], performance_insights_template: { strengths: [], weak_areas: [], recommended_next_step: "" }
   };
-  return generateJSON<SmartQuizData>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+  return generateJSON<SmartQuizData>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST, responseFormat: { type: "json_object" } }, fallback);
 }
 
 export interface FlashcardData {
@@ -1830,7 +1830,7 @@ Output JSON with:
    - "difficulty": "easy" | "medium" | "hard"`;
 
   const fallback: FlashcardData = { cards: [] };
-  return generateJSON<FlashcardData>(LEARNING_SYSTEM, prompt, { model: MODELS.BALANCED, responseFormat: { type: "json_object" } }, fallback);
+  return generateJSON<FlashcardData>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST, responseFormat: { type: "json_object" } }, fallback);
 }
 
 export interface LearnLessonData {
@@ -1898,7 +1898,7 @@ Keep responses concise for short durations and detailed for longer durations. Us
     overview: "", key_concepts: [], examples: [], practice_questions: [], quiz: [], summary: "",
     why_matters: "", simple_explanation: "", real_life_analogy: "", example: "", key_takeaways: [], mini_quiz: []
   };
-  return generateJSON<LearnLessonData>(LEARNING_SYSTEM, prompt, { model: MODELS.POWERFUL, responseFormat: { type: "json_object" } }, fallback);
+  return generateJSON<LearnLessonData>(LEARNING_SYSTEM, prompt, { model: MODELS.FAST, responseFormat: { type: "json_object" } }, fallback);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

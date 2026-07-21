@@ -20,7 +20,23 @@ export async function streamChat(
 ): Promise<void> {
   const providers = [];
 
-  // 1. Add Google Gemini if key exists
+  // 1. Add NVIDIA NIM if key exists (primary for chat)
+  if (env.nvidiaApiKey) {
+    let nvidiaModel = "z-ai/glm-5.2";
+    if (model.includes("deepseek-ai/")) nvidiaModel = model;
+    else if (model.includes("z-ai/")) nvidiaModel = model;
+    else if (model.includes("moonshotai/")) nvidiaModel = model;
+    else if (model.includes("mistralai/")) nvidiaModel = model;
+    else if (model.includes("gemini")) nvidiaModel = "deepseek-ai/deepseek-v4-flash";
+    providers.push({
+      name: "NVIDIA",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      key: env.nvidiaApiKey,
+      model: nvidiaModel,
+    });
+  }
+
+  // 2. Add Google Gemini if key exists
   if (env.geminiApiKey) {
     let geminiModel = "gemini-2.5-flash";
     if (model.includes("gemini")) {
@@ -34,7 +50,7 @@ export async function streamChat(
     });
   }
 
-  // 2. Add OpenRouter if key exists
+  // 3. Add OpenRouter if key exists
   if (env.openrouterApiKey) {
     providers.push({
       name: "OpenRouter",
@@ -44,7 +60,7 @@ export async function streamChat(
     });
   }
 
-  // 3. Add Groq if key exists
+  // 4. Add Groq if key exists
   if (env.groqApiKey) {
     let groqModel = "llama-3.3-70b-versatile";
     const modelLower = model.toLowerCase();

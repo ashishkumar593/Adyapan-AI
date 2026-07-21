@@ -87,6 +87,22 @@ async function callAIRobust(
     });
   }
 
+  // 4. Add NVIDIA NIM if key exists (quaternary)
+  if (env.nvidiaApiKey) {
+    const nvidiaModel = options.model?.startsWith("deepseek-ai/") ||
+                        options.model?.startsWith("z-ai/") ||
+                        options.model?.startsWith("moonshotai/") ||
+                        options.model?.startsWith("mistralai/")
+      ? options.model
+      : "deepseek-ai/deepseek-v4-flash";
+    providers.push({
+      name: "NVIDIA",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      key: env.nvidiaApiKey,
+      model: nvidiaModel,
+    });
+  }
+
   if (providers.length === 0) {
     throw new Error("No AI providers configured. Please check environment keys.");
   }
@@ -371,12 +387,16 @@ function enforceSchema<T>(parsed: any, fallback: T): T {
 }
 
 // Default model presets for different task categories
+// Each module is mapped to its optimal NVIDIA model
 export const MODELS = {
-  FAST: "google/gemini-2.5-flash",
-  BALANCED: "google/gemini-2.5-flash",
-  POWERFUL: "google/gemini-2.5-flash",
-  CODE: "google/gemini-2.5-flash",
-  CHEAP: "google/gemini-2.5-flash",
+  FAST: "deepseek-ai/deepseek-v4-flash",       // Study Assistant, Notes, Assignment, ATS fast, Proctoring
+  BALANCED: "z-ai/glm-5.2",                    // Resume Builder, Interview, Coding Assistant, LinkedIn, DSA
+  POWERFUL: "moonshotai/kimi-k2.6",             // Research Paper, Code Generation, PPT, Enhanced MindMap/Quiz
+  CODE: "deepseek-ai/deepseek-v4-flash",        // Code Gen, Debug, Explain, AI Coding Analysis
+  CHEAP: "deepseek-ai/deepseek-v4-flash",       // Cheapest option
+  SUMMARIZATION: "mistralai/mistral-medium-3.5-128b", // Research Summarization, writing
+  CHAT: "z-ai/glm-5.2",                        // AI Chat default
+  EMBEDDING: "nvidia/nemotron-3-embed-1b",      // RAG/Search embeddings
 } as const;
 
 // Available models for Ady Chat
@@ -391,6 +411,10 @@ export const CHAT_MODELS = [
   { id: "deepseek/deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek", cheap: true },
   { id: "meta-llama/llama-3.3-70b", name: "Llama 3.3 70B", provider: "Meta", cheap: true },
   { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", cheap: false },
+  { id: "deepseek-ai/deepseek-v4-flash", name: "DeepSeek V4 Flash", provider: "NVIDIA", cheap: true },
+  { id: "z-ai/glm-5.2", name: "GLM 5.2", provider: "NVIDIA", cheap: true },
+  { id: "moonshotai/kimi-k2.6", name: "Kimi K2.6", provider: "NVIDIA", cheap: true },
+  { id: "mistralai/mistral-medium-3.5-128b", name: "Mistral Medium 3.5 128B", provider: "NVIDIA", cheap: true },
 ] as const;
 
 export type ChatModelId = (typeof CHAT_MODELS)[number]["id"];

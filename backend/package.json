@@ -44,6 +44,7 @@
     "marked": "^4.3.0",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
+    "openai": "^6.48.0",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.19.1",
     "pg": "^8.22.0",

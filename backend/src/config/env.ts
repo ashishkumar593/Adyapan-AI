@@ -10,6 +10,11 @@ export const env = {
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   groqApiKey: process.env.GROQ_API_KEY ?? "",
   openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
+  nvidiaApiKey: process.env.NVIDIA_API_KEY ?? "",
+  nvidiaApiKey2: process.env.NVIDIA_API_KEY_2 ?? "",
+  nvidiaApiKey3: process.env.NVIDIA_API_KEY_3 ?? "",
+  nvidiaApiKey4: process.env.NVIDIA_API_KEY_4 ?? "",
+  nvidiaApiKey5: process.env.NVIDIA_API_KEY_5 ?? "",
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
     apiKey: process.env.CLOUDINARY_API_KEY ?? "",

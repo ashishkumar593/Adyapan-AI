@@ -1,4 +1,5 @@
 import { generateJSON, generateText, MODELS, OpenRouterMessage } from "./openrouter";
+import { env } from "../../config/env";
 
 const CODING_SYSTEM = "You are an expert Senior Software Engineer. Provide production-ready code solutions.";
 
@@ -13,7 +14,7 @@ Return JSON matching:
   "folderStructure": "Visual tree of folder structure (markdown)",
   "code": "Complete source code implementation (markdown with codeblocks)"
 }`,
-    { model: MODELS.CODE },
+    { model: MODELS.POWERFUL },
     {
       setupGuide: "An error occurred generating the setup guide.",
       folderStructure: "Error",
@@ -71,7 +72,7 @@ Return JSON with keys for each language: ${langList}`;
     const result = await generateJSON<Record<string, LangResult>>(
       systemPrompt,
       userPrompt,
-      { model: MODELS.CODE, temperature: 0.5, maxTokens: 8000 },
+      { model: MODELS.POWERFUL, temperature: 0.5, maxTokens: 8000 },
       fallback
     );
 
@@ -147,7 +148,7 @@ Return JSON matching:
   "features": ["list", "of", "core", "features"],
   "roadmap": ["Step 1", "Step 2", "Step 3"]
 }`,
-    { model: MODELS.CODE },
+    { model: MODELS.POWERFUL },
     {
       architecture: "Error generating architecture",
       techStack: [],
@@ -165,6 +166,16 @@ export async function streamCodingAssistant(
   onError: (err: Error) => void
 ) {
   const providers: Array<{ name: string; url: string; key: string; model: string }> = [];
+
+  // 1. NVIDIA NIM (primary for coding)
+  if (env.nvidiaApiKey) {
+    providers.push({
+      name: "NVIDIA",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      key: env.nvidiaApiKey,
+      model: "z-ai/glm-5.2",
+    });
+  }
 
   const envGeminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (envGeminiKey) {

@@ -112,7 +112,7 @@ Be specific and reference actual responses from the candidate. Avoid generic fee
     return await generateJSON<ComprehensiveEvaluation>(
       "You are an expert hiring manager and interview evaluator. Output only valid JSON.",
       prompt,
-      { model: MODELS.POWERFUL },
+      { model: MODELS.BALANCED },
       fallback
     );
   } catch (error) {
