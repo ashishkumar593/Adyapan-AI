@@ -198,8 +198,11 @@ interface TaskRecord {
 interface Props { setView: (v: ResumeHubViewType) => void; }
 
 function SkillNode({ skill, c }: { skill: SkillMapItem; c: ReturnType<typeof mkC> }) {
-  const isCompleted = skill.status === "completed" || skill.currentLevel >= 80;
-  const isInProgress = skill.status === "in_progress" || (skill.currentLevel > 0 && skill.currentLevel < 80);
+  if (!skill) return null;
+  const current = skill.currentLevel || 0;
+  const target = skill.targetLevel || 0;
+  const isCompleted = skill.status === "completed" || current >= 80;
+  const isInProgress = skill.status === "in_progress" || (current > 0 && current < 80);
   const isLocked = skill.status === "locked" || (!isCompleted && !isInProgress);
 
   return (
@@ -210,7 +213,7 @@ function SkillNode({ skill, c }: { skill: SkillMapItem; c: ReturnType<typeof mkC
         boxShadow: isInProgress ? `0 0 15px ${c.am}15` : "none",
       }}>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-extrabold truncate pr-1" style={{ color: isLocked ? c.txM : c.tx }}>{skill.name}</span>
+        <span className="text-[10px] font-extrabold truncate pr-1" style={{ color: isLocked ? c.txM : c.tx }}>{skill.name || "Skill"}</span>
         {isCompleted ? (
           <CheckCircle size={12} style={{ color: c.gn }} />
         ) : isInProgress ? (
@@ -222,11 +225,11 @@ function SkillNode({ skill, c }: { skill: SkillMapItem; c: ReturnType<typeof mkC
       </div>
       <div className="space-y-1">
         <div className="h-1.5 rounded-full" style={{ background: c.dv }}>
-          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${skill.currentLevel}%`, background: isCompleted ? c.gn : isInProgress ? c.am : c.txM }} />
+          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${current}%`, background: isCompleted ? c.gn : isInProgress ? c.am : c.txM }} />
         </div>
         <div className="flex justify-between text-[8px] font-bold" style={{ color: c.txM }}>
-          <span>Cur: {skill.currentLevel}%</span>
-          <span>Tar: {skill.targetLevel}%</span>
+          <span>Cur: {current}%</span>
+          <span>Tar: {target}%</span>
         </div>
       </div>
     </motion.div>
@@ -537,8 +540,10 @@ export function CareerNavigationEngine({ setView }: Props) {
   const getSkillColumns = useCallback(() => {
     const cols = { foundation: [] as SkillMapItem[], core: [] as SkillMapItem[], advanced: [] as SkillMapItem[], specialized: [] as SkillMapItem[] };
     skillItems.forEach(s => {
-      const name = s.name.toLowerCase();
-      if (s.dependencies.length === 0) {
+      if (!s) return;
+      const name = (s.name || "").toLowerCase();
+      const deps = s.dependencies || [];
+      if (deps.length === 0) {
         cols.foundation.push(s);
       } else if (name.includes("system") || name.includes("distributed") || name.includes("cloud") || name.includes("devops") || name.includes("scale")) {
         cols.specialized.push(s);
@@ -1491,14 +1496,14 @@ export function CareerNavigationEngine({ setView }: Props) {
                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.txM }}>Milestones Completed</p>
                   </div>
                   <div className="w-16 h-16 relative flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-4" style={{ borderColor: c.dv }} />
-                    <div className="absolute inset-0 rounded-full border-4 transition-all duration-1000"
-                      style={{
-                        borderColor: c.gn,
-                        clipPath: `polygon(50% 50%, 50% 0%, ${localMilestones.length > 0 ? (localMilestones.filter(m => m.status === "completed").length / localMilestones.length) * 360 : 0}deg 0%, 100% 100%, 0% 100%, 0% 0%)`,
-                        transform: "rotate(-90deg)"
-                      }} />
-                    <span className="text-xs font-bold" style={{ color: c.tx }}>
+                    <svg width="64" height="64" className="transform -rotate-90">
+                      <circle cx="32" cy="32" r="26" stroke={c.dv} strokeWidth="4" fill="transparent" />
+                      <circle cx="32" cy="32" r="26" stroke={c.gn} strokeWidth="4" fill="transparent"
+                        strokeDasharray={2 * Math.PI * 26}
+                        strokeDashoffset={2 * Math.PI * 26 * (1 - (localMilestones.length > 0 ? localMilestones.filter(m => m.status === "completed").length / localMilestones.length : 0))}
+                        style={{ transition: "stroke-dashoffset 1s ease-out" }} strokeLinecap="round" />
+                    </svg>
+                    <span className="absolute text-xs font-bold" style={{ color: c.tx }}>
                       {localMilestones.length > 0 ? Math.round((localMilestones.filter(m => m.status === "completed").length / localMilestones.length) * 100) : 0}%
                     </span>
                   </div>
