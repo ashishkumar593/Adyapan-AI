@@ -461,17 +461,17 @@ export function StudyAssistantView({ onViewLesson, lessonToView }: {
           <BeginnerLesson
             c={c} data={lessonToView.lesson} isScratchpadOpen={false}
             onImportTakeaway={() => {}} onImportConcept={() => {}}
-            quizAnswers={{}} quizSubmitted={{}}
-            onQuizSelect={() => {}} onQuizSubmit={() => {}}
+            quizAnswers={quizAnswers} quizSubmitted={quizSubmitted}
+            onQuizSelect={handleQuizSelect} onQuizSubmit={handleQuizSubmit}
           />
         ) : (
           <IntermediateLesson
             c={c} data={lessonToView.lesson} level={lessonToView.level}
-            expandedConceptIdx={null} setExpandedConceptIdx={() => {}}
+            expandedConceptIdx={expandedConceptIdx} setExpandedConceptIdx={setExpandedConceptIdx}
             isScratchpadOpen={false} onImportConcept={() => {}}
-            practiceRevealed={{}} setPracticeRevealed={() => {}}
-            quizAnswers={{}} quizSubmitted={{}}
-            onQuizSelect={() => {}} onQuizSubmit={() => {}}
+            practiceRevealed={practiceRevealed} setPracticeRevealed={setPracticeRevealed}
+            quizAnswers={quizAnswers} quizSubmitted={quizSubmitted}
+            onQuizSelect={handleQuizSelect} onQuizSubmit={handleQuizSubmit}
           />
         )}
       </div>
