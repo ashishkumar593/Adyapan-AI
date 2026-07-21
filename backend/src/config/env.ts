@@ -15,6 +15,13 @@ export const env = {
   nvidiaApiKey3: process.env.NVIDIA_API_KEY_3 ?? "",
   nvidiaApiKey4: process.env.NVIDIA_API_KEY_4 ?? "",
   nvidiaApiKey5: process.env.NVIDIA_API_KEY_5 ?? "",
+  nvidiaApiKeys: [
+    process.env.NVIDIA_API_KEY ?? "",
+    process.env.NVIDIA_API_KEY_2 ?? "",
+    process.env.NVIDIA_API_KEY_3 ?? "",
+    process.env.NVIDIA_API_KEY_4 ?? "",
+    process.env.NVIDIA_API_KEY_5 ?? "",
+  ].filter(Boolean),
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
     apiKey: process.env.CLOUDINARY_API_KEY ?? "",

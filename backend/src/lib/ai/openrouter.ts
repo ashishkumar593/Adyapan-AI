@@ -30,6 +30,15 @@ const GROQ_MODEL_FALLBACKS_FAST = [
   "llama-3.3-70b-versatile",
 ];
 
+// NVIDIA NIM model fallback chain — 5 keys, each with a different model
+const NVIDIA_NIM_MODELS = [
+  { model: "nvidia/llama-3.3-70b-instruct", label: "Nemotron" },
+  { model: "deepseek-ai/deepseek-r1", label: "DeepSeek" },
+  { model: "mistralai/mistral-large-2-instruct", label: "Mistral" },
+  { model: "moonshotai/kimi-k2", label: "Kimi" },
+  { model: "z-ai/glm-5.1", label: "GLM" },
+];
+
 // Sequential fallback completion engine: Gemini (multiple models) → Groq (multiple models) → OpenRouter
 async function callAIRobust(
   messages: OpenRouterMessage[],
@@ -77,29 +86,27 @@ async function callAIRobust(
     }
   }
 
-  // 3. Add OpenRouter if key exists (tertiary)
+  // 3. Add NVIDIA NIM with 5 keys/models (tertiary) — key rotation across Nemotron, DeepSeek, Mistral, Kimi, GLM
+  if (env.nvidiaApiKeys.length > 0) {
+    for (let i = 0; i < env.nvidiaApiKeys.length; i++) {
+      const key = env.nvidiaApiKeys[i];
+      const nvidiaModel = NVIDIA_NIM_MODELS[i % NVIDIA_NIM_MODELS.length];
+      providers.push({
+        name: `NVIDIA NIM (${nvidiaModel.label})`,
+        url: "https://integrate.api.nvidia.com/v1/chat/completions",
+        key,
+        model: nvidiaModel.model,
+      });
+    }
+  }
+
+  // 4. Add OpenRouter if key exists (quaternary)
   if (env.openrouterApiKey) {
     providers.push({
       name: "OpenRouter",
       url: "https://openrouter.ai/api/v1/chat/completions",
       key: env.openrouterApiKey,
       model: options.model || "openai/gpt-4o-mini",
-    });
-  }
-
-  // 4. Add NVIDIA NIM if key exists (quaternary)
-  if (env.nvidiaApiKey) {
-    const nvidiaModel = options.model?.startsWith("deepseek-ai/") ||
-                        options.model?.startsWith("z-ai/") ||
-                        options.model?.startsWith("moonshotai/") ||
-                        options.model?.startsWith("mistralai/")
-      ? options.model
-      : "deepseek-ai/deepseek-v4-flash";
-    providers.push({
-      name: "NVIDIA",
-      url: "https://integrate.api.nvidia.com/v1/chat/completions",
-      key: env.nvidiaApiKey,
-      model: nvidiaModel,
     });
   }
 
