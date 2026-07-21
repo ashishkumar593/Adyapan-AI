@@ -112,41 +112,119 @@ export interface CareerRoadmapData {
   }[];
 }
 
-const FALLBACK_DATA: CareerRoadmapData = {
-  readinessScores: { overall: 35, technical: 30, resume: 40, interview: 25, placement: 30, recruiter: 35 },
-  roadmap: {
-    phases: [
-      { title: "Foundation Building", description: "Strengthen core technical fundamentals", duration: "2 Weeks", objectives: ["Master data structures basics", "Build first project"], expectedOutcomes: ["Improved problem-solving", "Portfolio project"], completionPercentage: 0, dependencies: [] },
-      { title: "Skill Development", description: "Develop role-specific technical skills", duration: "3 Weeks", objectives: ["Learn frameworks", "Practice system design"], expectedOutcomes: ["Framework proficiency", "Design thinking"], completionPercentage: 0, dependencies: ["Foundation Building"] },
-      { title: "Project Building", description: "Build 2-3 impressive projects", duration: "4 Weeks", objectives: ["Full-stack project", "Open source contribution"], expectedOutcomes: ["Strong portfolio", "GitHub activity"], completionPercentage: 0, dependencies: ["Skill Development"] },
-      { title: "Resume Optimization", description: "Polish resume and online presence", duration: "1 Week", objectives: ["ATS-optimized resume", "LinkedIn optimization"], expectedOutcomes: ["High ATS score", "Professional online presence"], completionPercentage: 0, dependencies: ["Project Building"] },
-      { title: "Interview Preparation", description: "Master technical and behavioral interviews", duration: "3 Weeks", objectives: ["DSA practice", "Mock interviews"], expectedOutcomes: ["Interview confidence", "Strong problem-solving"], completionPercentage: 0, dependencies: ["Resume Optimization"] },
+function computeFallback(profileData: any): CareerRoadmapData {
+  const targetRole = profileData?.targetRole || "Software Engineer";
+  const skills = profileData?.resumeData?.skills || profileData?.profile?.skills || [];
+  const experience = profileData?.resumeData?.experience || [];
+  const projects = profileData?.resumeData?.projects || [];
+  const dsaSolved = profileData?.codingAnalytics?.dsaSolved || 0;
+  const dsaAccuracy = profileData?.codingAnalytics?.dsaAccuracy || 0;
+  const avgAtsScore = profileData?.atsReports?.length
+    ? Math.round(profileData.atsReports.reduce((s: number, r: any) => s + (r.score || 0), 0) / profileData.atsReports.length)
+    : 0;
+  const linkedinScore = profileData?.linkedinData?.score || 0;
+  const weakTopics = profileData?.codingAnalytics?.weakTopics || [];
+  const learningScore = profileData?.learningAnalytics?.learningScore || 0;
+  const overallProgress = profileData?.learningAnalytics?.overallProgress || 0;
+
+  // Compute readiness scores from actual data
+  const technicalScore = Math.min(95, Math.round(
+    (dsaSolved > 50 ? 70 : dsaSolved > 20 ? 50 : dsaSolved > 0 ? 30 : 10)
+    + (dsaAccuracy * 30)
+    + (skills.length > 5 ? 10 : skills.length * 2)
+  ));
+  const resumeScore = Math.min(95, avgAtsScore || (experience.length > 0 && projects.length > 0 ? 55 : 30));
+  const interviewScore = Math.min(95, Math.round(technicalScore * 0.4 + resumeScore * 0.3 + (linkedinScore || 30) * 0.3));
+  const placementScore = Math.min(95, Math.round(overallProgress * 0.5 + technicalScore * 0.3 + resumeScore * 0.2));
+  const recruiterScore = Math.min(95, Math.round(resumeScore * 0.4 + linkedinScore * 0.3 + (projects.length > 2 ? 25 : projects.length * 10)));
+  const overallScore = Math.round(technicalScore * 0.3 + resumeScore * 0.2 + interviewScore * 0.2 + placementScore * 0.15 + recruiterScore * 0.15);
+
+  // Build skill map from actual skills
+  const skillMapSkills = skills.slice(0, 8).map((s: string) => ({
+    name: s,
+    currentLevel: Math.min(80, 30 + Math.round(Math.random() * 30)),
+    targetLevel: 85,
+    status: "in_progress" as const,
+    dependencies: [] as string[],
+    category: "Technical",
+  }));
+
+  // Build gap analysis from weak topics
+  const missingSkills = weakTopics.length > 0
+    ? weakTopics.slice(0, 5).map((w: any) => ({
+        skill: w.name,
+        importance: w.risk === "High" || w.risk === "Critical" ? "High" : "Medium",
+        priority: w.score < 30 ? 1 : w.score < 60 ? 2 : 3,
+        reason: `Your strength score is ${w.score}/100 — needs improvement for ${targetRole} roles`,
+      }))
+    : [{ skill: "System Design", importance: "High" as const, priority: 1, reason: `Essential for ${targetRole} roles` }];
+
+  const missingProjects = projects.length < 2
+    ? [{ project: `${targetRole} Portfolio Project`, impact: "High", effort: "Medium" }]
+    : [{ project: "Open Source Contribution", impact: "Medium", effort: "Low" }];
+
+  const missingExperience = experience.length === 0
+    ? [{ area: "Work Experience", suggestion: "Consider internships or freelance projects to build experience" }]
+    : [{ area: "Leadership", suggestion: "Lead a project or mentor juniors to demonstrate leadership" }];
+
+  // Build weekly tasks based on weakest area
+  const tasks = [];
+  if (dsaSolved < 20) {
+    tasks.push({ title: "Solve 3 DSA problems daily", description: "Focus on arrays and strings — fundamentals for " + targetRole, category: "coding", priority: "High", estimatedHours: 3, impactScore: 80, status: "not_started" });
+  } else if (dsaSolved < 100) {
+    tasks.push({ title: "Solve 2 medium DSA problems", description: "Practice trees and graphs — commonly tested for " + targetRole, category: "coding", priority: "High", estimatedHours: 2, impactScore: 75, status: "not_started" });
+  } else {
+    tasks.push({ title: "Solve 1 hard DSA problem", description: "Focus on advanced patterns for senior " + targetRole + " roles", category: "coding", priority: "Medium", estimatedHours: 2, impactScore: 65, status: "not_started" });
+  }
+
+  if (resumeScore < 50) {
+    tasks.push({ title: "Optimize resume for ATS", description: "Your ATS score is " + resumeScore + "% — rewrite key sections", category: "resume", priority: "High", estimatedHours: 2, impactScore: 85, status: "not_started" });
+  } else {
+    tasks.push({ title: "Add latest project to resume", description: "Keep resume updated with recent work", category: "resume", priority: "Medium", estimatedHours: 1, impactScore: 55, status: "not_started" });
+  }
+
+  tasks.push({ title: `Study ${targetRole} interview questions`, description: "Review common behavioral and technical questions", category: "interview", priority: "Medium", estimatedHours: 1, impactScore: 60, status: "not_started" });
+
+  const dailyMicroTasks = [
+    dsaSolved < 50 ? "Solve 1 DSA problem" : "Review 1 advanced concept",
+    "Read 1 article about " + targetRole,
+    "Practice 1 mock interview question",
+  ];
+
+  // Project recommendations based on skills
+  const projectRecs = skills.length > 0
+    ? [{ title: `${targetRole} Capstone`, description: `Build a production-grade project demonstrating ${skills.slice(0, 3).join(", ")}`, skillsGained: skills.slice(0, 4), resumeImpact: "Strong demonstration of technical ability", interviewValue: "Provides talking points for behavioral questions", estimatedTime: "3 weeks", difficulty: "Intermediate", whyItMatters: `Shows hands-on ${targetRole} competency to recruiters` }]
+    : [{ title: "Full-Stack Portfolio", description: "Build a personal portfolio website", skillsGained: ["HTML", "CSS", "JavaScript"], resumeImpact: "Shows initiative", interviewValue: "Demonstrates self-learning", estimatedTime: "2 weeks", difficulty: "Beginner", whyItMatters: "First impression for recruiters" }];
+
+  const targetRoleLower = targetRole.toLowerCase();
+  const timeline = profileData?.timeline || "90 Days";
+
+  return {
+    readinessScores: { overall: overallScore, technical: technicalScore, resume: resumeScore, interview: interviewScore, placement: placementScore, recruiter: recruiterScore },
+    roadmap: {
+      phases: [
+        { title: "Foundation & Gap Analysis", description: `Assess current skills relative to ${targetRole}`, duration: "1 Week", objectives: ["Complete skills assessment", "Identify top 3 gaps", "Set weekly targets"], expectedOutcomes: ["Clear gap analysis", "Personalized study plan"], completionPercentage: 0, dependencies: [] },
+        { title: "Core Skill Development", description: `Build competencies required for ${targetRole}`, duration: "4 Weeks", objectives: ["Address weak coding topics", `Master ${targetRole}-specific skills`, "Daily practice routine"], expectedOutcomes: ["Improved technical scores", "New skills acquired"], completionPercentage: 0, dependencies: ["Foundation & Gap Analysis"] },
+        { title: "Project Building", description: "Build projects that fill resume gaps", duration: "3 Weeks", objectives: ["Complete capstone project", "Contribute to open source", "Document everything"], expectedOutcomes: ["Strong portfolio", "Updated resume"], completionPercentage: 0, dependencies: ["Core Skill Development"] },
+        { title: "Resume & Profile Optimization", description: "Maximize ATS and recruiter visibility", duration: "1 Week", objectives: ["ATS-optimize resume", "Update LinkedIn", `Tailor for ${targetRole} roles`], expectedOutcomes: ["High ATS score", "Professional online presence"], completionPercentage: 0, dependencies: ["Project Building"] },
+        { title: "Interview Preparation", description: "Master technical and behavioral interviews", duration: `${Math.max(1, Math.round(parseInt(timeline) || 13) - 9)} Weeks`, objectives: ["DSA mock interviews", "Behavioral question prep", "Company-specific prep"], expectedOutcomes: ["Interview confidence", "Strong problem-solving"], completionPercentage: 0, dependencies: ["Resume & Profile Optimization"] },
+      ],
+      totalDuration: timeline,
+    },
+    weeklyPlan: { tasks, dailyMicroTasks, totalEstimatedHours: tasks.reduce((s, t) => s + t.estimatedHours, 0) },
+    gapAnalysis: { missingSkills, missingProjects, missingCertifications: [], missingExperience, missingSoftSkills: [{ skill: "Communication", importance: "Medium" }] },
+    skillMap: { skills: skillMapSkills },
+    projectRecommendations: projectRecs,
+    certRecommendations: [],
+    marketInsights: { currentDemand: "Growing", averageSalary: "Competitive", topSkillCombinations: skills.slice(0, 3).length ? skills.slice(0, 3) : ["Python", "Cloud"], resumeExpectations: ["Projects section", "Skills list", "Work experience"], portfolioExpectations: ["GitHub portfolio", "Live projects"], interviewTrends: ["DSA + System Design", "Behavioral + System Design"], topHiringCompanies: ["Tech companies", "Startups"], growthOutlook: "Positive" },
+    coachFeedback: { weeklyFeedback: `You've solved ${dsaSolved} DSA problems${dsaAccuracy > 0 ? ` with ${Math.round(dsaAccuracy * 100)}% accuracy` : ""}. ${resumeScore < 50 ? "Focus on improving your resume ATS score." : "Your resume is in good shape."} ${overallProgress > 0 ? `Overall platform progress: ${overallProgress}%.` : ""} Keep building momentum!`, progressSummary: `Technical: ${technicalScore}% | Resume: ${resumeScore}% | Interview: ${interviewScore}%`, motivationalGuidance: `Every ${targetRole} started somewhere. Focus on consistent daily progress.`, focusAreas: weakTopics.slice(0, 3).map((w: any) => w.name).concat(resumeScore < 50 ? ["Resume optimization"] : []), risks: [dsaSolved < 10 ? "Low practice volume" : "Maintaining consistency", "Timeline pressure"], nextBestAction: dsaSolved < 20 ? "Solve your first DSA problem today" : `Practice a ${targetRole} interview question` },
+    milestones: [
+      { title: "Skills Assessment Complete", description: "Identify all gaps and set targets", targetDate: "Week 1", category: "learning", status: "pending" },
+      { title: "First Project Shipped", description: "Complete and deploy a project", targetDate: "Week 4", category: "project", status: "pending" },
+      { title: "Resume Score > 70%", description: "Optimize resume to pass ATS", targetDate: "Week 6", category: "resume", status: "pending" },
     ],
-    totalDuration: "90 Days"
-  },
-  weeklyPlan: {
-    tasks: [
-      { title: "Solve 3 DSA problems", description: "Practice medium-level problems", category: "coding", priority: "High", estimatedHours: 3, impactScore: 75, status: "not_started" },
-      { title: "Study one system design concept", description: "Learn about load balancers", category: "learning", priority: "Medium", estimatedHours: 2, impactScore: 60, status: "not_started" },
-      { title: "Update resume project section", description: "Add latest project details", category: "resume", priority: "High", estimatedHours: 1, impactScore: 70, status: "not_started" },
-    ],
-    dailyMicroTasks: ["Solve 1 array problem", "Read 1 system design article", "Review 1 weak topic for 15 minutes"],
-    totalEstimatedHours: 6
-  },
-  gapAnalysis: {
-    missingSkills: [{ skill: "System Design", importance: "High", priority: 1, reason: "Essential for senior roles" }],
-    missingProjects: [{ project: "Full-Stack Application", impact: "High", effort: "Medium" }],
-    missingCertifications: [],
-    missingExperience: [{ area: "Open Source", suggestion: "Contribute to one open source project" }],
-    missingSoftSkills: [{ skill: "Communication", importance: "Medium" }]
-  },
-  skillMap: { skills: [{ name: "Programming", currentLevel: 50, targetLevel: 85, status: "in_progress", dependencies: [], category: "Technical" }] },
-  projectRecommendations: [{ title: "Portfolio Website", description: "Build a personal portfolio", skillsGained: ["React", "CSS", "Design"], resumeImpact: "Shows frontend skills", interviewValue: "Demonstrates initiative", estimatedTime: "2 weeks", difficulty: "Beginner", whyItMatters: "First impression for recruiters" }],
-  certRecommendations: [],
-  marketInsights: { currentDemand: "Growing", averageSalary: " competitive", topSkillCombinations: ["Python + Cloud"], resumeExpectations: ["Projects section", "Skills list"], portfolioExpectations: ["GitHub portfolio"], interviewTrends: ["DSA + System Design"], topHiringCompanies: ["Tech companies"], growthOutlook: "Positive" },
-  coachFeedback: { weeklyFeedback: "Start building momentum", progressSummary: "Getting started", motivationalGuidance: "Every expert was once a beginner", focusAreas: ["DSA basics", "Resume"], risks: ["Inconsistency"], nextBestAction: "Solve your first DSA problem" },
-  milestones: [{ title: "Complete first project", description: "Build and deploy a project", targetDate: "Week 2", category: "project", status: "pending" }]
-};
+  };
+}
 
 export async function generateCareerRoadmap(profileData: any): Promise<CareerRoadmapData> {
   const prompt = `Generate a comprehensive, ROLE-SPECIFIC career roadmap. Every recommendation must be tailored to the user's target role.
@@ -222,10 +300,10 @@ Return the data as a JSON object with this exact structure:
 }`;
 
   try {
-    const result = await generateJSON<CareerRoadmapData>(CAREER_SYSTEM, prompt, { model: MODELS.FAST }, FALLBACK_DATA);
+    const result = await generateJSON<CareerRoadmapData>(CAREER_SYSTEM, prompt, { model: MODELS.FAST }, computeFallback(profileData));
     return result;
   } catch (error) {
-    console.warn("[Career AI] Generation failed, using fallback:", error);
-    return FALLBACK_DATA;
+    console.warn("[Career AI] Generation failed, using computed fallback:", error);
+    return computeFallback(profileData);
   }
 }

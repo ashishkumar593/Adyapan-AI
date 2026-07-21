@@ -151,19 +151,7 @@ export async function generateRoadmap(req: Request, res: Response, next: NextFun
       roadmapData = await generateCareerRoadmap(profileData);
     } catch (aiErr) {
       console.error("[Career] generateCareerRoadmap AI call failed:", (aiErr as Error)?.message);
-      const fallback = {
-        readinessScores: { overall: 0, technical: 0, resume: 0, interview: 0, placement: 0, recruiter: 0 },
-        roadmap: { phases: [] },
-        weeklyPlan: { tasks: [] },
-        gapAnalysis: {},
-        skillMap: {},
-        projectRecommendations: [],
-        certRecommendations: [],
-        marketInsights: {},
-        coachFeedback: "",
-        milestones: [],
-      };
-      res.status(503).json({ success: false, roadmap: null, roadmapData: fallback, error: "AI generation failed. Using fallback data." });
+      res.status(503).json({ success: false, roadmap: null, roadmapData: null, error: "AI generation failed. Please try again later." });
       return;
     }
 

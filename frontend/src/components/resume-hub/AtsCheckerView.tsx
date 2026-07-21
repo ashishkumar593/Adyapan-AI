@@ -15,6 +15,8 @@ import {
   Circle,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
+import { ATS_ROLES, ATS_ROLE_ICONS } from "@/config/resume-config";
 import { EmptyState } from "@/components/ui/PremiumComponents";
 import {
   Chart as ChartJS,
@@ -183,28 +185,6 @@ function Dots() {
   );
 }
 
-const ROLES = [
-  "General ATS",
-  "Software Engineer",
-  "Data Analyst",
-  "Data Scientist",
-  "Backend Developer",
-  "Frontend Developer",
-  "Full Stack Developer",
-  "AI Engineer",
-];
-
-const ROLE_ICONS: Record<string, string> = {
-  "General ATS": "🎯",
-  "Software Engineer": "💻",
-  "Data Analyst": "📊",
-  "Data Scientist": "🧠",
-  "Backend Developer": "⚙️",
-  "Frontend Developer": "🎨",
-  "Full Stack Developer": "🚀",
-  "AI Engineer": "🤖",
-};
-
 function FloatingOrbs({ theme }: { theme: string }) {
   const d = theme === "dark";
   return (
@@ -283,7 +263,7 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
         }}
       >
         <span className="flex items-center gap-2.5">
-          <span className="text-base">{ROLE_ICONS[value] || "🎯"}</span>
+          <span className="text-base">{ATS_ROLE_ICONS[value] || "\u{1F3AF}"}</span>
           <span className="font-semibold text-sm">{value}</span>
         </span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -310,7 +290,7 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
               overflowY: "auto",
             }}
           >
-            {ROLES.map((r) => (
+            {ATS_ROLES.map((r) => (
               <button
                 key={r}
                 onMouseDown={(e) => { e.preventDefault(); onChange(r); setOpen(false); }}
@@ -323,7 +303,7 @@ function CustomRoleDropdown({ value, onChange, theme }: { value: string; onChang
                   borderBottom: `1px solid ${d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
                 }}
               >
-                <span className="text-base w-7 text-center">{ROLE_ICONS[r] || "🎯"}</span>
+                <span className="text-base w-7 text-center">{ATS_ROLE_ICONS[r] || "\u{1F3AF}"}</span>
                 <span className="text-sm font-medium flex-1">{r}</span>
                 {r === value && (
                   <CheckCircle size={14} style={{ color: "#f59e0b" }} />
@@ -356,6 +336,7 @@ const AP = {
 export function AtsCheckerView({ setView }: Props) {
   const theme = useTheme();
   const c = mkC(theme);
+  const cfg = useConfig();
 
   // ── State ──────────────────────────────────────────────────────────────────
   type Screen = "home" | "jd" | "loading" | "dashboard" | "history" | "compare" | "final";

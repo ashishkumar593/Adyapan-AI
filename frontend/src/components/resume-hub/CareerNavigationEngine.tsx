@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
 import { EmptyState } from "@/components/ui/PremiumComponents";
 import confetti from "canvas-confetti";
 import {
@@ -30,15 +31,6 @@ ChartJS.register(
   RadialLinearScale, PointElement, LineElement, Filler, CT, CL,
   CategoryScale, LinearScale, BarElement, ArcElement
 );
-
-const TARGET_ROLES = [
-  "Software Engineer", "Backend Developer", "Frontend Developer",
-  "Full Stack Developer", "AI Engineer", "Machine Learning Engineer",
-  "Data Scientist", "Data Analyst", "Cloud Engineer",
-  "DevOps Engineer", "QA Engineer", "Cybersecurity Engineer", "Custom Goal",
-];
-
-const TIMELINES = ["30 Days", "60 Days", "90 Days", "6 Months", "12 Months", "Custom"];
 
 const LOADING_STEPS = [
   "Analyzing Resume Quality",
@@ -239,6 +231,7 @@ function SkillNode({ skill, c }: { skill: SkillMapItem; c: ReturnType<typeof mkC
 export function CareerNavigationEngine({ setView }: Props) {
   const theme = useTheme();
   const c = mkC(theme);
+  const cfg = useConfig();
 
   const [tab, setTab] = useState<"setup" | "overview" | "roadmap" | "weekly" | "skills" | "gaps" | "projects" | "insights" | "coach" | "history" | "milestones">("setup");
   const [loading, setLoading] = useState(false);
@@ -497,7 +490,7 @@ export function CareerNavigationEngine({ setView }: Props) {
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
                     className="absolute top-full left-0 right-0 mt-1 rounded-xl z-50 max-h-64 overflow-y-auto"
                     style={{ background: c.d ? "#111827" : "#fff", border: `1px solid ${c.bd}`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
-                    {TARGET_ROLES.map(role => (
+                    {cfg.careerTargetRoles.map(role => (
                       <button key={role} onClick={() => { setTargetRole(role); setShowRoleDropdown(false); }}
                         className="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors"
                         style={{ color: targetRole === role ? c.am : c.tx2, background: targetRole === role ? c.amBg : "transparent" }}
@@ -545,7 +538,7 @@ export function CareerNavigationEngine({ setView }: Props) {
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block" style={{ color: c.txM }}>Timeline</label>
               <div className="flex flex-wrap gap-2">
-                {TIMELINES.map(t => (
+                {cfg.careerTimelines.map(t => (
                   <button key={t} onClick={() => setTimeline(t)}
                     className="px-4 py-2 rounded-xl text-xs font-bold transition-all"
                     style={{

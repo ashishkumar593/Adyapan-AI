@@ -13,6 +13,7 @@ import {
 import type { ResumeHubViewType } from "@/types/resume";
 import { useConfirm } from "@/components/ui/ConfirmModal";
 import { useTheme } from "@/hooks/useTheme";
+import { useConfig } from "@/hooks/useConfig";
 import {
   Chart as ChartJS,
   RadialLinearScale, PointElement, LineElement, Filler,
@@ -139,26 +140,6 @@ interface CoverLetterViewProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MODES = [
-  "Software Engineer", "Machine Learning Engineer", "Data Scientist",
-  "Frontend Developer", "Backend Developer", "Full Stack Developer",
-  "DevOps Engineer", "Cloud Engineer", "AI Engineer",
-  "Product Manager", "Data Analyst", "UX Designer",
-  "Mobile Developer", "Cybersecurity Analyst",
-];
-
-const TONES = [
-  "Professional", "Friendly", "Formal", "Confident",
-  "Creative", "Enthusiastic", "Humble", "Bold",
-];
-
-const LENGTHS = ["Short", "Standard", "Detailed"];
-
-const LETTER_TYPES = [
-  "Full-Time", "Internship", "Referral",
-  "Career Switch", "General Application",
-];
-
 const GENERATING_STEPS = [
   "Reading Resume",
   "Analyzing Job Description",
@@ -208,6 +189,7 @@ const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, visible: (i = 0) => ({ op
 export function CoverLetterView({ setView }: CoverLetterViewProps) {
   const theme = useTheme();
   const c = mkColors(theme);
+  const cfg = useConfig();
 
   const [confirm, confirmModal] = useConfirm();
 
@@ -1048,7 +1030,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: c.textSec }}>Role Mode</label>
-              <div className="flex flex-wrap gap-1.5">{MODES.map(m => (
+              <div className="flex flex-wrap gap-1.5">{cfg.coverLetterModes.map(m => (
                 <motion.button key={m} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setMode(m)}
                   className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
                   style={{ background: mode === m ? c.amberBg : "transparent", border: `1px solid ${mode === m ? c.amber : c.border}`, color: mode === m ? c.amber : c.textSec }}>{m}</motion.button>
@@ -1056,7 +1038,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             </div>
             <div>
               <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: c.textSec }}>Tone</label>
-              <div className="flex flex-wrap gap-1.5">{TONES.map(t => (
+              <div className="flex flex-wrap gap-1.5">{cfg.coverLetterTones.map(t => (
                 <motion.button key={t} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setTone(t)}
                   className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
                   style={{ background: tone === t ? c.amberBg : "transparent", border: `1px solid ${tone === t ? c.amber : c.border}`, color: tone === t ? c.amber : c.textSec }}>{t}</motion.button>
@@ -1065,7 +1047,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: c.textSec }}>Length</label>
-                <div className="flex gap-1.5">{LENGTHS.map(l => (
+                <div className="flex gap-1.5">{cfg.coverLetterLengths.map(l => (
                   <motion.button key={l} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setLength(l)}
                     className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all"
                     style={{ background: length === l ? c.amberBg : "transparent", border: `1px solid ${length === l ? c.amber : c.border}`, color: length === l ? c.amber : c.textSec }}>{l}</motion.button>
@@ -1074,7 +1056,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
             </div>
             <div>
               <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: c.textSec }}>Letter Type</label>
-              <div className="flex flex-wrap gap-1.5">{LETTER_TYPES.map(lt => (
+              <div className="flex flex-wrap gap-1.5">{cfg.coverLetterTypes.map(lt => (
                 <motion.button key={lt} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setLetterType(lt)}
                   className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
                   style={{ background: letterType === lt ? c.amberBg : "transparent", border: `1px solid ${letterType === lt ? c.amber : c.border}`, color: letterType === lt ? c.amber : c.textSec }}>{lt}</motion.button>

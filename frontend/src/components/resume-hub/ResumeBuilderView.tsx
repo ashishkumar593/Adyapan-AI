@@ -278,17 +278,7 @@ export function ResumeBuilderView({ setView, selectedTemplate }: ResumeBuilderVi
             {screen === 1 && (
               <div className="h-full grid grid-cols-1 lg:grid-cols-5 gap-0">
                 <div className="lg:col-span-3 h-full flex flex-col p-6 overflow-y-auto">
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "0.5rem" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FileText size={22} style={{ color: col }} />
-                      </div>
-                      <div>
-                        <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: c.text, margin: 0 }}>Build Your Resume</h1>
-                        <p style={{ fontSize: "0.78rem", color: c.textMuted, margin: "2px 0 0" }}>AI-powered, ATS-optimized resume tailored to your target role</p>
-                      </div>
-                    </div>
-                  </motion.div>
+
 
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.75rem" }}>
                     {[

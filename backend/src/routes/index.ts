@@ -39,6 +39,7 @@ import { jobListingRouter } from "./job-listing.routes";
 import { communityRouter } from "./community.routes";
 import { resumeImprovementRouter } from "./resume-improvement.routes";
 import { careerRouter } from "./career.routes";
+import { configRouter } from "./config.routes";
 import { placementRouter } from "./placement.routes";
 
 export const apiRouter = Router();
@@ -105,6 +106,9 @@ apiRouter.use("/career-roadmap", careerRouter);
 
 // Placement Hub Routes
 apiRouter.use("/placement", placementRouter);
+
+// Platform Configuration Routes
+apiRouter.use("/config", configRouter);
 
 
 
