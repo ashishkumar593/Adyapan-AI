@@ -121,6 +121,8 @@ interface PlagiarismReport {
 
 interface PlagiarismCheckerViewProps {
   setView: (v: string) => void;
+  activeModule?: string;
+  theme?: string;
 }
 
 const SAMPLE_DOCUMENT = `Introduction to Machine Learning in Healthcare

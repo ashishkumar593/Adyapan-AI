@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, Sparkles, BookOpen, Clock, Download, Plus, ArrowRight, ArrowLeft,
   Upload, Layers, CheckCircle2, AlertCircle, RefreshCw, Eye, Edit3,
-  Sliders, Wand2, Play, Code2, Globe, ShieldCheck, Check, ChevronRight
+  Sliders, Wand2, Play, Code2, Globe, ShieldCheck, Check, ChevronRight, FileCode
 } from "lucide-react";
 import { api } from "@/services/api";
 import { toast } from "sonner";
