@@ -7,7 +7,7 @@ const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 import {
   Mic, MicOff, Send, PhoneOff, Clock, MessageSquare, Brain, Volume2, VolumeX,
   Code2, Terminal, Play, RotateCcw, BarChart3, Sparkles, Zap, Target, Settings2,
-  ArrowRight, ChevronLeft, ChevronRight, Check, Loader2, AlertTriangle, Trophy,
+  ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Check, Loader2, AlertTriangle, Trophy,
   TrendingUp, TrendingDown, Lightbulb, BookOpen, ArrowLeft, FileText, Star,
   Award, RefreshCw, Copy, CheckCircle2, XCircle, User, Bot, Info, Flame,
   Globe, Server, Monitor, Layers, Cpu, Database, Network, BrainCircuit,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { COMPANY_PRESETS, ROLE_PRESETS } from "../interview-hub/engine/EngineTypes";
+import { COMPANY_PRESETS, ROLE_PRESETS } from "../engine/EngineTypes";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -175,7 +175,7 @@ const LANG_MAP: Record<CodingLanguage, string> = {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export default function TechnicalInterviewView() {
+export default function TechnicalInterviewView({ theme: propTheme }: { theme?: string } = {}) {
   const [theme, setTheme] = useState("dark");
   const [screen, setScreen] = useState<ViewScreen>("landing");
   const [config, setConfig] = useState<TechnicalConfig | null>(null);
@@ -697,7 +697,7 @@ function LoadingScreen({ config, colors: c }: { config: TechnicalConfig | null; 
 
 function ActiveInterview({
   sessionId, config, messages, setMessages, questionNumber, setQuestionNumber,
-  totalQuestions, currentQuestion, setCurrentQuestion, onComplete, onEnd,
+  totalQuestions, setTotalQuestions, currentQuestion, setCurrentQuestion, onComplete, onEnd,
   theme, colors: c,
 }: {
   sessionId: string;
@@ -707,6 +707,7 @@ function ActiveInterview({
   questionNumber: number;
   setQuestionNumber: (n: number) => void;
   totalQuestions: number;
+  setTotalQuestions?: (n: number) => void;
   currentQuestion: TechnicalQuestionData | null;
   setCurrentQuestion: (q: TechnicalQuestionData | null) => void;
   onComplete: (sessionId: string) => void;
@@ -861,7 +862,7 @@ function ActiveInterview({
       setMessages(prev => [...prev, aiMsg]);
       setCurrentQuestion(data.nextQuestion);
       setQuestionNumber(data.questionNumber || questionNumber + 1);
-      if (data.totalQuestions) setTotalQuestions(data.totalQuestions);
+      if (data.totalQuestions && setTotalQuestions) setTotalQuestions(data.totalQuestions);
 
       // Auto-open coding if it's a coding challenge
       if (data.nextQuestion?.isCodingChallenge && data.nextQuestion?.codingProblem) {
