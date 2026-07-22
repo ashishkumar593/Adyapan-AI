@@ -158,13 +158,19 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
           <motion.div key="workspace" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             <PaperEditorWorkspace
               paper={selectedPaper || {
-                title: "Quantum Multi-Task Deep Reinforcement Learning for Autonomous Systems",
-                abstract: "This paper presents a novel quantum multi-task deep reinforcement learning framework...",
+                title: "",
+                authors: [],
+                abstract: "",
+                keywords: [],
                 sections: [
-                  { id: "abstract", title: "Abstract", content: "Concise summary of research contributions..." },
-                  { id: "intro", title: "1. Introduction", content: "Autonomous multi-agent robotics require fast decision loops..." },
+                  { id: "abstract", title: "Abstract", content: "" },
+                  { id: "intro", title: "1. Introduction", content: "" },
+                  { id: "methodology", title: "2. Methodology", content: "" },
+                  { id: "results", title: "3. Results", content: "" },
+                  { id: "conclusion", title: "4. Conclusion", content: "" },
                 ],
-                metadata: { template: selectedTemplate, wordCount: 3800 }
+                references: [],
+                metadata: { template: selectedTemplate, wordCount: 0 }
               }}
               onBack={() => setViewState("dashboard")}
               onOpenTemplates={() => setIsTemplateModalOpen(true)}

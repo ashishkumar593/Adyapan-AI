@@ -125,19 +125,7 @@ interface PlagiarismCheckerViewProps {
   theme?: string;
 }
 
-const SAMPLE_DOCUMENT = `Introduction to Machine Learning in Healthcare
-
-Machine learning has emerged as a transformative technology in healthcare, offering unprecedented opportunities to improve patient outcomes and streamline clinical workflows. The integration of artificial intelligence algorithms into medical practice has shown remarkable potential in diagnostic imaging, drug discovery, and personalized treatment planning.
-
-Recent studies have demonstrated that deep learning models can achieve diagnostic accuracy comparable to or exceeding that of experienced clinicians in specific domains such as dermatology and radiology. Smith et al. (2023) reported that convolutional neural networks achieved 94.5% accuracy in detecting malignant skin lesions, outperforming the average dermatologist benchmark of 86.7%.
-
-The application of natural language processing to electronic health records has enabled the extraction of clinically meaningful patterns from unstructured medical text. This capability has proven valuable in identifying patients at risk for various conditions, including sepsis, heart failure, and diabetic complications (Johnson & Williams, 2022).
-
-Furthermore, reinforcement learning approaches have been developed for optimizing treatment strategies in critical care settings. These algorithms learn from sequential clinical decisions and can recommend dynamically adjusted therapeutic interventions based on real-time patient data (Brown et al., 2023).
-
-Despite these advances, significant challenges remain in deploying machine learning systems in clinical practice. Issues related to data privacy, algorithmic bias, regulatory compliance, and clinical validation must be carefully addressed to ensure safe and equitable implementation. The lack of standardized evaluation frameworks for medical AI systems continues to hinder widespread adoption.
-
-In conclusion, machine learning holds tremendous promise for revolutionizing healthcare delivery. However, realizing this potential requires interdisciplinary collaboration between computer scientists, clinicians, regulatory bodies, and patients to develop AI systems that are not only accurate but also trustworthy, interpretable, and aligned with clinical needs.`;
+const SAMPLE_DOCUMENT = "";
 
 export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
   const theme = useTheme();
@@ -890,15 +878,6 @@ export function PlagiarismCheckerView({ setView }: PlagiarismCheckerViewProps) {
               style={{ borderColor: c.border, color: c.textSec }}
             >
               <Upload size={11} /> Upload File
-            </motion.button>
-            <motion.button
-              onClick={loadSampleDocument}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-colors"
-              style={{ borderColor: c.border, color: c.textSec }}
-            >
-              <FileText size={11} /> Sample Document
             </motion.button>
           </div>
         </div>
