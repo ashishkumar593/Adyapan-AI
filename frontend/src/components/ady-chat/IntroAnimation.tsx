@@ -284,17 +284,12 @@ export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
                 <h1
                   className="text-5xl font-black tracking-tight"
                   style={{
-                    background: isDark
-                      ? "linear-gradient(135deg, #ffffff 0%, rgba(245,158,11,0.9) 50%, #ffffff 100%)"
-                      : "linear-gradient(135deg, #1e293b 0%, rgba(245,158,11,0.9) 50%, #1e293b 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    color: isDark ? "#ffffff" : "#0f172a",
                     fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
                     letterSpacing: "-0.02em",
                   }}
                 >
-                  Ady Chat
+                  Ady <span style={{ color: "#f59e0b" }}>Chat</span>
                 </h1>
               </motion.div>
             </motion.div>
@@ -311,9 +306,9 @@ export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
                   transition={{ duration: 0.3 }}
                 >
                   <span
-                    className="text-lg font-medium"
+                    className="text-lg font-bold"
                     style={{
-                      color: isDark ? "rgba(255,255,255,0.65)" : "rgba(30,41,59,0.6)",
+                      color: isDark ? "#cbd5e1" : "#334155",
                       fontFamily: "'Outfit', sans-serif",
                       letterSpacing: "0.01em",
                     }}
@@ -323,7 +318,7 @@ export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
                   <span
                     className="inline-block w-0.5 h-5 ml-0.5 align-middle"
                     style={{
-                      background: isDark ? "rgba(245,158,11,0.8)" : "rgba(245,158,11,0.7)",
+                      background: "#f59e0b",
                       opacity: showCursor ? 1 : 0,
                       transition: "opacity 0.1s",
                     }}
@@ -337,13 +332,13 @@ export function IntroAnimation({ isDark, onComplete }: IntroAnimationProps) {
           <motion.div
             className="absolute bottom-10 text-center"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
+            animate={{ opacity: 0.8 }}
             transition={{ delay: 1.5, duration: 1 }}
           >
             <span
-              className="text-xs tracking-widest uppercase"
+              className="text-xs font-bold tracking-widest uppercase"
               style={{
-                color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,41,59,0.35)",
+                color: isDark ? "#94a3b8" : "#475569",
                 letterSpacing: "0.2em",
               }}
             >

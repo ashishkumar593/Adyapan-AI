@@ -128,14 +128,7 @@ export function ChatGreeting({ userName, isDark, onSuggestionClick }: ChatGreeti
         transition={{ duration: 0.5, delay: 0.08 }}
       >
         {getGreeting()},{" "}
-        <span
-          style={{
-            background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 60%, #f59e0b 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
+        <span style={{ color: "#f59e0b" }}>
           {firstName}
         </span>
       </motion.h1>
