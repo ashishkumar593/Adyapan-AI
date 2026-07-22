@@ -2,7 +2,7 @@ import type { GeneratedPaper } from "./research.service";
 import { renderPaperHTMLByTemplate, getTemplateMeta } from "./template-engine.service";
 
 // ============================================================================
-// 1. PDF EXPORT (via Puppeteer with dynamic template HTML rendering)
+// 1. PDF EXPORT (via Puppeteer with dynamic PaperShell template HTML rendering)
 // ============================================================================
 
 export async function exportPaperPdf(paper: GeneratedPaper, templateId: string = "IEEE"): Promise<Buffer> {
@@ -18,15 +18,15 @@ export async function exportPaperPdf(paper: GeneratedPaper, templateId: string =
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const paperTitleStr = typeof paper.title === "string" ? paper.title : (Array.isArray(paper.title) ? (paper.title as string[]).join(", ") : "Untitled");
+    const paperTitleStr = typeof paper.title === "string" ? paper.title : (Array.isArray(paper.title) ? (paper.title as string[]).join(", ") : "Untitled Paper");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "18mm", bottom: "18mm", left: "15mm", right: "15mm" },
       displayHeaderFooter: true,
-      headerTemplate: `<div style="font-size:8px;font-family:serif;text-align:center;width:100%;color:#64748b;">${escapeHtmlHeader(paperTitleStr)} • ${templateId.toUpperCase()} Template</div>`,
-      footerTemplate: `<div style="font-size:8px;font-family:serif;text-align:center;width:100%;color:#64748b;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`,
+      headerTemplate: `<div style="font-size:8px;font-family:sans-serif;text-align:center;width:100%;color:#64748b;">${escapeHtmlHeader(paperTitleStr)} • PaperShell Template: ${templateId.toUpperCase()}</div>`,
+      footerTemplate: `<div style="font-size:8px;font-family:sans-serif;text-align:center;width:100%;color:#64748b;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`,
     });
 
     return Buffer.from(pdfBuffer);
@@ -56,15 +56,49 @@ export async function exportPaperDocx(paper: GeneratedPaper, templateId: string 
 }
 
 // ============================================================================
-// 3. LATEX (.tex) EXPORT (Professional TeX source file generation)
+// 3. LATEX (.tex) EXPORT — Powered by PaperShell (Sylvain Hallé Specifications)
 // ============================================================================
 
 export async function exportPaperLatex(paper: GeneratedPaper, templateId: string = "IEEE"): Promise<string> {
-  const docClass = templateId === "ACM" ? "\\documentclass[sigconf]{acmart}" : (templateId === "Springer-LNCS" ? "\\documentclass{llncs}" : "\\documentclass[conference]{IEEEtran}");
+  const meta = getTemplateMeta(templateId);
+  const paperTitleStr = typeof paper.title === "string" ? paper.title : "Untitled Paper";
+  const authorsList = paper.authors && paper.authors.length > 0 ? paper.authors : ["Author Name"];
 
-  const authorsTex = paper.authors && paper.authors.length > 0
-    ? paper.authors.map((a) => `\\author{\\IEEEauthorblockN{${sanitizeLatex(a)}}\n\\IEEEauthorblockA{\\textit{Department of Computer Science}\\\\Institution}}`).join("\n\\and\n")
-    : "\\author{\\IEEEauthorblockN{Anonymous Author}}";
+  let docClass = "\\documentclass[conference]{IEEEtran}";
+  let publisherKey = "ieeetran";
+  let preamblePacks = `\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[english]{babel}\n\\usepackage{graphicx}\n\\usepackage{cite}\n\\usepackage{microtype}\n\\usepackage{amsmath,amssymb}\n\\usepackage[scaled]{helvet}\n\\usepackage{hyperref}`;
+  let authorBlock = "";
+
+  if (templateId === "ACM") {
+    publisherKey = "acmart";
+    docClass = "\\documentclass[sigconf]{acmart}";
+    preamblePacks = `\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[english]{babel}\n\\usepackage{graphicx}\n\\usepackage{microtype}`;
+    authorBlock = authorsList.map((a) => `\\author{${sanitizeLatex(a)}}\n\\affiliation{\\institution{Adyapan AI Research Lab}\\country{USA}}`).join("\n");
+  } else if (templateId === "Springer-LNCS") {
+    publisherKey = "lncs";
+    docClass = "\\documentclass{llncs}";
+    preamblePacks = `\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[english]{babel}\n\\usepackage{graphicx}\n\\usepackage{cite}\n\\usepackage{lmodern}`;
+    authorBlock = `\\author{${authorsList.map(a => sanitizeLatex(a)).join(" \\and ")}}\n\\institute{Adyapan AI Research Institute}`;
+  } else if (templateId === "Elsevier") {
+    publisherKey = "cas";
+    docClass = "\\documentclass[5p,times]{elsarticle}";
+    preamblePacks = `\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[english]{babel}\n\\usepackage{graphicx}\n\\usepackage{amsmath}`;
+    authorBlock = authorsList.map((a) => `\\author{${sanitizeLatex(a)}}\n\\address{Department of Computer Science, Institution}`).join("\n");
+  } else if (templateId === "IEEE-Journal") {
+    publisherKey = "ieeetran";
+    docClass = "\\documentclass[journal]{IEEEtran}";
+    authorBlock = `\\author{${authorsList.map((a, i) => `\\IEEEauthorblockN{${sanitizeLatex(a)}}\\IEEEauthorblockA{Institution}`).join("\\and\n")}}`;
+  } else {
+    // foo / generic article template for Thesis, TechReport, Survey, Review
+    publisherKey = "foo";
+    docClass = "\\documentclass[11pt,a4paper]{article}";
+    preamblePacks = `\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[english]{babel}\n\\usepackage{graphicx}\n\\usepackage{cite}\n\\usepackage{amsmath,amssymb}\n\\usepackage[margin=25mm]{geometry}\n\\usepackage{hyperref}`;
+    authorBlock = `\\author{${authorsList.map(a => sanitizeLatex(a)).join(", ")}\\\\ \\textit{Adyapan AI Research Institute}}`;
+  }
+
+  if (!authorBlock) {
+    authorBlock = `\\author{${authorsList.map(a => `\\IEEEauthorblockN{${sanitizeLatex(a)}}\\IEEEauthorblockA{Institution}`).join("\\and\n")}}`;
+  }
 
   const sectionsTex = paper.sections
     .filter(s => s.id !== "references")
@@ -75,21 +109,22 @@ export async function exportPaperLatex(paper: GeneratedPaper, templateId: string
     .map((r, i) => `\\bibitem{ref${i + 1}}\n${sanitizeLatex(r.authors?.join(", ") || "Author")}, "\`\`${sanitizeLatex(r.title)}'', \\textit{${sanitizeLatex(r.journal || r.source || "Proceedings")}}, ${r.year}.`)
     .join("\n\n");
 
-  const paperTitleStr = typeof paper.title === "string" ? paper.title : "Untitled Paper";
+  return `%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Autogenerated by PaperShell v3.0 Integration
+%% Original PaperShell Engine by Sylvain Hallé (https://github.com/sylvainhalle/PaperShell)
+%% Publisher: ${publisherKey} | Template: ${templateId}
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  return `${docClass}
-\\usepackage{cite}
-\\usepackage{amsmath,amssymb,amsfonts}
-\\usepackage{algorithmic}
-\\usepackage{graphicx}
-\\usepackage{textcomp}
-\\usepackage{xcolor}
+${docClass}
 
-\\begin{document}
+% Preamble Packages
+${preamblePacks}
 
 \\title{${sanitizeLatex(paperTitleStr)}}
 
-${authorsTex}
+${authorBlock}
+
+\\begin{document}
 
 \\maketitle
 
@@ -97,9 +132,7 @@ ${authorsTex}
 ${sanitizeLatex(paper.abstract)}
 \\end{abstract}
 
-\\begin{IEEEkeywords}
-${sanitizeLatex(paper.keywords?.join(", ") || "Research, AI")}
-\\end{IEEEkeywords}
+\\keywords{${sanitizeLatex(paper.keywords?.join(", ") || "Research, AI, Computer Science")}}
 
 ${sectionsTex}
 
@@ -131,7 +164,7 @@ export async function exportPaperMarkdown(paper: GeneratedPaper): Promise<string
 
 **Authors:** ${authorsStr}  
 **Keywords:** ${keywordsStr}  
-**Template:** ${paper.metadata?.template || "IEEE"}  
+**Template Framework:** PaperShell (${paper.metadata?.template || "IEEE"})  
 
 ---
 
