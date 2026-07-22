@@ -7,7 +7,7 @@ const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 import {
   Mic, MicOff, Send, PhoneOff, Clock, MessageSquare, Brain, Volume2, VolumeX,
   Code2, Terminal, Play, RotateCcw, BarChart3, Sparkles, Zap, Target, Settings2,
-  ArrowRight, ChevronLeft, ChevronRight, Check, Loader2, AlertTriangle, Trophy,
+  ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Check, Loader2, AlertTriangle, Trophy,
   TrendingUp, TrendingDown, Lightbulb, BookOpen, ArrowLeft, FileText, Star,
   Award, RefreshCw, Copy, CheckCircle2, XCircle, User, Bot, Info, Flame,
   Globe, Server, Monitor, Layers, Cpu, Database, Network, BrainCircuit,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { COMPANY_PRESETS, ROLE_PRESETS } from "../interview-hub/engine/EngineTypes";
+import { COMPANY_PRESETS, ROLE_PRESETS } from "../engine/EngineTypes";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -322,6 +322,7 @@ export default function TechnicalInterviewView() {
               questionNumber={questionNumber}
               setQuestionNumber={setQuestionNumber}
               totalQuestions={totalQuestions}
+              setTotalQuestions={setTotalQuestions}
               currentQuestion={currentQuestion}
               setCurrentQuestion={setCurrentQuestion}
               onComplete={handleComplete}
@@ -697,7 +698,7 @@ function LoadingScreen({ config, colors: c }: { config: TechnicalConfig | null; 
 
 function ActiveInterview({
   sessionId, config, messages, setMessages, questionNumber, setQuestionNumber,
-  totalQuestions, currentQuestion, setCurrentQuestion, onComplete, onEnd,
+  totalQuestions, setTotalQuestions, currentQuestion, setCurrentQuestion, onComplete, onEnd,
   theme, colors: c,
 }: {
   sessionId: string;
@@ -707,6 +708,7 @@ function ActiveInterview({
   questionNumber: number;
   setQuestionNumber: (n: number) => void;
   totalQuestions: number;
+  setTotalQuestions: (n: number) => void;
   currentQuestion: TechnicalQuestionData | null;
   setCurrentQuestion: (q: TechnicalQuestionData | null) => void;
   onComplete: (sessionId: string) => void;
