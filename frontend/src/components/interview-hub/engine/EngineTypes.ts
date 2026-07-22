@@ -1,7 +1,5 @@
 export type InterviewType =
   | "hr"
-  | "technical"
-  | "coding"
   | "system-design"
   | "behavioral"
   | "managerial"
@@ -174,22 +172,6 @@ export const INTERVIEW_TYPE_CONFIG: Record<InterviewType, {
     icon: "User",
     suggestedDuration: 30,
     difficultyRange: ["easy", "medium"],
-  },
-  technical: {
-    label: "Technical Interview",
-    description: "Algorithms, data structures, system design",
-    color: "#06b6d4",
-    icon: "Code",
-    suggestedDuration: 45,
-    difficultyRange: ["easy", "medium", "hard"],
-  },
-  coding: {
-    label: "Coding Interview",
-    description: "Live coding, problem solving, code review",
-    color: "#8b5cf6",
-    icon: "Terminal",
-    suggestedDuration: 60,
-    difficultyRange: ["easy", "medium", "hard"],
   },
   "system-design": {
     label: "System Design",

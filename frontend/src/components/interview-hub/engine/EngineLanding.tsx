@@ -100,7 +100,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
 
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
     defaultValues: {
-      interviewType: "technical",
+      interviewType: "hr",
       targetRole: "Software Engineer",
       targetCompany: "",
       difficulty: "medium",
@@ -128,14 +128,14 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
 
   const isDark = theme === "dark";
   const c = {
-    bg: isDark ? "#080710" : "#f8fafc",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
-    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
-    border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
-    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#cbd5e1",
-    text: isDark ? "#ffffff" : "#0f172a",
-    textSec: isDark ? "rgba(255,255,255,0.7)" : "#334155",
-    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#64748b",
+    bg: isDark ? "#080710" : "#f9fafb",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "#f3f4f6",
+    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb",
+    border: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#d1d5db",
+    text: isDark ? "#ffffff" : "#111827",
+    textSec: isDark ? "rgba(255,255,255,0.7)" : "#4b5563",
+    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af",
     primary: "#f59e0b",
     primaryDark: "#d97706",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
@@ -151,7 +151,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
     setHistoryLoading(true);
     try {
       const res = await api.get("/engine/analytics");
-      if (res.data.success) {
+      if (res.data) {
         setStats({
           total: res.data.totalInterviews || 0,
           avgScore: res.data.averageScore || 0,
@@ -161,7 +161,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
     } catch { /* ignore */ }
     try {
       const histRes = await api.get("/engine/history");
-      if (histRes.data.success) {
+      if (histRes.data) {
         setRecentHistory((histRes.data.sessions || []).slice(0, 6));
       }
     } catch { /* ignore */ }
@@ -288,7 +288,6 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
           {[
             { label: "Resume Last", icon: RotateCcw, color: c.textSec, onClick: () => toast.info("Resuming last interview...") },
             { label: "Practice HR", icon: User, color: "#f59e0b", onClick: () => { setValue("interviewType", "hr"); goToStep(2); } },
-            { label: "Practice Technical", icon: Code, color: "#06b6d4", onClick: () => { setValue("interviewType", "technical"); goToStep(2); } },
             { label: "View Reports", icon: BarChart3, color: "#8b5cf6", onClick: onViewAnalytics },
           ].map(q => (
             <motion.button
@@ -801,7 +800,7 @@ export default function EngineLanding({ onStart, onViewHistory, onViewAnalytics 
                   {/* Right Column */}
                   <div className="space-y-6">
                     {/* Technology (conditional) */}
-                    {["technical", "coding", "system-design"].includes(formValues.interviewType) && (
+                    {["system-design"].includes(formValues.interviewType) && (
                       <div className="p-5 rounded-2xl border space-y-3" style={{ background: c.cardBg, borderColor: c.border }}>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSec }}>Technology Stack</label>
                         <input

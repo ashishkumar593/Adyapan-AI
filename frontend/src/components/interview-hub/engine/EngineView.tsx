@@ -20,6 +20,7 @@ interface EngineViewProps {
 }
 
 export default function EngineView({ theme }: EngineViewProps) {
+  const isDark = theme === "dark";
   const [screen, setScreen] = useState<ViewScreen>("landing");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [evaluation, setEvaluation] = useState<EngineEvaluation | null>(null);
@@ -122,12 +123,13 @@ export default function EngineView({ theme }: EngineViewProps) {
     >
       {/* Header — hidden during active interview (EngineInterview has its own) */}
       {screen !== "landing" && screen !== "active" && (
-        <div className="sticky top-0 z-50 border-b border-white/8 bg-[#080710]/90 backdrop-blur-xl">
+        <div className="sticky top-0 z-50 border-b backdrop-blur-xl" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb", background: isDark ? "rgba(8,7,16,0.9)" : "rgba(255,255,255,0.95)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleReset}
-                className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors"
+                className="w-8 h-8 rounded-xl border flex items-center justify-center transition-colors"
+                style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb", color: isDark ? "#ffffff" : "#111827" }}
               >
                 <ArrowLeft size={14} />
               </button>
@@ -140,13 +142,14 @@ export default function EngineView({ theme }: EngineViewProps) {
             </div>
             <div className="flex items-center gap-2">
               {sessionId && (
-                <span className="text-[9px] px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">
+                <span className="text-[9px] px-2 py-1 rounded-lg border font-bold" style={{ background: isDark ? "rgba(16,185,129,0.1)" : "#ecfdf5", borderColor: isDark ? "rgba(16,185,129,0.2)" : "rgba(16,185,129,0.25)", color: isDark ? "#34d399" : "#059669" }}>
                   SESSION ACTIVE
                 </span>
               )}
               <button
                 onClick={() => setScreen("analytics")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-bold text-white/50 hover:bg-white/5 hover:text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all"
+                style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb", color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280" }}
               >
                 <BarChart3 size={12} /> Analytics
               </button>

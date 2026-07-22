@@ -66,7 +66,7 @@ interface EngineState {
 }
 
 const DEFAULT_CONFIG: EngineConfig = {
-  interviewType: "technical",
+  interviewType: "hr",
   targetRole: "Software Engineer",
   targetCompany: "",
   difficulty: "medium",

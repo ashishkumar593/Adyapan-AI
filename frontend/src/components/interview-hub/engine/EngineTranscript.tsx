@@ -108,14 +108,14 @@ export default function EngineTranscript({
   const isDark = theme === "dark";
   const c = useMemo(
     () => ({
-      bg: isDark ? "#080710" : "#f0f4ff",
-      surface: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-      border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-      borderLight: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)",
-      text: isDark ? "#ffffff" : "#0f172a",
-      textSec: isDark ? "rgba(255,255,255,0.65)" : "#475569",
-      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#94a3b8",
+      bg: isDark ? "#080710" : "#f9fafb",
+      surface: isDark ? "rgba(255,255,255,0.03)" : "#f3f4f6",
+      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb",
+      border: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#f3f4f6",
+      text: isDark ? "#ffffff" : "#111827",
+      textSec: isDark ? "rgba(255,255,255,0.65)" : "#4b5563",
+      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#9ca3af",
       amber: "#f59e0b",
       green: "#10b981",
       red: "#ef4444",
@@ -123,9 +123,9 @@ export default function EngineTranscript({
       cyan: "#06b6d4",
       blue: "#3b82f6",
       cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
-      aiBubble: isDark ? "rgba(139,92,246,0.08)" : "rgba(139,92,246,0.05)",
-      userBubble: isDark ? "rgba(6,182,212,0.08)" : "rgba(6,182,212,0.05)",
-      highlightGlow: isDark ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)",
+      aiBubble: isDark ? "rgba(139,92,246,0.08)" : "#f5f3ff",
+      userBubble: isDark ? "rgba(6,182,212,0.08)" : "#ecfeff",
+      highlightGlow: isDark ? "rgba(245,158,11,0.12)" : "#fffbeb",
     }),
     [isDark]
   );

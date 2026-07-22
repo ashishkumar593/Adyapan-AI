@@ -127,14 +127,14 @@ export default function EngineReport({
   const isDark = theme === "dark";
   const c = useMemo(
     () => ({
-      bg: isDark ? "#080710" : "#f8fafc",
-      surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
-      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
-      border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
-      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#cbd5e1",
-      text: isDark ? "#ffffff" : "#0f172a",
-      textSec: isDark ? "rgba(255,255,255,0.65)" : "#334155",
-      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#64748b",
+      bg: isDark ? "#080710" : "#f9fafb",
+      surface: isDark ? "rgba(255,255,255,0.03)" : "#f3f4f6",
+      surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb",
+      border: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#d1d5db",
+      text: isDark ? "#ffffff" : "#111827",
+      textSec: isDark ? "rgba(255,255,255,0.65)" : "#4b5563",
+      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#9ca3af",
       amber: "#f59e0b",
       green: "#10b981",
       red: "#ef4444",
@@ -158,7 +158,7 @@ export default function EngineReport({
       { label: "Leadership", value: evaluation.leadership, icon: Award },
       { label: "Role Fit", value: evaluation.roleFit, icon: Target },
     ];
-    if (config.interviewType === "technical" || config.interviewType === "coding" || config.interviewType === "system-design") {
+    if (config.interviewType === "system-design") {
       items.splice(1, 0, { label: "Technical", value: evaluation.technical, icon: Zap });
     }
     return items;

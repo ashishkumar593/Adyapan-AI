@@ -532,17 +532,20 @@ engineRouter.get("/analytics", async (req, res) => {
       where: { userId: req.user!.userId },
       include: {
         evaluations: { take: 1 },
-        messages: { select: { createdAt: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 200,
     });
 
     const completed = sessions.filter((s: any) => s.evaluations?.[0]);
 
-    const totalSessions = sessions.length;
-    const completedSessions = completed.length;
-    const avgScore = completed.length
+    const totalInterviews = completed.length;
+    const bestScore = completed.length
+      ? Math.max(
+          ...completed.map((s: any) => s.evaluations?.[0]?.overallScore || 0),
+        )
+      : 0;
+    const averageScore = completed.length
       ? Math.round(
           completed.reduce(
             (a: number, s: any) => a + (s.evaluations?.[0]?.overallScore || 0),
@@ -550,14 +553,64 @@ engineRouter.get("/analytics", async (req, res) => {
           ) / completed.length,
         )
       : 0;
-    const bestScore = completed.length
-      ? Math.max(
-          ...completed.map((s: any) => s.evaluations?.[0]?.overallScore || 0),
-        )
-      : 0;
+    const totalHours = Math.round(
+      sessions.reduce((a: number, s: any) => a + (s.durationMinutes || 0), 0) / 60,
+    );
 
+    // Score trend per session (newest last)
+    const scoreTrend = [...completed]
+      .reverse()
+      .map((s: any) => ({
+        date: s.createdAt?.toISOString?.() || String(s.createdAt),
+        score: s.evaluations?.[0]?.overallScore || 0,
+      }));
+
+    // Skill averages from evaluations
+    const skillKeys = ["communication", "technical", "confidence", "problemSolving", "leadership", "roleFit"] as const;
+    const skillSums: Record<string, number> = {};
+    const skillCounts: Record<string, number> = {};
+    for (const key of skillKeys) {
+      skillSums[key] = 0;
+      skillCounts[key] = 0;
+    }
+    for (const s of completed) {
+      const ev = s.evaluations?.[0];
+      if (!ev) continue;
+      for (const key of skillKeys) {
+        const val = ev[key];
+        if (typeof val === "number") {
+          skillSums[key] += val;
+          skillCounts[key] += 1;
+        }
+      }
+    }
+    const skillAverages = {
+      communication: skillCounts.communication ? Math.round(skillSums.communication / skillCounts.communication) : 0,
+      technical: skillCounts.technical ? Math.round(skillSums.technical / skillCounts.technical) : 0,
+      confidence: skillCounts.confidence ? Math.round(skillSums.confidence / skillCounts.confidence) : 0,
+      problemSolving: skillCounts.problemSolving ? Math.round(skillSums.problemSolving / skillCounts.problemSolving) : 0,
+      leadership: skillCounts.leadership ? Math.round(skillSums.leadership / skillCounts.leadership) : 0,
+      roleFit: skillCounts.roleFit ? Math.round(skillSums.roleFit / skillCounts.roleFit) : 0,
+    };
+
+    // Type breakdown from all completed sessions
+    const typeMap = new Map<string, { count: number; totalScore: number }>();
+    for (const s of completed) {
+      const t = s.type || "general";
+      const entry = typeMap.get(t) || { count: 0, totalScore: 0 };
+      entry.count += 1;
+      entry.totalScore += s.evaluations?.[0]?.overallScore || 0;
+      typeMap.set(t, entry);
+    }
+    const typeBreakdown = Array.from(typeMap.entries()).map(([type, data]) => ({
+      type,
+      count: data.count,
+      avgScore: Math.round(data.totalScore / data.count),
+    }));
+
+    // Weekly activity (last 8 weeks)
     const now = new Date();
-    const weeklyTrend = Array.from({ length: 8 }, (_, i) => {
+    const weeklyActivity = Array.from({ length: 8 }, (_, i) => {
       const weekStart = new Date(now);
       weekStart.setDate(now.getDate() - 7 * (7 - i));
       const weekEnd = new Date(weekStart);
@@ -571,98 +624,61 @@ engineRouter.get("/analytics", async (req, res) => {
       const weekAvg = weekSessions.length
         ? Math.round(
             weekSessions.reduce(
-              (a: number, s: any) =>
-                a + (s.evaluations?.[0]?.overallScore || 0),
+              (a: number, s: any) => a + (s.evaluations?.[0]?.overallScore || 0),
               0,
             ) / weekSessions.length,
           )
-        : null;
+        : 0;
 
       return {
         week: `W${i + 1}`,
-        date: weekStart.toISOString().split("T")[0],
-        sessions: weekSessions.length,
+        count: weekSessions.length,
         avgScore: weekAvg,
       };
     });
 
-    const typeBreakdown = ["technical", "behavioral", "general"].map((type) => {
-      const typeSessions = completed.filter((s: any) => s.type === type);
-      return {
-        type,
-        count: typeSessions.length,
-        avgScore: typeSessions.length
-          ? Math.round(
-              typeSessions.reduce(
-                (a: number, s: any) =>
-                  a + (s.evaluations?.[0]?.overallScore || 0),
-                0,
-              ) / typeSessions.length,
-            )
-          : 0,
-      };
-    });
-
-    const roleMap = new Map<string, { count: number; totalScore: number }>();
+    // Score distribution
+    const scoreDistribution = { excellent: 0, good: 0, average: 0, needsWork: 0 };
     for (const s of completed) {
-      const r = s.role || "Unknown";
-      const entry = roleMap.get(r) || { count: 0, totalScore: 0 };
-      entry.count += 1;
-      entry.totalScore += s.evaluations?.[0]?.overallScore || 0;
-      roleMap.set(r, entry);
+      const score = s.evaluations?.[0]?.overallScore || 0;
+      if (score >= 80) scoreDistribution.excellent += 1;
+      else if (score >= 60) scoreDistribution.good += 1;
+      else if (score >= 40) scoreDistribution.average += 1;
+      else scoreDistribution.needsWork += 1;
     }
-    const roleBreakdown = Array.from(roleMap.entries()).map(([role, data]) => ({
-      role,
-      count: data.count,
-      avgScore: Math.round(data.totalScore / data.count),
-    }));
 
-    const firstHalf = completed.slice(
-      Math.floor(completed.length / 2),
-    );
-    const secondHalf = completed.slice(
-      0,
-      Math.floor(completed.length / 2),
-    );
-    const firstAvg = firstHalf.length
-      ? Math.round(
-          firstHalf.reduce(
-            (a: number, s: any) =>
-              a + (s.evaluations?.[0]?.overallScore || 0),
-            0,
-          ) / firstHalf.length,
-        )
-      : 0;
-    const secondAvg = secondHalf.length
-      ? Math.round(
-          secondHalf.reduce(
-            (a: number, s: any) =>
-              a + (s.evaluations?.[0]?.overallScore || 0),
-            0,
-          ) / secondHalf.length,
-        )
-      : 0;
-    const improvementMetrics = {
-      recentAvgScore: secondAvg,
-      olderAvgScore: firstAvg,
-      improvement: secondAvg - firstAvg,
-      totalPracticeHours: Math.round(
-        sessions.reduce((a: number, s: any) => a + (s.durationMinutes || 0), 0) / 60,
-      ),
-    };
+    // Generate insights
+    const insights: string[] = [];
+    if (totalInterviews === 0) {
+      insights.push("Start your first interview to see personalized insights.");
+    } else {
+      if (averageScore >= 75) insights.push("Your scores are strong — keep refining edge cases.");
+      else if (averageScore >= 50) insights.push("You're making solid progress. Focus on your weaker skill areas.");
+      else insights.push("Practice consistently to improve your scores.");
+
+      if (skillAverages.communication < 50) insights.push("Work on articulating your thoughts more clearly.");
+      if (skillAverages.technical < 50) insights.push("Brush up on core technical fundamentals.");
+      if (skillAverages.problemSolving < 50) insights.push("Practice breaking down problems step by step.");
+
+      const recentSessions = scoreTrend.slice(-5);
+      if (recentSessions.length >= 2) {
+        const recentAvg = recentSessions.reduce((a, b) => a + b.score, 0) / recentSessions.length;
+        if (recentAvg > averageScore) insights.push("Your recent trend is improving — great momentum!");
+        else if (recentAvg < averageScore - 10) insights.push("Scores dipped recently. Review missed topics.");
+      }
+    }
 
     res.json({
-      success: true,
-      analytics: {
-        totalSessions,
-        completedSessions,
-        avgScore,
-        bestScore,
-        weeklyTrend,
-        typeBreakdown,
-        roleBreakdown,
-        improvementMetrics,
-      },
+      totalInterviews,
+      bestScore,
+      averageScore,
+      totalHours,
+      scoreTrend,
+      skillAverages,
+      typeBreakdown,
+      weeklyActivity,
+      scoreDistribution,
+      insights,
     });
   } catch (error) {
     handleRouteError(res, error, "Engine.analytics", "Failed to fetch analytics");

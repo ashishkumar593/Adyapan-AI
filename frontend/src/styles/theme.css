@@ -6,3 +6,12 @@
   --adyapan-teal: #0f766e;
   --adyapan-amber: #b7791f;
 }
+
+[data-theme="light"] {
+  --adyapan-ink: #111827;
+  --adyapan-muted: #6b7280;
+  --adyapan-line: #e5e7eb;
+  --adyapan-surface: #ffffff;
+  --adyapan-teal: #0f766e;
+  --adyapan-amber: #d97706;
+}

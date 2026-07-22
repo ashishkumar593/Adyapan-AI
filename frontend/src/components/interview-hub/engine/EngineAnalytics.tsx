@@ -22,8 +22,8 @@ import { Line, Radar, Bar, Doughnut } from "react-chartjs-2";
 import {
   ArrowLeft, TrendingUp, TrendingDown, BarChart3, Award, Clock,
   Flame, Target, Sparkles, ChevronUp, ChevronDown, ArrowRight,
-  Loader2, AlertTriangle, Brain, Zap, Users, Briefcase, Code,
-  Terminal, LayoutGrid, Crown, GraduationCap, School, Calendar,
+  Loader2, AlertTriangle, Brain, Zap, Users, Briefcase,
+  LayoutGrid, Crown, GraduationCap, School, Calendar,
 } from "lucide-react";
 
 ChartJS.register(
@@ -100,8 +100,6 @@ const cardVariants = {
 
 const TYPE_COLORS: Record<string, string> = {
   hr: "#f59e0b",
-  technical: "#06b6d4",
-  coding: "#8b5cf6",
   "system-design": "#3b82f6",
   behavioral: "#10b981",
   managerial: "#ef4444",
@@ -113,8 +111,6 @@ const TYPE_COLORS: Record<string, string> = {
 
 const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   hr: Users,
-  technical: Code,
-  coding: Terminal,
   "system-design": LayoutGrid,
   behavioral: Briefcase,
   managerial: Crown,
@@ -136,14 +132,14 @@ export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnal
   const isDark = theme === "dark";
 
   const c = {
-    bg: isDark ? "#080710" : "#f8fafc",
-    surface: isDark ? "rgba(255,255,255,0.03)" : "#f1f5f9",
-    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0",
-    border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
-    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#cbd5e1",
-    text: isDark ? "#ffffff" : "#0f172a",
-    textSec: isDark ? "rgba(255,255,255,0.7)" : "#334155",
-    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#64748b",
+    bg: isDark ? "#080710" : "#f9fafb",
+    surface: isDark ? "rgba(255,255,255,0.03)" : "#f3f4f6",
+    surfaceHover: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb",
+    border: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+    borderHover: isDark ? "rgba(255,255,255,0.15)" : "#d1d5db",
+    text: isDark ? "#ffffff" : "#111827",
+    textSec: isDark ? "rgba(255,255,255,0.7)" : "#4b5563",
+    textMuted: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af",
     primary: "#f59e0b",
     primaryDark: "#d97706",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "#ffffff",
@@ -251,7 +247,7 @@ export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnal
           pointRadius: 4,
           pointHoverRadius: 6,
           pointBackgroundColor: "#f59e0b",
-          pointBorderColor: isDark ? "#080710" : "#f0f4ff",
+           pointBorderColor: isDark ? "#080710" : "#f9fafb",
           pointBorderWidth: 2,
           borderWidth: 2.5,
         },
@@ -272,7 +268,7 @@ export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnal
           borderColor: "#f59e0b",
           borderWidth: 2,
           pointBackgroundColor: "#f59e0b",
-          pointBorderColor: isDark ? "#080710" : "#f0f4ff",
+           pointBorderColor: isDark ? "#080710" : "#f9fafb",
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6,
@@ -367,8 +363,8 @@ export default function EngineAnalytics({ onBack, onStartInterview }: EngineAnal
 
   const chartTooltipStyle = {
     backgroundColor: isDark ? "#1a1a2e" : "#ffffff",
-    titleColor: isDark ? "#ffffff" : "#0f172a",
-    bodyColor: isDark ? "rgba(255,255,255,0.8)" : "#475569",
+    titleColor: isDark ? "#ffffff" : "#111827",
+    bodyColor: isDark ? "rgba(255,255,255,0.8)" : "#4b5563",
     borderColor: isDark ? "rgba(245,158,11,0.3)" : "rgba(245,158,11,0.4)",
     borderWidth: 1,
     cornerRadius: 10,

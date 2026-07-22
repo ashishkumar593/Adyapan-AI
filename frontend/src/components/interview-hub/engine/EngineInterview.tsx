@@ -59,23 +59,11 @@ const PHASE_LABELS: Record<InterviewPhase, string> = {
 };
 
 const PHASE_TIPS: Record<string, string[]> = {
-  technical: [
-    "Think aloud when solving problems",
-    "Clarify requirements before diving in",
-    "Consider edge cases and trade-offs",
-    "Explain your thought process step by step",
-  ],
   hr: [
     "Use the STAR method for behavioral questions",
     "Be specific with examples from your experience",
     "Show enthusiasm for the role",
     "Ask thoughtful questions at the end",
-  ],
-  coding: [
-    "Start with a brute force approach, then optimize",
-    "Talk through your coding decisions",
-    "Test your solution with examples",
-    "Consider time and space complexity",
   ],
   behavioral: [
     "Structure answers with Situation, Task, Action, Result",
@@ -676,14 +664,14 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
   // ── Color palette ──
   const c = useMemo(
     () => ({
-      bg: isDark ? "#080710" : "#f8fafc",
-      surface: isDark ? "rgba(255,255,255,0.04)" : "#f1f5f9",
-      surfaceHover: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
-      border: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
-      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#cbd5e1",
-      text: isDark ? "#ffffff" : "#0f172a",
-      textSec: isDark ? "rgba(255,255,255,0.65)" : "#334155",
-      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#64748b",
+      bg: isDark ? "#080710" : "#f9fafb",
+      surface: isDark ? "rgba(255,255,255,0.04)" : "#f3f4f6",
+      surfaceHover: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+      border: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+      borderLight: isDark ? "rgba(255,255,255,0.04)" : "#f3f4f6",
+      text: isDark ? "#ffffff" : "#111827",
+      textSec: isDark ? "rgba(255,255,255,0.65)" : "#4b5563",
+      textMuted: isDark ? "rgba(255,255,255,0.35)" : "#9ca3af",
       primary: "#8b5cf6",
       primaryLight: "#a78bfa",
       primaryDark: "#6d28d9",
@@ -696,11 +684,11 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
       cyan: "#06b6d4",
       cardBg: isDark ? "rgba(255,255,255,0.04)" : "#ffffff",
       inputBg: isDark ? "rgba(0,0,0,0.5)" : "#ffffff",
-      aiBubble: isDark ? "rgba(139,92,246,0.1)" : "#f3e8ff",
+      aiBubble: isDark ? "rgba(139,92,246,0.1)" : "#f5f3ff",
       aiBubbleText: isDark ? "#ffffff" : "#6b21a8",
       userBubble: isDark ? "rgba(59,130,246,0.12)" : "#eff6ff",
       userBubbleText: isDark ? "#ffffff" : "#1e40af",
-      systemBubble: isDark ? "rgba(255,255,255,0.05)" : "#f1f5f9",
+      systemBubble: isDark ? "rgba(255,255,255,0.05)" : "#f3f4f6",
       gradient1: "linear-gradient(135deg, #6d28d9 0%, #3b82f6 100%)",
       gradient2: "linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%)",
     }),
@@ -723,7 +711,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
         style={{
           background: isDark
             ? "rgba(8,7,16,0.95)"
-            : "rgba(240,244,255,0.95)",
+            : "rgba(249,250,251,0.95)",
           borderBottomColor: c.border,
           backdropFilter: "blur(20px)",
         }}
@@ -2013,7 +2001,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
       <div
         className="lg:hidden flex-shrink-0 flex items-center justify-around px-4 py-2 border-t"
         style={{
-          background: isDark ? "rgba(8,7,16,0.95)" : "rgba(240,244,255,0.95)",
+          background: isDark ? "rgba(8,7,16,0.95)" : "rgba(249,250,251,0.95)",
           borderTopColor: c.border,
           backdropFilter: "blur(20px)",
         }}

@@ -135,7 +135,7 @@ const EngineLoading: React.FC<EngineLoadingProps> = ({ config, onComplete }) => 
       className="fixed inset-0 flex items-center justify-center overflow-hidden"
       style={{
         fontFamily: "'Outfit', sans-serif",
-        background: isDark ? "#080710" : "#f5f3ff",
+        background: isDark ? "#080710" : "#f9fafb",
       }}
     >
       {/* Ambient glow orbs */}
