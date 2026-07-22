@@ -116,7 +116,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
     setIsGenerating(true);
     setCurrentStep(5);
     setGeneratingProgress(10);
-    setGeneratingMessage("Connecting to OpenRouter AI Engine...");
+    setGeneratingMessage("Connecting to AI Research Engine...");
 
     try {
       const config = {
@@ -169,7 +169,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       {/* Wizard Header Progress Bar */}
-      <div className="p-4 rounded-2xl border" style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#ffffff", borderColor: c.border }}>
+      <div className="p-4 rounded-2xl border" style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#ffffff", borderColor: c.isDark ? "rgba(245,158,11,0.2)" : c.border }}>
         <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
           {stepsHeader.map((sLabel, idx) => {
             const stepNum = idx + 1;
@@ -181,9 +181,9 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                 onClick={() => isCompleted && setCurrentStep(stepNum)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                    ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
                     : isCompleted
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                     : "text-gray-400 bg-white/5"
                 }`}
               >
@@ -195,8 +195,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         </div>
       </div>
 
-      {/* Step Content */}
-      <div className="p-6 md:p-8 rounded-2xl border space-y-6" style={{ background: c.isDark ? "#0f172a" : "#ffffff", borderColor: c.border }}>
+      {/* Step Content Container */}
+      <div className="p-6 md:p-8 rounded-2xl border space-y-6" style={{ background: c.isDark ? "#0f172a" : "#ffffff", borderColor: c.isDark ? "rgba(245,158,11,0.2)" : c.border }}>
         {/* Step 1: Details */}
         {currentStep === 1 && (
           <div className="space-y-6">
@@ -259,7 +259,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="flex justify-between pt-4">
               <button onClick={onCancel} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Cancel</button>
-              <button onClick={() => setCurrentStep(2)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(2)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Config <ChevronRight size={14} />
               </button>
             </div>
@@ -333,7 +333,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                   { label: "Math Equations", state: includeEquations, set: setIncludeEquations },
                 ].map(item => (
                   <label key={item.label} className="p-3 rounded-xl border flex items-center gap-2 cursor-pointer bg-white/5" style={{ borderColor: c.border }}>
-                    <input type="checkbox" checked={item.state} onChange={e => item.set(e.target.checked)} className="rounded text-blue-600" />
+                    <input type="checkbox" checked={item.state} onChange={e => item.set(e.target.checked)} className="rounded text-amber-500 focus:ring-amber-500" />
                     <span className="text-xs font-semibold" style={{ color: c.text }}>{item.label}</span>
                   </label>
                 ))}
@@ -342,7 +342,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(1)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={() => setCurrentStep(3)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(3)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Literature <ChevronRight size={14} />
               </button>
             </div>
@@ -367,17 +367,17 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                 className="flex-1 p-3 rounded-xl text-xs outline-none"
                 style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
               />
-              <button onClick={handleFetchSources} disabled={searchingSources} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white">
+              <button onClick={handleFetchSources} disabled={searchingSources} className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950">
                 {searchingSources ? "Searching..." : "Search arXiv"}
               </button>
             </div>
 
             {/* Upload PDF Section */}
-            <div className="p-4 rounded-xl border border-dashed text-center space-y-2" style={{ borderColor: c.border, background: "rgba(59,130,246,0.02)" }}>
-              <Upload size={24} className="mx-auto text-blue-400" />
+            <div className="p-4 rounded-xl border border-dashed text-center space-y-2" style={{ borderColor: "rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.02)" }}>
+              <Upload size={24} className="mx-auto text-amber-500" />
               <div className="text-xs font-semibold" style={{ color: c.text }}>Upload PDF Reference Papers</div>
               <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" id="pdf-upload" />
-              <label htmlFor="pdf-upload" className="inline-block px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs cursor-pointer">
+              <label htmlFor="pdf-upload" className="inline-block px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer">
                 Select PDF File
               </label>
             </div>
@@ -385,10 +385,10 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
             {/* Results Grid */}
             {searchedSources.length > 0 && (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                <div className="text-xs font-bold text-gray-400 uppercase">Fetched Citations ({searchedSources.length})</div>
+                <div className="text-xs font-bold text-amber-500 uppercase">Fetched Citations ({searchedSources.length})</div>
                 {searchedSources.slice(0, 5).map((s, i) => (
                   <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs space-y-1">
-                    <div className="font-bold text-blue-400 truncate">{s.title}</div>
+                    <div className="font-bold text-amber-400 truncate">{s.title}</div>
                     <div className="text-gray-400 text-[11px] truncate">{s.authors?.join(", ")} • {s.year}</div>
                   </div>
                 ))}
@@ -397,7 +397,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(2)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={() => setCurrentStep(4)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(4)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Outline <ChevronRight size={14} />
               </button>
             </div>
@@ -419,14 +419,14 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                     <div className="text-xs font-bold" style={{ color: c.text }}>{sec.title}</div>
                     <div className="text-[11px]" style={{ color: c.textMuted }}>{sec.desc}</div>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">Step 4.{idx + 1}</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">Step 4.{idx + 1}</span>
                 </div>
               ))}
             </div>
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(3)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={handleStartGeneration} className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-xs text-white flex items-center gap-2 shadow-lg shadow-emerald-600/20">
+              <button onClick={handleStartGeneration} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-black text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/25">
                 <Play size={14} /> Generate Full Paper
               </button>
             </div>
@@ -436,7 +436,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         {/* Step 5: Generation Progress */}
         {currentStep === 5 && (
           <div className="py-12 text-center space-y-6 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center mx-auto animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto animate-pulse">
               <Sparkles size={32} />
             </div>
 
@@ -446,10 +446,10 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
             </div>
 
             <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${generatingProgress}%` }} />
+              <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${generatingProgress}%` }} />
             </div>
 
-            <p className="text-[11px] text-gray-400 font-mono">Template: {template} • Citation: {citationStyle}</p>
+            <p className="text-[11px] text-amber-400 font-mono">Template: {template} • Citation: {citationStyle}</p>
           </div>
         )}
 
@@ -461,7 +461,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
               <p className="text-xs" style={{ color: c.textMuted }}>Apply AI tools for academic tone, grammar, and similarity reduction.</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-2">
               <CheckCircle2 size={18} /> Paper content generated successfully! Refine using AI tools below:
             </div>
 
@@ -474,8 +474,8 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                 { id: "expand", name: "Expand Details", desc: "Add methodological depth" },
                 { id: "shorten", name: "Condense", desc: "Make concise for length limit" },
               ].map(tool => (
-                <div key={tool.id} className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
-                  <div className="text-xs font-bold text-blue-400">{tool.name}</div>
+                <div key={tool.id} className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1 hover:border-amber-500/40 transition-colors">
+                  <div className="text-xs font-bold text-amber-400">{tool.name}</div>
                   <div className="text-[10px] text-gray-400">{tool.desc}</div>
                 </div>
               ))}
@@ -483,7 +483,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(4)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={() => setCurrentStep(7)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(7)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Visuals <ChevronRight size={14} />
               </button>
             </div>
@@ -498,14 +498,14 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
               <p className="text-xs" style={{ color: c.textMuted }}>Review automatically generated architecture diagrams and equations.</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs border border-slate-800 space-y-2">
+            <div className="p-4 rounded-xl bg-slate-950 text-amber-400 font-mono text-xs border border-slate-800 space-y-2">
               <div className="text-gray-400">Generated System Architecture (Mermaid)</div>
               <pre>{`graph TD\n  Dataset[(Research Dataset)] --> Preprocess[Preprocessing Module]\n  Preprocess --> Model[Proposed Multi-Agent Engine]\n  Model --> Metrics[Evaluation Metrics]\n  Metrics --> Result[Experimental Result]`}</pre>
             </div>
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(6)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={() => setCurrentStep(8)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(8)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Review <ChevronRight size={14} />
               </button>
             </div>
@@ -522,11 +522,11 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-blue-400">{generatedPaper?.metadata?.wordCount || 4200}</div>
+                <div className="text-lg font-extrabold text-amber-400">{generatedPaper?.metadata?.wordCount || 4200}</div>
                 <div className="text-[10px] text-gray-400">Total Word Count</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-emerald-400">{template}</div>
+                <div className="text-lg font-extrabold text-amber-400">{template}</div>
                 <div className="text-[10px] text-gray-400">Publication Format</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
@@ -534,14 +534,14 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                 <div className="text-[10px] text-gray-400">Citations Included</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-purple-400">100%</div>
+                <div className="text-lg font-extrabold text-amber-400">100%</div>
                 <div className="text-[10px] text-gray-400">Format Validated</div>
               </div>
             </div>
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setCurrentStep(7)} className="px-4 py-2 rounded-xl bg-white/10 font-semibold text-xs text-white">Back</button>
-              <button onClick={() => setCurrentStep(9)} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white flex items-center gap-2">
+              <button onClick={() => setCurrentStep(9)} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-xs text-slate-950 flex items-center gap-2 shadow-lg shadow-amber-500/20">
                 Continue to Export <ChevronRight size={14} />
               </button>
             </div>
@@ -551,7 +551,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
         {/* Step 9: Export */}
         {currentStep === 9 && (
           <div className="space-y-6 text-center max-w-lg mx-auto py-6">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
               <Download size={28} />
             </div>
 
@@ -561,16 +561,16 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <button onClick={() => handleExport("pdf")} className="p-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex flex-col items-center gap-2 shadow-lg shadow-blue-500/20">
+              <button onClick={() => handleExport("pdf")} className="p-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex flex-col items-center gap-2 shadow-lg shadow-amber-500/20">
                 <Download size={20} /> Export PDF
               </button>
-              <button onClick={() => handleExport("latex")} className="p-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex flex-col items-center gap-2 shadow-lg shadow-purple-600/20">
+              <button onClick={() => handleExport("latex")} className="p-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs flex flex-col items-center gap-2 shadow-lg shadow-amber-600/20">
                 <Code2 size={20} /> Export LaTeX (.tex)
               </button>
-              <button onClick={() => handleExport("docx")} className="p-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex flex-col items-center gap-2 shadow-lg shadow-emerald-600/20">
+              <button onClick={() => handleExport("docx")} className="p-4 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-black text-xs flex flex-col items-center gap-2 shadow-lg shadow-amber-700/20">
                 <FileText size={20} /> Export DOCX
               </button>
-              <button onClick={() => handleExport("markdown")} className="p-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex flex-col items-center gap-2">
+              <button onClick={() => handleExport("markdown")} className="p-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex flex-col items-center gap-2">
                 <FileCode size={20} /> Export Markdown (.md)
               </button>
             </div>

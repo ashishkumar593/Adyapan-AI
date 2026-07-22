@@ -34,6 +34,9 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
     border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
     divider: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
     inputBg: isDark ? "rgba(0,0,0,0.35)" : "#f1f5f9",
+    amber: "#f59e0b",
+    amberGlow: "rgba(245,158,11,0.2)",
+    amberGradient: "linear-gradient(135deg, #f59e0b, #d97706)",
   };
 
   const [viewState, setViewState] = useState<ViewState>("dashboard");
@@ -58,7 +61,6 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
         setDrafts(res.data.drafts || []);
       }
     } catch {
-      // Fallback stats
       setDashboardStats({
         totalPapers: 12,
         savedDrafts: 4,
@@ -87,24 +89,30 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewState("dashboard")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              viewState === "dashboard" ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white/5 text-gray-400 hover:text-white"
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+              viewState === "dashboard"
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-white/5 text-gray-400 hover:text-white"
             }`}
           >
             Dashboard
           </button>
           <button
             onClick={() => setViewState("wizard")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              viewState === "wizard" ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white/5 text-gray-400 hover:text-white"
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+              viewState === "wizard"
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-white/5 text-gray-400 hover:text-white"
             }`}
           >
             9-Step Paper Wizard
           </button>
           <button
             onClick={() => setViewState("plagiarism")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              viewState === "plagiarism" ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white/5 text-gray-400 hover:text-white"
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+              viewState === "plagiarism"
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-white/5 text-gray-400 hover:text-white"
             }`}
           >
             Plagiarism Checker
@@ -113,9 +121,9 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
 
         <button
           onClick={() => setIsTemplateModalOpen(true)}
-          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 flex items-center gap-1.5"
+          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 flex items-center gap-1.5"
         >
-          Template: <span className="text-blue-400">{selectedTemplate}</span>
+          Template: <span className="text-amber-300 font-extrabold">{selectedTemplate}</span>
         </button>
       </div>
 

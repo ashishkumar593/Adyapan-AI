@@ -58,54 +58,76 @@ export function TemplateGalleryModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-5xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl"
-          style={{ background: c.isDark ? "#0f172a" : "#ffffff", border: `1px solid ${c.border}` }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          className="w-full max-w-5xl max-h-[85vh] my-auto rounded-2xl flex flex-col overflow-hidden shadow-2xl border"
+          style={{
+            background: c.isDark ? "#0f172a" : "#ffffff",
+            borderColor: c.isDark ? "rgba(245,158,11,0.3)" : "rgba(245,158,11,0.3)",
+            boxShadow: c.isDark ? "0 25px 50px -12px rgba(0, 0, 0, 0.7)" : "0 20px 40px -15px rgba(245, 158, 11, 0.15)",
+          }}
         >
           {/* Modal Header */}
-          <div className="p-5 flex items-center justify-between" style={{ borderBottom: `1px solid ${c.divider}` }}>
+          <div className="p-5 flex items-center justify-between shrink-0" style={{ borderBottom: `1px solid ${c.divider}`, background: c.isDark ? "rgba(255,255,255,0.02)" : "rgba(245,158,11,0.03)" }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center justify-center shrink-0">
                 <Layers size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold" style={{ color: c.text }}>Academic Publication Template Gallery</h2>
-                <p className="text-xs" style={{ color: c.textMuted }}>Select a publication format. Content renders dynamically without duplication.</p>
+                <h2 className="text-lg font-black tracking-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
+                  Academic Publication Template Gallery
+                </h2>
+                <p className="text-xs" style={{ color: c.textMuted }}>
+                  Select a publication format. Universal Research JSON renders dynamically with zero content duplication.
+                </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl transition-colors"
+              style={{
+                background: c.isDark ? "rgba(255,255,255,0.05)" : "#f1f5f9",
+                color: c.textMuted,
+              }}
+            >
               <X size={20} />
             </button>
           </div>
 
           {/* Filters Bar */}
-          <div className="p-4 flex flex-col md:flex-row gap-3 items-center justify-between" style={{ borderBottom: `1px solid ${c.divider}` }}>
+          <div className="p-4 flex flex-col md:flex-row gap-3 items-center justify-between shrink-0" style={{ borderBottom: `1px solid ${c.divider}`, background: c.isDark ? "rgba(0,0,0,0.2)" : "#f8fafc" }}>
             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                    categoryFilter === cat ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white/5 text-gray-400 hover:bg-white/10"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+              {categories.map(cat => {
+                const isActive = categoryFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
+                      isActive
+                        ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                        : c.isDark
+                        ? "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                        : "bg-slate-200/70 text-slate-700 hover:bg-slate-300"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="relative w-full md:w-64">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
               <input
                 type="text"
                 placeholder="Search templates..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg text-xs outline-none"
+                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs outline-none font-medium"
                 style={{ background: c.inputBg, color: c.text, border: `1px solid ${c.border}` }}
               />
             </div>
@@ -118,39 +140,46 @@ export function TemplateGalleryModal({
               return (
                 <div
                   key={t.id}
-                  className={`p-4 rounded-xl flex flex-col justify-between transition-all border ${
-                    isSelected ? "border-blue-500 bg-blue-500/5 shadow-lg shadow-blue-500/10" : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                  className={`p-4 rounded-2xl flex flex-col justify-between transition-all border ${
+                    isSelected
+                      ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10"
+                      : c.isDark
+                      ? "border-white/10 hover:border-amber-500/40 bg-white/[0.02]"
+                      : "border-slate-200 hover:border-amber-500/50 bg-slate-50/50 hover:bg-amber-500/[0.03]"
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/15 text-blue-400">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                         {t.category}
                       </span>
-                      <span className="text-[10px] text-gray-400 font-mono">
+                      <span className="text-[10px] font-mono font-bold" style={{ color: c.textMuted }}>
                         {t.columns === 2 ? "2 Columns" : "Single Column"}
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold mb-1" style={{ color: c.text }}>{t.name}</h3>
-                    <p className="text-xs line-clamp-2 mb-4" style={{ color: c.textMuted }}>{t.description}</p>
+                    <h3 className="text-sm font-extrabold mb-1" style={{ color: c.text }}>{t.name}</h3>
+                    <p className="text-xs line-clamp-2 mb-4 leading-relaxed" style={{ color: c.textMuted }}>{t.description}</p>
                   </div>
 
                   <div className="pt-3 flex items-center gap-2" style={{ borderTop: `1px solid ${c.divider}` }}>
                     <button
                       onClick={() => setPreviewTemplate(t)}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors bg-white/5 hover:bg-white/10"
-                      style={{ color: c.text }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
+                        c.isDark ? "bg-white/5 hover:bg-white/10 text-gray-200" : "bg-slate-200/80 hover:bg-slate-300 text-slate-800"
+                      }`}
                     >
-                      <Eye size={14} /> Preview
+                      <Eye size={14} className="text-amber-500" /> Preview
                     </button>
                     <button
                       onClick={() => {
                         onSelectTemplate(t.id);
                         onClose();
                       }}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-                        isSelected ? "bg-emerald-600 text-white" : "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20"
+                      className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
+                        isSelected
+                          ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                          : "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20"
                       }`}
                     >
                       {isSelected ? <><Check size={14} /> Active</> : "Use Template"}
@@ -162,26 +191,36 @@ export function TemplateGalleryModal({
           </div>
 
           {/* Modal Footer */}
-          <div className="p-4 flex items-center justify-between text-xs" style={{ borderTop: `1px solid ${c.divider}`, color: c.textMuted }}>
-            <span>Showing {filteredTemplates.length} publication templates</span>
-            <button onClick={onClose} className="px-4 py-1.5 rounded-lg bg-white/10 font-semibold text-white">Close</button>
+          <div className="p-4 flex items-center justify-between text-xs shrink-0" style={{ borderTop: `1px solid ${c.divider}`, background: c.isDark ? "rgba(0,0,0,0.2)" : "#f8fafc", color: c.textMuted }}>
+            <span className="font-semibold">Showing {filteredTemplates.length} publication templates</span>
+            <button
+              onClick={onClose}
+              className={`px-4 py-2 rounded-xl font-bold transition-colors ${
+                c.isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-slate-200 text-slate-800 hover:bg-slate-300"
+              }`}
+            >
+              Close
+            </button>
           </div>
         </motion.div>
       </div>
 
       {/* Mini Preview Drawer Modal */}
       {previewTemplate && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 p-6 text-white space-y-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-amber-500/40 p-6 text-white space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg">{previewTemplate.name} Layout Spec</h3>
-              <button onClick={() => setPreviewTemplate(null)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+              <h3 className="font-bold text-lg text-amber-400">{previewTemplate.name} Layout Spec</h3>
+              <button onClick={() => setPreviewTemplate(null)} className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10">
+                <X size={18} />
+              </button>
             </div>
+
             <div className="p-4 rounded-xl bg-slate-950 font-serif text-xs leading-relaxed space-y-2 border border-slate-800">
-              <div className="text-center font-bold text-base">{previewTemplate.name} Preview Document</div>
+              <div className="text-center font-bold text-base text-amber-300">{previewTemplate.name} Preview Document</div>
               <div className="text-center text-slate-400 text-[10px]">Author Name(s) • Institution Department</div>
-              <div className="p-3 bg-slate-900 rounded border border-slate-800 text-[11px] italic">
-                Abstract— Demonstrating instant visual re-layout using ${previewTemplate.name} template guidelines (${previewTemplate.columns} column format, ${previewTemplate.fontSize} font size).
+              <div className="p-3 bg-amber-500/10 border-l-4 border-amber-500 rounded text-[11px] italic text-slate-200">
+                Abstract— Demonstrating instant visual re-layout using {previewTemplate.name} template guidelines ({previewTemplate.columns} column format, {previewTemplate.fontSize} font size).
               </div>
               <div className={previewTemplate.columns === 2 ? "grid grid-cols-2 gap-4 pt-2" : "space-y-2 pt-2"}>
                 <div>
@@ -194,13 +233,14 @@ export function TemplateGalleryModal({
                 </div>
               </div>
             </div>
+
             <button
               onClick={() => {
                 onSelectTemplate(previewTemplate.id);
                 setPreviewTemplate(null);
                 onClose();
               }}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-sm text-white"
+              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 font-extrabold text-sm text-slate-950 shadow-lg shadow-amber-500/20"
             >
               Apply {previewTemplate.name} Template
             </button>

@@ -29,30 +29,31 @@ export function ResearchDashboard({
   c,
 }: ResearchDashboardProps) {
   const statCards = [
-    { label: "Total Papers", value: stats?.totalPapers || 12, icon: <FileText size={20} />, color: "#3b82f6" },
-    { label: "Saved Drafts", value: stats?.savedDrafts || 4, icon: <Clock size={20} />, color: "#f59e0b" },
-    { label: "AI Tokens Used", value: `${Math.round((stats?.aiTokensUsed || 148500) / 1000)}k`, icon: <Zap size={20} />, color: "#10b981" },
-    { label: "Research Progress", value: `${stats?.researchProgress || 84}%`, icon: <TrendingUp size={20} />, color: "#8b5cf6" },
+    { label: "Total Papers", value: stats?.totalPapers || 12, icon: <FileText size={20} />, color: "#f59e0b" },
+    { label: "Saved Drafts", value: stats?.savedDrafts || 4, icon: <Clock size={20} />, color: "#fbbf24" },
+    { label: "AI Tokens Used", value: `${Math.round((stats?.aiTokensUsed || 148500) / 1000)}k`, icon: <Zap size={20} />, color: "#d97706" },
+    { label: "Research Progress", value: `${stats?.researchProgress || 84}%`, icon: <TrendingUp size={20} />, color: "#f59e0b" },
   ];
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header Banner */}
+      {/* Gold & Amber Header Banner */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 md:p-8"
         style={{
           background: c.isDark
-            ? "linear-gradient(135deg, rgba(30,58,138,0.4) 0%, rgba(15,23,42,0.8) 100%)"
-            : "linear-gradient(135deg, rgba(239,246,255,1) 0%, rgba(219,234,254,0.6) 100%)",
-          border: `1px solid ${c.isDark ? "rgba(59,130,246,0.3)" : "rgba(147,197,253,0.5)"}`,
+            ? "linear-gradient(135deg, rgba(180,83,9,0.35) 0%, rgba(15,23,42,0.9) 100%)"
+            : "linear-gradient(135deg, rgba(254,243,199,1) 0%, rgba(253,230,138,0.6) 100%)",
+          border: `1px solid ${c.isDark ? "rgba(245,158,11,0.35)" : "rgba(245,158,11,0.5)"}`,
+          boxShadow: "0 10px 30px rgba(245,158,11,0.08)",
         }}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3" style={{ background: "rgba(59,130,246,0.15)", color: "#3b82f6" }}>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold mb-3" style={{ background: "rgba(245,158,11,0.2)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }}>
               <Sparkles size={14} /> Production-Ready Research Paper Engine
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: c.text, fontFamily: "'Outfit', sans-serif" }}>
               Research Paper AI Dashboard
             </h1>
             <p className="text-sm mt-1 max-w-xl" style={{ color: c.textMuted }}>
@@ -63,19 +64,19 @@ export function ResearchDashboard({
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={onOpenTemplateGallery}
-              className="px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
               style={{
-                background: c.isDark ? "rgba(255,255,255,0.08)" : "#ffffff",
+                background: c.isDark ? "rgba(255,255,255,0.06)" : "#ffffff",
                 color: c.text,
-                border: `1px solid ${c.border}`,
+                border: `1px solid ${c.isDark ? "rgba(245,158,11,0.2)" : c.border}`,
               }}
             >
-              <Layers size={16} /> Template Gallery
+              <Layers size={16} className="text-amber-500" /> Template Gallery
             </button>
             <button
               onClick={onStartNewPaper}
-              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:shadow-blue-500/20 flex items-center gap-2"
-              style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
+              className="px-5 py-2.5 rounded-xl font-black text-sm text-slate-950 transition-all shadow-lg hover:shadow-amber-500/25 flex items-center gap-2"
+              style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
             >
               <Plus size={18} /> Create New Paper
             </button>
@@ -91,21 +92,21 @@ export function ResearchDashboard({
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="p-4 rounded-xl flex items-center gap-4"
+            className="p-4 rounded-xl flex items-center gap-4 transition-all hover:border-amber-500/40"
             style={{
               background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-              border: `1px solid ${c.border}`,
+              border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
             }}
           >
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: `${sc.color}15`, color: sc.color }}
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
+              style={{ background: `${sc.color}18`, color: sc.color, borderColor: `${sc.color}30` }}
             >
               {sc.icon}
             </div>
             <div>
               <div className="text-2xl font-black" style={{ color: c.text }}>{sc.value}</div>
-              <div className="text-xs font-medium" style={{ color: c.textMuted }}>{sc.label}</div>
+              <div className="text-xs font-semibold" style={{ color: c.textMuted }}>{sc.label}</div>
             </div>
           </motion.div>
         ))}
@@ -116,10 +117,10 @@ export function ResearchDashboard({
         {/* Recent Papers */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold flex items-center gap-2" style={{ color: c.text }}>
-              <BookOpen size={18} className="text-blue-500" /> Recent Research Papers
+            <h2 className="text-base font-extrabold flex items-center gap-2" style={{ color: c.text }}>
+              <BookOpen size={18} className="text-amber-500" /> Recent Research Papers
             </h2>
-            <button onClick={onStartNewPaper} className="text-xs font-semibold text-blue-500 hover:underline flex items-center gap-1">
+            <button onClick={onStartNewPaper} className="text-xs font-bold text-amber-500 hover:underline flex items-center gap-1">
               New Wizard <ArrowRight size={12} />
             </button>
           </div>
@@ -134,18 +135,18 @@ export function ResearchDashboard({
               <div
                 key={p.id}
                 onClick={() => onSelectPaper(p)}
-                className="p-5 rounded-xl transition-all cursor-pointer hover:border-blue-500/50 flex flex-col justify-between"
+                className="p-5 rounded-xl transition-all cursor-pointer hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5 flex flex-col justify-between"
                 style={{
                   background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-                  border: `1px solid ${c.border}`,
+                  border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
                 }}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 uppercase tracking-wider">
                       {p.template || "IEEE"}
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${p.status === "PUBLISHED" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.status === "PUBLISHED" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
                       {p.status || "DRAFT"}
                     </span>
                   </div>
@@ -155,8 +156,8 @@ export function ResearchDashboard({
                 </div>
 
                 <div className="mt-4 pt-3 flex items-center justify-between text-xs" style={{ borderTop: `1px solid ${c.divider}`, color: c.textMuted }}>
-                  <span className="flex items-center gap-1"><Globe size={12} /> {p.domain || "CS"}</span>
-                  <span>{p.wordCount ? `${p.wordCount} words` : p.date}</span>
+                  <span className="flex items-center gap-1 font-medium"><Globe size={12} className="text-amber-500" /> {p.domain || "CS"}</span>
+                  <span className="font-mono text-[11px]">{p.wordCount ? `${p.wordCount} words` : p.date}</span>
                 </div>
               </div>
             ))}
@@ -170,10 +171,10 @@ export function ResearchDashboard({
             className="p-5 rounded-xl space-y-3"
             style={{
               background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-              border: `1px solid ${c.border}`,
+              border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
             }}
           >
-            <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.text }}>
+            <h3 className="text-sm font-extrabold flex items-center gap-2" style={{ color: c.text }}>
               <Clock size={16} className="text-amber-500" /> Active Drafts ({drafts.length || 2})
             </h3>
 
@@ -185,14 +186,14 @@ export function ResearchDashboard({
                 <div
                   key={d.id}
                   onClick={() => onSelectPaper(d)}
-                  className="p-3 rounded-lg flex items-center justify-between gap-3 cursor-pointer hover:bg-white/5 transition-colors"
-                  style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#f8fafc", border: `1px solid ${c.divider}` }}
+                  className="p-3 rounded-lg flex items-center justify-between gap-3 cursor-pointer hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-colors"
+                  style={{ background: c.isDark ? "rgba(255,255,255,0.02)" : "#f8fafc" }}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold truncate" style={{ color: c.text }}>{d.title}</div>
-                    <div className="text-[10px]" style={{ color: c.textMuted }}>{d.step || "Step 3"}</div>
+                    <div className="text-xs font-bold truncate" style={{ color: c.text }}>{d.title}</div>
+                    <div className="text-[10px] font-semibold text-amber-500">{d.step || "Step 3"}</div>
                   </div>
-                  <Edit3 size={14} className="text-blue-400 shrink-0" />
+                  <Edit3 size={14} className="text-amber-400 shrink-0" />
                 </div>
               ))}
             </div>
@@ -203,11 +204,11 @@ export function ResearchDashboard({
             className="p-5 rounded-xl space-y-3"
             style={{
               background: c.isDark ? "rgba(255,255,255,0.025)" : "#ffffff",
-              border: `1px solid ${c.border}`,
+              border: `1px solid ${c.isDark ? "rgba(245,158,11,0.15)" : c.border}`,
             }}
           >
-            <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: c.text }}>
-              <Download size={16} className="text-emerald-500" /> Recent Exports
+            <h3 className="text-sm font-extrabold flex items-center gap-2" style={{ color: c.text }}>
+              <Download size={16} className="text-amber-500" /> Recent Exports
             </h3>
 
             <div className="space-y-2 text-xs">
@@ -217,8 +218,8 @@ export function ResearchDashboard({
                 { name: "Financial Fraud.docx", format: "DOCX", template: "Springer", time: "Yesterday" },
               ].map((ex, i) => (
                 <div key={i} className="flex items-center justify-between py-1.5" style={{ borderBottom: i < 2 ? `1px solid ${c.divider}` : "none" }}>
-                  <div className="truncate max-w-[170px]" style={{ color: c.text }}>{ex.name}</div>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                  <div className="truncate max-w-[170px] font-medium" style={{ color: c.text }}>{ex.name}</div>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
                     {ex.format}
                   </span>
                 </div>
