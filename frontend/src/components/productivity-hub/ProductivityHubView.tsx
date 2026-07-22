@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import {
@@ -798,7 +799,7 @@ export function ProductivityHubView({ setView, activeModule = "productivity-hub"
                       }`}
                       style={{ borderColor: c.border }}
                     >
-                      <p className="whitespace-pre-line">{msg.content}</p>
+                      <p className="whitespace-pre-line">{stripMarkdown(msg.content)}</p>
                     </div>
                   </motion.div>
                 );

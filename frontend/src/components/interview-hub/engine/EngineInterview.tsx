@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
@@ -1160,7 +1161,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
                       }}
                     >
                       <Info className="w-3 h-3" />
-                      {msg.content}
+                      {stripMarkdown(msg.content)}
                     </div>
                   ) : (
                     <div
@@ -1205,7 +1206,7 @@ const EngineInterview: React.FC<EngineInterviewProps> = ({
                               msg.role === "interviewer" ? "6px" : undefined,
                           }}
                         >
-                          {msg.content}
+                          {stripMarkdown(msg.content)}
                         </div>
                         <div
                           className={`flex items-center gap-2 mt-1 ${

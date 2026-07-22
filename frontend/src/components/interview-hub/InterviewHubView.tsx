@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import {
@@ -1114,7 +1115,7 @@ export function InterviewHubView({ setView, activeModule = "interview-hub", them
                       <div className="text-[9px] uppercase tracking-wider font-bold mb-1 opacity-60">
                         {isInterviewer ? "AI Interviewer" : "You"}
                       </div>
-                      <p className="whitespace-pre-line">{m.content}</p>
+                      <p className="whitespace-pre-line">{stripMarkdown(m.content)}</p>
                     </div>
                   </div>
                 );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   FileText, Search, ChevronRight, BookOpen, Brain, Sparkles,
   Copy, FileDown, RefreshCw, X, Loader2, Cpu, BarChart2, Layers
@@ -432,7 +433,7 @@ export function DocumentReadyView({
                                     {sub.name}
                                   </h4>
                                   <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>
-                                    {sub.content}
+                                    {stripMarkdown(sub.content)}
                                   </p>
                                 </div>
                               ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Search, Calendar, DollarSign, Send, Sparkles, CheckCircle2,
   XCircle, Info, Heart, ArrowRight, Share2, Trash2, Plus, Clock,
@@ -949,7 +950,7 @@ export function PlacementHubView({ setView, activeModule = "placement-hub", them
                       }`}
                       style={{ borderColor: c.border }}
                     >
-                      <p className="whitespace-pre-line">{msg.content}</p>
+                      <p className="whitespace-pre-line">{stripMarkdown(msg.content)}</p>
                     </div>
                   </motion.div>
                 );

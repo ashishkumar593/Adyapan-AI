@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { api } from "@/services/api";
 import {
   ArrowLeft, FileText, Upload, Sparkles, RefreshCw, Check, Copy, Download,
@@ -1380,7 +1381,7 @@ export function CoverLetterView({ setView }: CoverLetterViewProps) {
               }}>{h.type}</span>
               <span className="text-[9px] font-bold" style={{ color: c.textMuted }}>{h.section}</span>
             </div>
-            <p className="text-[10px] leading-relaxed" style={{ color: c.textSec }}>{h.text}</p>
+            <p className="text-[10px] leading-relaxed" style={{ color: c.textSec }}>{stripMarkdown(h.text)}</p>
           </motion.div>
         ))}</div>
       ) : (

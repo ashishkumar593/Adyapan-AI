@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import CountUp from "react-countup";
 import {
   Sparkles, Brain, AlertTriangle, RotateCcw, Search, Zap,
@@ -383,7 +384,7 @@ function AnswerRow({ index, question, selected, correct, isCorrect, explanation 
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
           className="px-4 pb-4 space-y-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           {!isCorrect && <p className="text-[10px]" style={{ color: "#a1a1aa" }}>Correct answer: <span className="text-emerald-400 font-semibold">{correct}</span></p>}
-          <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa" }}>{explanation}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa" }}>{stripMarkdown(explanation)}</p>
         </motion.div>
       )}
     </motion.div>

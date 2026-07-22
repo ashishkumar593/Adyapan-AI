@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { api } from "@/services/api";
 import type { ResumeHubViewType } from "@/types/resume";
 import { useTheme } from "@/hooks/useTheme";
@@ -875,7 +876,7 @@ export function LinkedInView({ setView }: Props) {
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: c.blBg, color: c.bl }}>{v.label}</span>
                               <CopyButton text={v.content} k={`ab-${v.label}`} copiedKey={copiedKey} setCopiedKey={setCopiedKey} c={c} />
                             </div>
-                            <p className="text-[10px] leading-relaxed line-clamp-3" style={{ color: c.tx2 }}>{v.content}</p>
+                            <p className="text-[10px] leading-relaxed line-clamp-3" style={{ color: c.tx2 }}>{stripMarkdown(v.content)}</p>
                           </motion.div>
                         ))}
                         {/* Generate new variant buttons */}

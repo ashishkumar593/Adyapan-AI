@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Search,
   Copy,
@@ -486,7 +487,7 @@ export default function EngineTranscript({
                       border: `1px solid ${c.borderLight}`,
                     }}
                   >
-                    {msg.content}
+                    {stripMarkdown(msg.content)}
                   </div>
                 ) : (
                   <div

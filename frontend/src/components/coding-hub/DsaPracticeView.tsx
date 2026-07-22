@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Code2, CheckCircle2, Target, Trophy, Flame, Search, Filter,
   HelpCircle, Play, Sparkles, ArrowLeft, BookOpen, Lightbulb,
@@ -286,7 +287,7 @@ export function DsaPracticeView() {
                         className="bg-blue-500/5 border border-blue-500/15 p-4 rounded-xl"
                       >
                         <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wider">Hint {i + 1}</span>
-                        <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">{h}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">{stripMarkdown(h)}</p>
                       </motion.div>
                     ))}
                     {hint.approach && (
@@ -298,7 +299,7 @@ export function DsaPracticeView() {
                         className="bg-amber-500/5 border border-amber-500/15 p-4 rounded-xl"
                       >
                         <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider">Optimal Approach</span>
-                        <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">{hint.approach}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">{stripMarkdown(hint.approach)}</p>
                       </motion.div>
                     )}
                   </motion.div>

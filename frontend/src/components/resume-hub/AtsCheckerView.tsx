@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import CountUp from "react-countup";
 import confetti from "canvas-confetti";
 import { api } from "@/services/api";
@@ -1696,7 +1697,7 @@ export function AtsCheckerView({ setView }: Props) {
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] p-2.5 rounded-xl text-xs leading-relaxed ${m.role === "user" ? "rounded-br-sm" : "rounded-bl-sm"}`}
                         style={{ background: m.role === "user" ? c.am : c.sf, color: m.role === "user" ? "#000" : c.tx, border: m.role === "user" ? "none" : `1px solid ${c.bd}` }}>
-                        {m.content}
+                        {stripMarkdown(m.content)}
                       </div>
                     </div>
                   ))}

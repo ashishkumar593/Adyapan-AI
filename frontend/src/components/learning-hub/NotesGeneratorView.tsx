@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   BookOpen, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
   CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, Layers, Download, Loader2
@@ -621,7 +622,7 @@ export function NotesGeneratorView() {
                               <div className="p-5 space-y-5">
                                 <div>
                                   <span className="text-[10px] uppercase tracking-widest font-black block mb-2" style={{ color: c.amber }}>Content</span>
-                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{s.content}</p>
+                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{stripMarkdown(s.content)}</p>
                                 </div>
                                 <div className="p-4 rounded-xl" style={{ background: c.purpleBg, border: `1px solid ${c.purpleBorder}` }}>
                                   <span className="text-[10px] uppercase tracking-widest font-black block mb-3" style={{ color: "#a78bfa" }}>✦ Key Points</span>

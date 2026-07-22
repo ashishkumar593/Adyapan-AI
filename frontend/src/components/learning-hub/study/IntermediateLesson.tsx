@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { mkColors } from "@/utils/themeColors";
 import { parseMarkdown } from "@/utils/parseMarkdown";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import type { UnifiedLesson } from "../StudyAssistantView";
 
 const modeConfig = {
@@ -152,7 +153,7 @@ export function IntermediateLesson({ c, data, level, expandedConceptIdx, setExpa
                   </div>
                   {pr.guidance && (
                     <div className="text-xs p-3 rounded-lg leading-relaxed font-medium" style={{ background: c.cardBgAlt, border: `1px solid ${c.border}`, color: c.textMuted }}>
-                      <strong>Guidance/Hint:</strong> {pr.guidance}
+                      <strong>Guidance/Hint:</strong> {stripMarkdown(pr.guidance)}
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3">

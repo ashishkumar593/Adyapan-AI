@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   PenTool, Copy, FileDown, RefreshCw, ChevronRight, Search, Plus, History,
   CheckCircle2, Sparkles, Brain, Zap, Star, X, FileText, Layers, Quote
@@ -545,7 +546,7 @@ export function AssignmentGeneratorView() {
                                     ))}
                                   </ul>
                                 ) : (
-                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{s.content}</p>
+                                  <p className="text-[15px] leading-[1.75]" style={{ color: c.textSec }}>{stripMarkdown(s.content)}</p>
                                 )}
                               </div>
                             </motion.div>

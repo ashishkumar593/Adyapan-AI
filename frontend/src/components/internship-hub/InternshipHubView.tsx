@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Search, Filter, Briefcase, MapPin, Clock, DollarSign, Star, Bookmark,
   BookmarkCheck, ExternalLink, Share2, ChevronDown, ChevronUp, X,
@@ -729,7 +730,7 @@ function DetailModal({
                 <Brain size={12} className="text-purple-400" />
                 <span className="text-[10px] font-black uppercase tracking-wider text-purple-400">AI Summary</span>
               </div>
-              <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: c.textSec }}>{aiResult}</p>
+              <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: c.textSec }}>{stripMarkdown(aiResult)}</p>
             </motion.div>
           )}
           {skillGapResult && (
@@ -1000,7 +1001,7 @@ function AIChatSidebar({
                     color: msg.role === "user" ? "#000" : c.textSec,
                     border: msg.role === "assistant" ? `1px solid ${c.border}` : "none",
                   }}>
-                  {msg.content}
+                  {stripMarkdown(msg.content)}
                 </div>
               </motion.div>
             ))}

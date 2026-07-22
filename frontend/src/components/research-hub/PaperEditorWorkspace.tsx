@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   FileText, Sparkles, Layers, Download, Save, Eye, Edit3,
   CheckCircle2, RefreshCw, MessageSquare, Send, X, ChevronRight,
@@ -232,7 +233,7 @@ export function PaperEditorWorkspace({
                 {templateId === "Thesis" ? `CHAPTER: ${s.title}` : s.title}
               </h2>
               <p className="text-xs text-slate-800 text-justify leading-relaxed whitespace-pre-wrap">
-                {s.content}
+                {stripMarkdown(s.content)}
               </p>
             </div>
           ))}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import confetti from "canvas-confetti";
 import { api } from "@/services/api";
 import { useTheme } from "@/hooks/useTheme";
@@ -864,7 +865,7 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
                         </motion.button>
                       </div>
                       <p style={{ fontSize: "0.82rem", color: textSecondary, lineHeight: 1.6 }}>
-                        {ver.content}
+                        {stripMarkdown(ver.content)}
                       </p>
                     </motion.div>
                   ))
@@ -993,7 +994,7 @@ export function ResumeImprovementsView({ setView }: { setView: (v: string) => vo
                         ].map((v) => (
                           <div key={v.label} style={{ padding: "0.6rem", borderRadius: 10, background: `${v.color}08`, border: `1px solid ${v.color}20`, position: "relative" }}>
                             <div style={{ fontSize: "0.68rem", fontWeight: 700, color: v.color, marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{v.label}</div>
-                            <p style={{ fontSize: "0.78rem", color: textPrimary, lineHeight: 1.5 }}>{v.content}</p>
+                            <p style={{ fontSize: "0.78rem", color: textPrimary, lineHeight: 1.5 }}>{stripMarkdown(v.content)}</p>
                             <button
                               onClick={() => copyText(v.content, `bullet-${i}-${v.label}`)}
                               style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", color: textMuted, padding: 2 }}

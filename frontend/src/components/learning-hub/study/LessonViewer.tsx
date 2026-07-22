@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Sparkles, Edit3, Clock, Check, Terminal, Plus, Play,
 } from "lucide-react";
@@ -131,7 +132,7 @@ export function LessonViewer({ c, lessonData, currentTopic, duration, isScratchp
                             <Plus size={8} /> Copy to Notes
                           </button>
                         </div>
-                        <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: c.textMuted }}>{concept.content}</p>
+                        <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: c.textMuted }}>{stripMarkdown(concept.content)}</p>
                       </div>
                     ))}
                   </div>

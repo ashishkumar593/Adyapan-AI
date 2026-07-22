@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import {
   Briefcase, Search, Filter, MapPin, Building2, Globe, Clock, Tag, DollarSign,
   GraduationCap, Sparkles, ExternalLink, Heart, Share2, Copy, Check, X, ChevronDown,
@@ -2415,7 +2416,7 @@ export function JobHubView({ setView, activeModule }: JobHubProps) {
                       color: c.text,
                       border: `1px solid ${msg.role === "user" ? "rgba(245,158,11,0.15)" : c.border}`,
                     }}>
-                    {msg.content}
+                    {stripMarkdown(msg.content)}
                   </div>
                 </motion.div>
               ))}
