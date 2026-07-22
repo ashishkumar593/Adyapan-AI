@@ -140,6 +140,15 @@ const ProgressDashboard = dynamic(() => import("@/components/progress-hub/Progre
 const CommunityProfileView = dynamic(() => import("@/components/account-hub/CommunityProfileView").then(m => m.CommunityProfileView), {
   loading: () => <DashboardWidgetSkeleton title="Community Profile" />
 });
+const CommunityProfilesView = dynamic(() => import("@/components/account-hub/CommunityProfilesView").then(m => m.CommunityProfilesView), {
+  loading: () => <DashboardWidgetSkeleton title="Community" />
+});
+const CommunityMessagesView = dynamic(() => import("@/components/account-hub/CommunityMessagesView").then(m => m.CommunityMessagesView), {
+  loading: () => <DashboardWidgetSkeleton title="Messages" />
+});
+const BlogView = dynamic(() => import("@/components/account-hub/BlogView").then(m => m.BlogView), {
+  loading: () => <DashboardWidgetSkeleton title="Blog" />
+});
 const ManageAccountView = dynamic(() => import("@/components/account-hub/ManageAccountView").then(m => m.ManageAccountView), {
   loading: () => <DashboardWidgetSkeleton title="Manage Account" />
 });
@@ -167,7 +176,7 @@ import {
   LayoutDashboard, Sun, Moon, TrendingDown, ArrowUpRight,
   BookMarked, ClipboardList,
   Star, Zap,
-  LineChart, Trophy, MessageCircle,
+  LineChart, Trophy, MessageCircle, Users,
   Target, Globe, Edit3, Save, X,
   Upload, Download, Trash2, RefreshCw, ArrowLeft, Lock, Shield,
 } from "lucide-react";
@@ -245,6 +254,11 @@ const SEARCH_INDEX: SearchEntry[] = [
   { label: "Progress Tracker", viewId: "analytics-hub", category: "Analytics" },
   { label: "Interview Progress", viewId: "analytics-hub", category: "Analytics" },
   { label: "Skill Growth", viewId: "analytics-hub", category: "Analytics" },
+  { label: "Community", viewId: "community-browse", category: "Community" },
+  { label: "Browse Profiles", viewId: "community-browse", category: "Community" },
+  { label: "Messages", viewId: "community-messages", category: "Community" },
+  { label: "Blog", viewId: "community-blog", category: "Community" },
+  { label: "Write Blog", viewId: "community-blog", category: "Community" },
 ];
 
 // ─── Sidebar Data ─────────────────────────────────────────────────────────────
@@ -342,6 +356,14 @@ export const sidebarItems: SidebarItem[] = [
       { label: "Progress Tracker", href: "#" },
       { label: "Interview Progress", href: "#" },
       { label: "Resume Score", href: "#" }, { label: "Skill Growth", href: "#" },
+    ],
+  },
+  {
+    id: "community", label: "Community", icon: <Users size={18} />,
+    submenu: [
+      { label: "Browse Profiles", href: "#" },
+      { label: "Messages", href: "#" },
+      { label: "Blog", href: "#" },
     ],
   },
 ];
@@ -2198,6 +2220,12 @@ function UserDashboardContent() {
           <HubErrorBoundary><CareerDashboardView setView={setActiveView} /></HubErrorBoundary>
         ) : activeView === "community-profile" ? (
           <HubErrorBoundary><CommunityProfileView /></HubErrorBoundary>
+        ) : activeView === "community-browse" ? (
+          <HubErrorBoundary><CommunityProfilesView /></HubErrorBoundary>
+        ) : activeView === "community-messages" ? (
+          <HubErrorBoundary><CommunityMessagesView /></HubErrorBoundary>
+        ) : activeView === "community-blog" ? (
+          <HubErrorBoundary><BlogView /></HubErrorBoundary>
         ) : activeView === "settings" ? (
           <HubErrorBoundary><ManageAccountView /></HubErrorBoundary>
         ) : activeView === "billing" ? (

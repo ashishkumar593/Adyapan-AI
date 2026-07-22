@@ -182,4 +182,126 @@ Return JSON matching:
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMUNITY BROWSING & MESSAGING
+// ═══════════════════════════════════════════════════════════════════════════
+
+// List community users (with search)
+router.get("/users", async (req: any, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const { q, page = "1", limit = "20" } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const where: any = {};
+    if (q) {
+      where.OR = [
+        { user: { name: { contains: String(q), mode: "insensitive" } } },
+        { username: { contains: String(q), mode: "insensitive" } },
+        { college: { contains: String(q), mode: "insensitive" } },
+      ];
+    }
+    const [profiles, total] = await Promise.all([
+      userPrisma.profile.findMany({
+        where,
+        include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: Number(limit),
+      }),
+      userPrisma.profile.count({ where }),
+    ]);
+    res.json({ success: true, users: profiles, total });
+  } catch (error) {
+    handleRouteError(res, error, "Community.users", "Failed to fetch users");
+  }
+});
+
+// Get another user's public profile
+router.get("/users/:userId", async (req: any, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const { userId } = req.params;
+    const profile = await userPrisma.profile.findUnique({
+      where: { userId },
+      include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } },
+    });
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    const [followers, following, isFollowing, projects, activities, achievements] = await Promise.all([
+      userPrisma.communityFollow.count({ where: { followingId: userId } }),
+      userPrisma.communityFollow.count({ where: { followerId: userId } }),
+      userPrisma.communityFollow.findUnique({ where: { followerId_followingId: { followerId: req.user.id, followingId: userId } } }).then(Boolean),
+      userPrisma.communityProject.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
+      userPrisma.communityActivity.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
+      userPrisma.communityAchievement.findMany({ where: { userId }, orderBy: { unlockedAt: "desc" } }),
+    ]);
+    res.json({ success: true, profile, followers, following, isFollowing, projects, activities, achievements });
+  } catch (error) {
+    handleRouteError(res, error, "Community.getUserProfile", "Failed to fetch user profile");
+  }
+});
+
+// Get conversations list
+router.get("/conversations", async (req: any, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const userId = req.user.id;
+    const rawMessages = await userPrisma.communityMessage.findMany({
+      where: { OR: [{ senderId: userId }, { receiverId: userId }] },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+    const convMap = new Map<string, any>();
+    for (const msg of rawMessages) {
+      const otherId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      if (!convMap.has(otherId)) {
+        convMap.set(otherId, { userId: otherId, lastMessage: msg, unread: 0 });
+      }
+      if (msg.receiverId === userId && !msg.read) {
+        convMap.get(otherId)!.unread++;
+      }
+    }
+    const otherIds = [...convMap.keys()];
+    const otherProfiles = await userPrisma.profile.findMany({
+      where: { userId: { in: otherIds } },
+      select: { userId: true, user: { select: { id: true, name: true } } },
+    });
+    const profileMap = new Map<string, any>(otherProfiles.map((p: any) => [p.userId, p]));
+    const conversations = otherIds.map(id => ({
+      userId: id,
+      name: (profileMap.get(id) as any)?.user?.name || "Unknown",
+      lastMessage: convMap.get(id)!.lastMessage,
+      unread: convMap.get(id)!.unread,
+    }));
+    conversations.sort((a: any, b: any) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime());
+    res.json({ success: true, conversations });
+  } catch (error) {
+    handleRouteError(res, error, "Community.conversations", "Failed to fetch conversations");
+  }
+});
+
+// Get messages with a specific user
+router.get("/messages/:userId", async (req: any, res) => {
+  try {
+    const userPrisma = await getUserPrismaFromRequest(req);
+    const { userId } = req.params;
+    const messages = await userPrisma.communityMessage.findMany({
+      where: {
+        OR: [
+          { senderId: req.user.id, receiverId: userId },
+          { senderId: userId, receiverId: req.user.id },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+    });
+    await userPrisma.communityMessage.updateMany({
+      where: { senderId: userId, receiverId: req.user.id, read: false },
+      data: { read: true },
+    });
+    res.json({ success: true, messages });
+  } catch (error) {
+    handleRouteError(res, error, "Community.getMessagesWith", "Failed to fetch messages");
+  }
+});
+
 export const communityRouter = router;

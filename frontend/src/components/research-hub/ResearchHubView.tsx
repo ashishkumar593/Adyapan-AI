@@ -83,31 +83,8 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
 
   return (
     <div className="min-h-screen p-4 md:p-6 transition-colors" style={{ background: c.bg, color: c.text }}>
-      {/* Top Header Switcher */}
-      <div className="flex items-center justify-between gap-4 mb-6 pb-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewState("dashboard")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-              viewState === "dashboard"
-                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setViewState("wizard")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-              viewState === "wizard"
-                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
-          >
-            9-Step Paper Wizard
-          </button>
-        </div>
-
+      {/* Top Header */}
+      <div className="flex items-center justify-end mb-6 pb-4" style={{ borderBottom: `1px solid ${c.divider}` }}>
         <button
           onClick={() => setIsTemplateModalOpen(true)}
           className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 flex items-center gap-1.5"

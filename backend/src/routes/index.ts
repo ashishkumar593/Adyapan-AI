@@ -41,6 +41,7 @@ import { resumeImprovementRouter } from "./resume-improvement.routes";
 import { careerRouter } from "./career.routes";
 import { configRouter } from "./config.routes";
 import { searchRouter } from "./search.routes";
+import { blogRouter } from "./blog.routes";
 import { placementRouter } from "./placement.routes";
 import { engineRouter } from "./engine.routes";
 import { technicalEngineRouter } from "./technical-engine.routes";
@@ -121,6 +122,9 @@ apiRouter.use("/config", configRouter);
 
 // Global Search Route
 apiRouter.use("/search", searchRouter);
+
+// Blog Routes
+apiRouter.use("/blog", blogRouter);
 
 
 

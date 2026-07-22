@@ -1227,6 +1227,54 @@ model CommunityProject {
   @@map("community_projects")
 }
 
+model Blog {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  content     String   @db.Text
+  summary     String   @default("")
+  category    String   @default("General")
+  tags        String[] @default([])
+  coverImage  String?  @map("cover_image")
+  published   Boolean  @default(false)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  comments    BlogComment[]
+  likes       BlogLike[]
+
+  @@index([userId])
+  @@index([published])
+  @@index([createdAt])
+  @@map("blogs")
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  blogId    String   @map("blog_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@index([blogId])
+  @@index([userId])
+  @@map("blog_comments")
+}
+
+model BlogLike {
+  id        String   @id @default(cuid())
+  blogId    String   @map("blog_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, userId])
+  @@index([blogId])
+  @@index([userId])
+  @@map("blog_likes")
+}
+
 model CodingQuestion {
   id                  String   @id @default(cuid())
   externalId          String   @unique @map("external_id")
