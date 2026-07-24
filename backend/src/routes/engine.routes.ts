@@ -340,6 +340,44 @@ engineRouter.post("/:sessionId/voice", async (req, res) => {
   }
 });
 
+export function formatEngineEvaluation(dbEval: any) {
+  if (!dbEval) return null;
+  const details = typeof dbEval.detailedAnalysis === "object" && dbEval.detailedAnalysis !== null ? dbEval.detailedAnalysis : {};
+
+  return {
+    id: dbEval.id,
+    sessionId: dbEval.sessionId,
+    overallScore: dbEval.overallScore ?? 0,
+    communicationScore: dbEval.communicationScore ?? 0,
+    technicalScore: dbEval.technicalScore ?? 0,
+    hrScore: dbEval.hrScore ?? 0,
+    confidenceScore: dbEval.confidenceScore ?? 0,
+    fluencyScore: dbEval.fluencyScore ?? 0,
+    bodyLanguageScore: dbEval.bodyLanguageScore ?? 0,
+
+    communication: dbEval.communicationScore ?? details.subScores?.communication ?? details.communicationClarity ?? 0,
+    technical: dbEval.technicalScore ?? details.subScores?.technical ?? details.technicalDepth ?? 0,
+    confidence: dbEval.confidenceScore ?? details.subScores?.confidence ?? 0,
+    problemSolving: details.subScores?.problemSolving ?? details.problemSolving ?? 0,
+    leadership: details.subScores?.leadership ?? details.culturalFit ?? 0,
+    roleFit: details.subScores?.roleFit ?? dbEval.overallScore ?? 0,
+
+    strengths: Array.isArray(dbEval.strengths) ? dbEval.strengths : [],
+    weaknesses: Array.isArray(dbEval.weaknesses) ? dbEval.weaknesses : [],
+    improvements: Array.isArray(dbEval.improvements) ? dbEval.improvements : [],
+    summary: dbEval.summary || "",
+    hiringRecommendation: dbEval.hiringRecommendation || "maybe",
+    detailedAnalysis: details,
+    answerBreakdowns: Array.isArray(details.answerBreakdowns) ? details.answerBreakdowns : [],
+    missedOpportunities: Array.isArray(details.missedOpportunities) ? details.missedOpportunities : [],
+    recommendedTopics: Array.isArray(details.recommendedTopics) ? details.recommendedTopics : [],
+    communicationTips: Array.isArray(details.communicationTips) ? details.communicationTips : [],
+    technicalImprovements: Array.isArray(details.technicalImprovements) ? details.technicalImprovements : [],
+    nextPracticePlan: details.nextPracticePlan || null,
+    createdAt: dbEval.createdAt,
+  };
+}
+
 // ─── Evaluate interview ──────────────────────────────────────────────────
 engineRouter.post("/:sessionId/evaluate", async (req, res) => {
   try {
@@ -353,6 +391,20 @@ engineRouter.post("/:sessionId/evaluate", async (req, res) => {
     });
     if (!session) {
       res.status(404).json({ success: false, error: "Interview session not found" });
+      return;
+    }
+
+    // Check if an evaluation already exists
+    const existingEvaluation = await p.interviewEvaluation.findFirst({
+      where: { sessionId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (existingEvaluation) {
+      res.json({
+        success: true,
+        evaluation: formatEngineEvaluation(existingEvaluation),
+        session,
+      });
       return;
     }
 
@@ -406,7 +458,16 @@ engineRouter.post("/:sessionId/evaluate", async (req, res) => {
         improvements: evaluation.improvements || [],
         summary: evaluation.summary || "",
         hiringRecommendation: evaluation.hiringRecommendation || "maybe",
-        detailedAnalysis: evaluation.detailedAnalysis || null,
+        detailedAnalysis: {
+          ...(evaluation.detailedAnalysis || {}),
+          subScores: evaluation.subScores || {},
+          answerBreakdowns: evaluation.answerBreakdowns || [],
+          missedOpportunities: evaluation.missedOpportunities || [],
+          recommendedTopics: evaluation.recommendedTopics || [],
+          communicationTips: evaluation.communicationTips || [],
+          technicalImprovements: evaluation.technicalImprovements || [],
+          nextPracticePlan: evaluation.nextPracticePlan || null,
+        },
       },
     });
 
@@ -427,7 +488,7 @@ engineRouter.post("/:sessionId/evaluate", async (req, res) => {
 
     res.json({
       success: true,
-      evaluation: savedEvaluation,
+      evaluation: formatEngineEvaluation(savedEvaluation),
       session: updatedSession,
     });
   } catch (error) {
@@ -460,6 +521,20 @@ engineRouter.post("/:sessionId/end", async (req, res) => {
       },
     });
 
+    const existingEvaluation = await p.interviewEvaluation.findFirst({
+      where: { sessionId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existingEvaluation) {
+      res.json({
+        success: true,
+        session: updatedSession,
+        evaluation: formatEngineEvaluation(existingEvaluation),
+      });
+      return;
+    }
+
     const messages = await p.interviewMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
@@ -467,7 +542,7 @@ engineRouter.post("/:sessionId/end", async (req, res) => {
     });
 
     let evaluation = null;
-    if (messages.length >= 3) {
+    if (messages.length >= 1) {
       let resumeContext = null;
       const config = session.configuration || {};
       if (config.resumeAware) {
@@ -492,7 +567,7 @@ engineRouter.post("/:sessionId/end", async (req, res) => {
         resumeContext: resumeContext || "",
       });
 
-      evaluation = await p.interviewEvaluation.create({
+      const savedEval = await p.interviewEvaluation.create({
         data: {
           sessionId,
           overallScore: partialEvaluation.overallScore || 0,
@@ -507,9 +582,19 @@ engineRouter.post("/:sessionId/end", async (req, res) => {
           improvements: partialEvaluation.improvements || [],
           summary: partialEvaluation.summary || "Interview terminated early.",
           hiringRecommendation: partialEvaluation.hiringRecommendation || "maybe",
-          detailedAnalysis: partialEvaluation.detailedAnalysis || null,
+          detailedAnalysis: {
+            ...(partialEvaluation.detailedAnalysis || {}),
+            subScores: partialEvaluation.subScores || {},
+            answerBreakdowns: partialEvaluation.answerBreakdowns || [],
+            missedOpportunities: partialEvaluation.missedOpportunities || [],
+            recommendedTopics: partialEvaluation.recommendedTopics || [],
+            communicationTips: partialEvaluation.communicationTips || [],
+            technicalImprovements: partialEvaluation.technicalImprovements || [],
+            nextPracticePlan: partialEvaluation.nextPracticePlan || null,
+          },
         },
       });
+      evaluation = formatEngineEvaluation(savedEval);
     }
 
     res.json({

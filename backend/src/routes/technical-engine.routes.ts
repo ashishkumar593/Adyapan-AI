@@ -295,6 +295,30 @@ technicalEngineRouter.post("/:sessionId/review", async (req, res) => {
   }
 });
 
+export function formatTechnicalEvaluation(dbEval: any) {
+  if (!dbEval) return null;
+  const details = typeof dbEval.detailedAnalysis === "object" && dbEval.detailedAnalysis !== null ? dbEval.detailedAnalysis : {};
+
+  return {
+    id: dbEval.id,
+    sessionId: dbEval.sessionId,
+    overallScore: dbEval.overallScore ?? 0,
+    technicalDepth: dbEval.technicalScore ?? details.technicalDepth ?? 0,
+    codeQuality: dbEval.fluencyScore ?? details.codeQuality ?? details.culturalFit ?? 0,
+    problemSolving: dbEval.confidenceScore ?? details.problemSolving ?? 0,
+    communication: dbEval.communicationScore ?? details.communication ?? details.communicationClarity ?? 0,
+
+    strengths: Array.isArray(dbEval.strengths) ? dbEval.strengths : [],
+    weaknesses: Array.isArray(dbEval.weaknesses) ? dbEval.weaknesses : [],
+    improvements: Array.isArray(dbEval.improvements) ? dbEval.improvements : [],
+    summary: dbEval.summary || "",
+    hiringRecommendation: dbEval.hiringRecommendation || "maybe",
+    detailedAnalysis: details,
+    answerBreakdowns: Array.isArray(details.answerBreakdowns) ? details.answerBreakdowns : [],
+    createdAt: dbEval.createdAt,
+  };
+}
+
 // ─── Evaluate interview ─────────────────────────────────────────────────────
 technicalEngineRouter.post("/:sessionId/evaluate", async (req, res) => {
   try {
@@ -308,6 +332,19 @@ technicalEngineRouter.post("/:sessionId/evaluate", async (req, res) => {
     });
     if (!session) {
       res.status(404).json({ success: false, error: "Session not found" });
+      return;
+    }
+
+    const existingEvaluation = await p.interviewEvaluation.findFirst({
+      where: { sessionId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (existingEvaluation) {
+      res.json({
+        success: true,
+        evaluation: formatTechnicalEvaluation(existingEvaluation),
+        session,
+      });
       return;
     }
 
@@ -366,7 +403,8 @@ technicalEngineRouter.post("/:sessionId/evaluate", async (req, res) => {
           technicalDepth: evaluation.technicalDepth,
           communicationClarity: evaluation.communication,
           problemSolving: evaluation.problemSolving,
-          culturalFit: evaluation.codeQuality,
+          codeQuality: evaluation.codeQuality,
+          answerBreakdowns: evaluation.answerBreakdowns || [],
         },
       },
     });
@@ -381,7 +419,7 @@ technicalEngineRouter.post("/:sessionId/evaluate", async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    res.json({ success: true, evaluation: savedEvaluation, session: updatedSession });
+    res.json({ success: true, evaluation: formatTechnicalEvaluation(savedEvaluation), session: updatedSession });
   } catch (error) {
     handleRouteError(res, error, "TechnicalEngine.evaluate", "Failed to evaluate");
   }
@@ -408,6 +446,20 @@ technicalEngineRouter.post("/:sessionId/end", async (req, res) => {
       data: { status: "terminated", endedAt: new Date() },
     });
 
+    const existingEvaluation = await p.interviewEvaluation.findFirst({
+      where: { sessionId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existingEvaluation) {
+      res.json({
+        success: true,
+        session: updatedSession,
+        evaluation: formatTechnicalEvaluation(existingEvaluation),
+      });
+      return;
+    }
+
     const messages = await p.interviewMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
@@ -415,7 +467,7 @@ technicalEngineRouter.post("/:sessionId/end", async (req, res) => {
     });
 
     let evaluation = null;
-    if (messages.length >= 3) {
+    if (messages.length >= 1) {
       const config = session.configuration || {};
       let resumeContext = null;
       if (config.resumeAware) {
@@ -437,7 +489,7 @@ technicalEngineRouter.post("/:sessionId/end", async (req, res) => {
         history,
         resumeContext: resumeContext || "",
       });
-      evaluation = await p.interviewEvaluation.create({
+      const savedEval = await p.interviewEvaluation.create({
         data: {
           sessionId,
           overallScore: partialEvaluation.overallScore || 0,
@@ -452,8 +504,17 @@ technicalEngineRouter.post("/:sessionId/end", async (req, res) => {
           improvements: partialEvaluation.improvements || [],
           summary: partialEvaluation.summary || "Interview ended early.",
           hiringRecommendation: partialEvaluation.hiringRecommendation || "maybe",
+          detailedAnalysis: {
+            answerQuality: partialEvaluation.overallScore,
+            technicalDepth: partialEvaluation.technicalDepth,
+            communicationClarity: partialEvaluation.communication,
+            problemSolving: partialEvaluation.problemSolving,
+            codeQuality: partialEvaluation.codeQuality,
+            answerBreakdowns: partialEvaluation.answerBreakdowns || [],
+          },
         },
       });
+      evaluation = formatTechnicalEvaluation(savedEval);
     }
 
     res.json({ success: true, session: updatedSession, evaluation });

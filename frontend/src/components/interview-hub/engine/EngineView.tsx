@@ -71,27 +71,30 @@ export default function EngineView({ theme }: EngineViewProps) {
 
   const handleInterviewComplete = useCallback(async (completedSessionId: string) => {
     try {
-      toast.info("Generating your evaluation...");
+      toast.info("Generating your evaluation report...");
       const res = await api.post(`/engine/${completedSessionId}/evaluate`);
-      if (res.data.success) {
+      if (res.data.evaluation) {
         setEvaluation(res.data.evaluation);
-        setMessages(res.data.messages || []);
-        setScreen("report");
         toast.success("Evaluation complete!");
-      } else {
-        toast.error("Failed to generate evaluation");
-        setScreen("landing");
       }
+      if (res.data.session?.messages) {
+        setMessages(res.data.session.messages);
+      }
+      setScreen("report");
     } catch {
-      toast.error("Failed to generate evaluation");
-      setScreen("landing");
+      toast.error("Evaluation processing took longer than expected");
+      setScreen("report");
     }
   }, []);
 
   const handleInterviewEnd = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const res = await api.post(`/engine/${sessionId}/end`);
+      toast.info("Wrapping up interview & generating report...");
+      let res = await api.post(`/engine/${sessionId}/evaluate`);
+      if (!res.data.evaluation) {
+        res = await api.post(`/engine/${sessionId}/end`);
+      }
       if (res.data.evaluation) {
         setEvaluation(res.data.evaluation);
       }
@@ -100,7 +103,8 @@ export default function EngineView({ theme }: EngineViewProps) {
       }
       setScreen("report");
     } catch {
-      setScreen("landing");
+      toast.error("Generating report summary...");
+      setScreen("report");
     }
   }, [sessionId]);
 
@@ -205,7 +209,7 @@ export default function EngineView({ theme }: EngineViewProps) {
           </motion.div>
         )}
 
-        {screen === "report" && sessionId && evaluation && config && (
+        {screen === "report" && sessionId && config && (
           <motion.div
             key="report"
             initial={{ opacity: 0, y: 20 }}
@@ -213,15 +217,23 @@ export default function EngineView({ theme }: EngineViewProps) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <EngineReport
-              sessionId={sessionId}
-              evaluation={evaluation}
-              messages={messages}
-              config={config}
-              onRetry={handleReset}
-              onViewAnalytics={() => setScreen("analytics")}
-              onNewInterview={handleReset}
-            />
+            {evaluation ? (
+              <EngineReport
+                sessionId={sessionId}
+                evaluation={evaluation}
+                messages={messages}
+                config={config}
+                onRetry={handleReset}
+                onViewAnalytics={() => setScreen("analytics")}
+                onNewInterview={handleReset}
+              />
+            ) : (
+              <div className="max-w-5xl mx-auto px-4 py-20 text-center space-y-4">
+                <Sparkles className="w-10 h-10 text-amber-500 animate-bounce mx-auto" />
+                <h3 className="text-xl font-bold">Generating Detailed Assessment Report...</h3>
+                <p className="text-xs text-gray-400">Analyzing responses, scoring technical depth, and preparing recommendations.</p>
+              </div>
+            )}
             <div className="max-w-5xl mx-auto px-4 pb-12">
               <EngineTranscript
                 messages={messages}

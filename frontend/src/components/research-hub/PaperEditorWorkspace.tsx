@@ -273,9 +273,9 @@ export function PaperEditorWorkspace({
             <div className="flex items-center gap-2 text-[11px]" style={{ color: c.textMuted }}>
               <span className="font-extrabold text-amber-400 uppercase tracking-wider">{templateId}</span>
               <span>•</span>
-              <span>{paper?.metadata?.wordCount || 3400} words</span>
+              <span>{paper?.metadata?.wordCount || 0} words</span>
               <span>•</span>
-              <span>{paper?.sections?.length || 8} Sections</span>
+              <span>{paper?.sections?.length || 0} Sections</span>
             </div>
           </div>
         </div>

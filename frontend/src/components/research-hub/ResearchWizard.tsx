@@ -79,6 +79,23 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
   const [generatedDiagram, setGeneratedDiagram] = useState<any>(null);
   const [generatingVisual, setGeneratingVisual] = useState(false);
 
+  const handleGenerateVisual = async (contentType: "architecture" | "flowchart" | "equation" | "table") => {
+    const topicVal = title || domain;
+    if (!topicVal) return toast.error("Enter a title or domain first.");
+    setGeneratingVisual(true);
+    try {
+      const res = await api.post("/research/generate-visual", { contentType, topic: topicVal });
+      if (res.data?.success && res.data?.visual) {
+        setGeneratedDiagram(res.data.visual);
+        toast.success("Visual generated!");
+      }
+    } catch {
+      toast.error("Failed to generate visual.");
+    } finally {
+      setGeneratingVisual(false);
+    }
+  };
+
   const stepsHeader = [
     "1. Details", "2. Config", "3. Literature", "4. Outline",
     "5. Generation", "6. Enhance", "7. Visuals", "8. Review", "9. Export"
@@ -518,9 +535,24 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
               <p className="text-xs" style={{ color: c.textMuted }}>Review automatically generated architecture diagrams and equations.</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-950 text-amber-400 font-mono text-xs border border-slate-800 space-y-2">
-              <div className="text-gray-400">Generated System Architecture (Mermaid)</div>
-              <pre>{`graph TD\n  Dataset[(Research Dataset)] --> Preprocess[Preprocessing Module]\n  Preprocess --> Model[Proposed Multi-Agent Engine]\n  Model --> Metrics[Evaluation Metrics]\n  Metrics --> Result[Experimental Result]`}</pre>
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-slate-950 text-amber-400 font-mono text-xs border border-slate-800 space-y-2 min-h-[120px]">
+                {generatingVisual ? (
+                  <div className="flex items-center gap-2 text-gray-400"><RefreshCw size={14} className="animate-spin" /> Generating visual content...</div>
+                ) : generatedDiagram?.content ? (
+                  <pre className="whitespace-pre-wrap">{generatedDiagram.content}</pre>
+                ) : (
+                  <div className="text-gray-500 italic">Click a button below to generate a diagram for your paper.</div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(["architecture", "flowchart", "equation", "table"] as const).map(t => (
+                  <button key={t} onClick={() => handleGenerateVisual(t)} disabled={generatingVisual}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 disabled:opacity-50 transition-all capitalize">
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex justify-between pt-4">
@@ -542,7 +574,7 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-amber-400">{generatedPaper?.metadata?.wordCount || 4200}</div>
+                <div className="text-lg font-extrabold text-amber-400">{generatedPaper?.metadata?.wordCount || 0}</div>
                 <div className="text-[10px] text-gray-400">Total Word Count</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
@@ -550,11 +582,11 @@ export function ResearchWizard({ onCancel, onFinish, c }: ResearchWizardProps) {
                 <div className="text-[10px] text-gray-400">Publication Format</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-amber-400">{generatedPaper?.references?.length || 15}</div>
+                <div className="text-lg font-extrabold text-amber-400">{generatedPaper?.references?.length || 0}</div>
                 <div className="text-[10px] text-gray-400">Citations Included</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-lg font-extrabold text-amber-400">100%</div>
+                <div className="text-lg font-extrabold text-amber-400">{generatedPaper ? "100%" : "—"}</div>
                 <div className="text-[10px] text-gray-400">Format Validated</div>
               </div>
             </div>

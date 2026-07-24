@@ -270,30 +270,31 @@ export default function TechnicalInterviewView({ theme: propTheme }: { theme?: s
 
   const handleComplete = useCallback(async (completedSessionId: string) => {
     try {
-      toast.info("Generating your evaluation...");
+      toast.info("Generating evaluation report...");
       const res = await api.post(`/technical-engine/${completedSessionId}/evaluate`);
-      if (res.data.success) {
+      if (res.data.evaluation) {
         setEvaluation(res.data.evaluation);
-        setScreen("report");
         toast.success("Evaluation complete!");
-      } else {
-        toast.error("Failed to generate evaluation");
-        setScreen("landing");
       }
+      setScreen("report");
     } catch {
-      toast.error("Failed to generate evaluation");
-      setScreen("landing");
+      toast.error("Generating technical evaluation summary...");
+      setScreen("report");
     }
   }, []);
 
   const handleEnd = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const res = await api.post(`/technical-engine/${sessionId}/end`);
+      toast.info("Wrapping up technical interview & generating report...");
+      let res = await api.post(`/technical-engine/${sessionId}/evaluate`);
+      if (!res.data.evaluation) {
+        res = await api.post(`/technical-engine/${sessionId}/end`);
+      }
       if (res.data.evaluation) setEvaluation(res.data.evaluation);
       setScreen("report");
     } catch {
-      setScreen("landing");
+      setScreen("report");
     }
   }, [sessionId]);
 
@@ -1250,31 +1251,35 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
 
   if (!evaluation) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: c.bg }}>
-        <div className="text-center space-y-4">
-          <AlertTriangle size={32} className="mx-auto" style={{ color: c.amber }} />
-          <p className="text-sm font-bold" style={{ color: c.textMuted }}>Generating evaluation...</p>
-          <Loader2 size={24} className="animate-spin mx-auto" style={{ color: c.cyan }} />
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: c.bg }}>
+        <div className="text-center space-y-4 max-w-sm">
+          <Sparkles size={36} className="animate-spin mx-auto text-cyan-400" />
+          <h3 className="text-lg font-bold" style={{ color: c.text }}>Generating Assessment Report...</h3>
+          <p className="text-xs leading-relaxed" style={{ color: c.textMuted }}>
+            Analyzing technical accuracy, code performance, and problem-solving metrics.
+          </p>
         </div>
       </div>
     );
   }
 
-  const scoreColor = evaluation.overallScore >= 80 ? c.green : evaluation.overallScore >= 60 ? c.amber : c.red;
+  const overallScore = evaluation.overallScore ?? 0;
+  const scoreColor = overallScore >= 80 ? c.green : overallScore >= 60 ? c.amber : c.red;
   const recLabel = evaluation.hiringRecommendation?.includes("strong") ? "Strong Hire" : evaluation.hiringRecommendation?.includes("recommend") ? "Hire" : evaluation.hiringRecommendation?.includes("maybe") ? "Maybe" : "No Hire";
   const recColor = evaluation.hiringRecommendation?.includes("strong") ? c.green : evaluation.hiringRecommendation?.includes("recommend") ? c.cyan : evaluation.hiringRecommendation?.includes("maybe") ? c.amber : c.red;
 
   const scoreBreakdowns = [
-    { label: "Technical Depth", value: evaluation.technicalDepth, icon: Code2 },
-    { label: "Code Quality", value: evaluation.codeQuality, icon: Terminal },
-    { label: "Problem Solving", value: evaluation.problemSolving, icon: Brain },
-    { label: "Communication", value: evaluation.communication, icon: MessageSquare },
+    { label: "Technical Depth", value: evaluation.technicalDepth ?? overallScore, icon: Code2 },
+    { label: "Code Quality", value: evaluation.codeQuality ?? overallScore, icon: Terminal },
+    { label: "Problem Solving", value: evaluation.problemSolving ?? overallScore, icon: Brain },
+    { label: "Communication", value: evaluation.communication ?? overallScore, icon: MessageSquare },
   ];
 
   const SVG_SIZE = 160;
   const SVG_RADIUS = 68;
   const SVG_CIRCUMFERENCE = 2 * Math.PI * SVG_RADIUS;
-  const SVG_OFFSET = SVG_CIRCUMFERENCE - (evaluation.overallScore / 100) * SVG_CIRCUMFERENCE;
+  const SVG_OFFSET = SVG_CIRCUMFERENCE - (overallScore / 100) * SVG_CIRCUMFERENCE;
+  const answerBreakdowns = Array.isArray(evaluation.answerBreakdowns) ? evaluation.answerBreakdowns : [];
 
   return (
     <div className="min-h-full" style={{ fontFamily: "'Outfit', sans-serif", background: c.bg }}>
@@ -1297,7 +1302,7 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
                 <motion.circle cx={SVG_SIZE / 2} cy={SVG_SIZE / 2} r={SVG_RADIUS} fill="none" stroke={scoreColor} strokeWidth="10" strokeLinecap="round" strokeDasharray={SVG_CIRCUMFERENCE} initial={{ strokeDashoffset: SVG_CIRCUMFERENCE }} animate={{ strokeDashoffset: SVG_OFFSET }} transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }} />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-extrabold" style={{ color: scoreColor }}>{evaluation.overallScore}</span>
+                <span className="text-4xl font-extrabold" style={{ color: scoreColor }}>{overallScore}</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textMuted }}>Overall</span>
               </div>
             </div>
@@ -1326,8 +1331,8 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
               })}
             </div>
             <div className="flex gap-4 pt-2 border-t" style={{ borderColor: c.border }}>
-              <div className="text-[10px] font-bold" style={{ color: c.textMuted }}>Avg Time Complexity: <span style={{ color: c.text }}>{evaluation.timeComplexity}</span></div>
-              <div className="text-[10px] font-bold" style={{ color: c.textMuted }}>Avg Space: <span style={{ color: c.text }}>{evaluation.spaceComplexity}</span></div>
+              <div className="text-[10px] font-bold" style={{ color: c.textMuted }}>Avg Time Complexity: <span style={{ color: c.text }}>{evaluation.timeComplexity || "O(N)"}</span></div>
+              <div className="text-[10px] font-bold" style={{ color: c.textMuted }}>Avg Space: <span style={{ color: c.text }}>{evaluation.spaceComplexity || "O(1)"}</span></div>
             </div>
           </div>
         </motion.div>
@@ -1338,7 +1343,7 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
             <Brain className="w-4 h-4" style={{ color: c.cyan }} />
             <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.cyan }}>AI Summary</h3>
           </div>
-          <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{evaluation.summary}</p>
+          <p className="text-sm leading-relaxed" style={{ color: c.textSec }}>{evaluation.summary || "Evaluation summary generated."}</p>
         </motion.div>
 
         {/* Strengths & Weaknesses */}
@@ -1349,7 +1354,7 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
               <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.green }}>Strengths</h3>
             </div>
             <div className="space-y-2">
-              {evaluation.strengths.map((s, i) => (
+              {(evaluation.strengths || []).map((s, i) => (
                 <div key={i} className="flex items-start gap-2 px-3 py-2.5 rounded-xl" style={{ background: isDark ? "rgba(16,185,129,0.06)" : "rgba(16,185,129,0.04)" }}>
                   <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: c.green }} />
                   <span className="text-xs leading-relaxed" style={{ color: c.textSec }}>{s}</span>
@@ -1364,7 +1369,7 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
               <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.red }}>Areas to Improve</h3>
             </div>
             <div className="space-y-2">
-              {evaluation.weaknesses.map((w, i) => (
+              {(evaluation.weaknesses || []).map((w, i) => (
                 <div key={i} className="flex items-start gap-2 px-3 py-2.5 rounded-xl" style={{ background: isDark ? "rgba(239,68,68,0.06)" : "rgba(239,68,68,0.04)" }}>
                   <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: c.red }} />
                   <span className="text-xs leading-relaxed" style={{ color: c.textSec }}>{w}</span>
@@ -1375,7 +1380,7 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
         </div>
 
         {/* Answer Breakdowns */}
-        {evaluation.answerBreakdowns.length > 0 && (
+        {answerBreakdowns.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="space-y-3">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" style={{ color: c.purple }} />

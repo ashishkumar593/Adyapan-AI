@@ -32,7 +32,7 @@ export function ResearchDashboard({
     { label: "Total Papers", value: stats?.totalPapers ?? 0, icon: <FileText size={20} />, color: "#f59e0b" },
     { label: "Saved Drafts", value: stats?.savedDrafts ?? 0, icon: <Clock size={20} />, color: "#fbbf24" },
     { label: "AI Tokens Used", value: stats?.aiTokensUsed ? `${Math.round(stats.aiTokensUsed / 1000)}k` : "0", icon: <Zap size={20} />, color: "#d97706" },
-    { label: "Research Score", value: stats?.researchProgress ? `${stats.researchProgress}%` : "100%", icon: <TrendingUp size={20} />, color: "#f59e0b" },
+    { label: "Research Score", value: stats?.researchProgress != null ? `${stats.researchProgress}%` : "0%", icon: <TrendingUp size={20} />, color: "#f59e0b" },
   ];
 
   return (

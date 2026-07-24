@@ -147,27 +147,37 @@ export default function EngineReport({
     [isDark]
   );
 
-  const scoreColor = useMemo(() => getScoreColor(evaluation.overallScore), [evaluation.overallScore]);
-  const recInfo = useMemo(() => getRecommendationInfo(evaluation.hiringRecommendation), [evaluation.hiringRecommendation]);
+  const overallScore = evaluation?.overallScore ?? 0;
+  const scoreColor = useMemo(() => getScoreColor(overallScore), [overallScore]);
+  const recInfo = useMemo(() => getRecommendationInfo(evaluation?.hiringRecommendation || "maybe"), [evaluation?.hiringRecommendation]);
 
   const scoreBreakdowns = useMemo(() => {
+    const evalAny = evaluation as any;
+    const comm = evalAny?.communication ?? evalAny?.communicationScore ?? 0;
+    const conf = evalAny?.confidence ?? evalAny?.confidenceScore ?? 0;
+    const prob = evalAny?.problemSolving ?? 0;
+    const lead = evalAny?.leadership ?? 0;
+    const fit = evalAny?.roleFit ?? overallScore;
+    const tech = evalAny?.technical ?? evalAny?.technicalScore ?? 0;
+
     const items: Array<{ label: string; value: number; icon: React.ComponentType<{ className?: string }> }> = [
-      { label: "Communication", value: evaluation.communication, icon: MessageSquare },
-      { label: "Confidence", value: evaluation.confidence, icon: Star },
-      { label: "Problem Solving", value: evaluation.problemSolving, icon: Brain },
-      { label: "Leadership", value: evaluation.leadership, icon: Award },
-      { label: "Role Fit", value: evaluation.roleFit, icon: Target },
+      { label: "Communication", value: comm, icon: MessageSquare },
+      { label: "Confidence", value: conf, icon: Star },
+      { label: "Problem Solving", value: prob, icon: Brain },
+      { label: "Leadership", value: lead, icon: Award },
+      { label: "Role Fit", value: fit, icon: Target },
     ];
-    if (config.interviewType === "system-design") {
-      items.splice(1, 0, { label: "Technical", value: evaluation.technical, icon: Zap });
+    if (config.interviewType === "system-design" || config.interviewType === "technical" || config.interviewType === "coding") {
+      items.splice(1, 0, { label: "Technical", value: tech, icon: Zap });
     }
     return items;
-  }, [evaluation, config.interviewType]);
+  }, [evaluation, config.interviewType, overallScore]);
 
   const visibleBreakdowns = useMemo(() => {
-    if (showAllBreakdowns) return evaluation.answerBreakdowns;
-    return evaluation.answerBreakdowns.slice(0, 5);
-  }, [evaluation.answerBreakdowns, showAllBreakdowns]);
+    const list = Array.isArray(evaluation?.answerBreakdowns) ? evaluation.answerBreakdowns : [];
+    if (showAllBreakdowns) return list;
+    return list.slice(0, 5);
+  }, [evaluation?.answerBreakdowns, showAllBreakdowns]);
 
   const toggleBreakdown = useCallback((idx: number) => {
     setOpenBreakdowns((prev) => {
@@ -398,7 +408,7 @@ export default function EngineReport({
               </h3>
             </div>
             <div className="space-y-2">
-              {evaluation.strengths.map((s, i) => (
+              {(evaluation?.strengths || []).map((s, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
@@ -435,7 +445,7 @@ export default function EngineReport({
               </h3>
             </div>
             <div className="space-y-2">
-              {evaluation.weaknesses.map((w, i) => (
+              {(evaluation?.weaknesses || []).map((w, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}

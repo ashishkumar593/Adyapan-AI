@@ -65,7 +65,7 @@ export function ResearchHubView({ setView, activeModule, theme: propTheme }: Res
         savedDrafts: 0,
         publishedPapers: 0,
         aiTokensUsed: 0,
-        researchProgress: 100,
+        researchProgress: 0,
       });
     }
   };

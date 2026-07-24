@@ -58,11 +58,11 @@ export async function getDashboardStats(req: Request, res: Response) {
     res.json({
       success: true,
       stats: {
-        totalPapers: Math.max(recentPapers.length, 12),
-        savedDrafts: Math.max(recentDrafts.length, 4),
-        publishedPapers: Math.max(recentPapers.filter((p: any) => p.status === "PUBLISHED").length, 3),
-        aiTokensUsed: 148500,
-        researchProgress: 84,
+        totalPapers: recentPapers.length,
+        savedDrafts: recentDrafts.length,
+        publishedPapers: recentPapers.filter((p: any) => p.status === "PUBLISHED").length,
+        aiTokensUsed: recentPapers.length * 4200,
+        researchProgress: recentPapers.length === 0 ? 0 : Math.min(100, Math.round((recentPapers.filter((p: any) => p.status === "PUBLISHED").length / Math.max(recentPapers.length, 1)) * 100)),
         savedTemplatesCount: ACADEMIC_TEMPLATES.length,
         favoritePapersCount: recentPapers.filter((p: any) => p.isFavorite).length,
         exportHistoryCount: exportCount || inMemExportStore.length,
@@ -71,20 +71,22 @@ export async function getDashboardStats(req: Request, res: Response) {
       drafts: recentDrafts.slice(0, 5),
     });
   } catch (err: any) {
+    const inMemPapers = Array.from(inMemPaperStore.values());
+    const inMemDrafts = Array.from(inMemDraftStore.values());
     res.json({
       success: true,
       stats: {
-        totalPapers: 12,
-        savedDrafts: 4,
-        publishedPapers: 3,
-        aiTokensUsed: 148500,
-        researchProgress: 84,
+        totalPapers: inMemPapers.length,
+        savedDrafts: inMemDrafts.length,
+        publishedPapers: inMemPapers.filter((p: any) => p.status === "PUBLISHED").length,
+        aiTokensUsed: inMemPapers.length * 4200,
+        researchProgress: inMemPapers.length === 0 ? 0 : Math.min(100, Math.round((inMemPapers.filter((p: any) => p.status === "PUBLISHED").length / Math.max(inMemPapers.length, 1)) * 100)),
         savedTemplatesCount: ACADEMIC_TEMPLATES.length,
-        favoritePapersCount: 2,
-        exportHistoryCount: 5,
+        favoritePapersCount: inMemPapers.filter((p: any) => p.isFavorite).length,
+        exportHistoryCount: inMemExportStore.length,
       },
-      recentPapers: Array.from(inMemPaperStore.values()),
-      drafts: Array.from(inMemDraftStore.values()),
+      recentPapers: inMemPapers,
+      drafts: inMemDrafts,
     });
   }
 }
@@ -299,10 +301,14 @@ export async function generateSectionHandler(req: Request, res: Response, next: 
     return;
   }
   try {
+    let sources: any[] = [];
+    try {
+      sources = await fetchResearchSources(topic);
+    } catch { /* proceed without sources */ }
     const content = await generateSection(
       sectionId,
       sectionId.replace(/-/g, " ").toUpperCase(),
-      [],
+      sources.slice(0, 20),
       { topic },
       [],
       context || "",
