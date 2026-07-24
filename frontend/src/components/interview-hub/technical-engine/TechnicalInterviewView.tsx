@@ -1387,20 +1387,21 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
               <h3 className="text-sm font-bold uppercase tracking-wider">Answer Breakdowns</h3>
             </div>
             <div className="space-y-3">
-              {evaluation.answerBreakdowns.map((bd, idx) => {
-                const col = bd.score >= 80 ? c.green : bd.score >= 60 ? c.amber : c.red;
+              {answerBreakdowns.map((bd, idx) => {
+                const scoreVal = bd.score ?? 50;
+                const col = scoreVal >= 80 ? c.green : scoreVal >= 60 ? c.amber : c.red;
                 const isOpen = openBreakdowns.has(idx);
                 return (
                   <div key={idx} className="rounded-2xl border overflow-hidden" style={{ background: c.cardBg, borderColor: isOpen ? `${col}30` : c.border }}>
                     <button onClick={() => toggleBreakdown(idx)} className="w-full flex items-center gap-3 px-5 py-4 text-left">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-extrabold" style={{ background: `${col}18`, color: col }}>Q{bd.questionNumber}</div>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-extrabold" style={{ background: `${col}18`, color: col }}>Q{bd.questionNumber || idx + 1}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate" style={{ color: c.text }}>{bd.question}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <div className="h-1 w-16 rounded-full overflow-hidden" style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${bd.score}%`, background: col }} />
+                            <div className="h-full rounded-full" style={{ width: `${scoreVal}%`, background: col }} />
                           </div>
-                          <span className="text-[10px] font-bold" style={{ color: col }}>{bd.score}%</span>
+                          <span className="text-[10px] font-bold" style={{ color: col }}>{scoreVal}%</span>
                         </div>
                       </div>
                       <motion.div animate={{ rotate: isOpen ? 180 : 0 }}><ChevronDown size={14} style={{ color: c.textMuted }} /></motion.div>
@@ -1423,14 +1424,14 @@ function ReportView({ sessionId, evaluation, config, messages, onRetry, onNewInt
         )}
 
         {/* Recommended Topics */}
-        {evaluation.recommendedTopics.length > 0 && (
+        {(evaluation.recommendedTopics || []).length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="p-6 rounded-3xl border" style={{ background: c.cardBg, borderColor: c.border }}>
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="w-4 h-4" style={{ color: c.blue }} />
               <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: c.blue }}>Recommended Topics</h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {evaluation.recommendedTopics.map((topic, i) => (
+              {(evaluation.recommendedTopics || []).map((topic, i) => (
                 <span key={i} className="text-xs px-3 py-1.5 rounded-xl font-bold" style={{ background: "rgba(59,130,246,0.08)", color: c.blue, border: "1px solid rgba(59,130,246,0.15)" }}>{topic}</span>
               ))}
             </div>
