@@ -854,7 +854,7 @@ export function QuizGeneratorView() {
                     <div className="p-3 border-b sticky top-0 z-10" style={{ borderColor: c.divider, background: c.stickyBg, backdropFilter: "blur(12px)" }}>
                       <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: accent.text }}>Questions List</span>
                     </div>
-                    <div className="p-2 space-y-0.5">
+                    <div className="p-2 space-y-0.5 overflow-y-auto qz-scroll" style={{ maxHeight: "calc(80vh - 120px)" }}>
                       {quizData.questions.map((q, idx) => {
                         const isCorrect = submittedQuestions[idx] && userAnswers[idx] === q.correct_answer;
                         const isWrong = submittedQuestions[idx] && userAnswers[idx] !== q.correct_answer;
